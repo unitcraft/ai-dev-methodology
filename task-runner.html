@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15121d">
+  <meta name="description" content="Визуальная презентация алгоритма раннера задач: фазы, цикл проверок, решения человека и состояние между сессиями.">
+  <title>Раннер задач — от запроса до результата</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --paper: #15121d;
+      --white: #211c2d;
+      --ink: #eceaf1;
+      --muted: #beb8cc;
+      --soft: #ded9e8;
+      --line: #383145;
+      --violet: #b493e5;
+      --violet-2: #c3a3ee;
+      --violet-pale: #30273e;
+      --dark: #15121d;
+      --dark-card: #211c2d;
+      --dark-line: #3a3348;
+      --dark-muted: #c1bacf;
+      --mint: #58c9a4;
+      --mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+      --ui: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); background-image: radial-gradient(1050px 580px at 14% -10%, rgba(107,63,160,.29), transparent 64%), radial-gradient(820px 530px at 93% 48%, rgba(107,63,160,.12), transparent 66%); background-attachment: fixed; font: 17px/1.55 var(--ui); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    .wrap { width: min(1160px, calc(100% - 56px)); margin-inline: auto; }
+    .topbar { height: 76px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(203,199,218,.12); }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #55476c; border-radius: 11px; color: var(--violet-2); background: rgba(107,63,160,.2); font-size: 21px; }
+    .brand-title { display: block; font-size: 15px; font-weight: 750; line-height: 1.15; }
+    .brand-subtitle { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; }
+    .nav { display: flex; gap: 26px; align-items: center; }
+    .nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 550; }
+    .nav a:hover { color: var(--ink); }
+    .nav .nav-source { color: var(--violet-2); }
+
+    .hero { position: relative; overflow: hidden; padding: 70px 0 48px; background: radial-gradient(ellipse at 85% 10%, rgba(107,63,160,.16), transparent 42%); }
+    .hero-grid { display: grid; grid-template-columns: 1fr .95fr; gap: 54px; align-items: center; }
+    .eyebrow, .kicker { color: var(--violet-2); font: 650 13px/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 690px; margin: 18px 0 20px; font-size: clamp(52px, 7vw, 82px); line-height: .99; letter-spacing: -.065em; font-weight: 760; }
+    h1 span { color: var(--violet-2); }
+    .hero-copy { max-width: 560px; margin: 0; color: var(--muted); font-size: 19px; line-height: 1.62; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin-top: 29px; }
+    .button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 0 20px; border: 1px solid #8d68bd; border-radius: 9px; background: #6f4a99; color: white; text-decoration: none; font-size: 15px; font-weight: 700; box-shadow: 0 8px 22px rgba(107,63,160,.24); transition: transform .18s, background .18s; }
+    .button:hover { transform: translateY(-2px); background: #815bad; }
+    .button-secondary { border-color: var(--line); background: rgba(33,28,45,.8); color: var(--ink); box-shadow: none; }
+    .button-secondary:hover { background: #2a2437; }
+    .hero-facts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .fact-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 99px; background: rgba(33,28,45,.68); color: var(--muted); font-size: 13px; }
+    .fact-pill strong { color: var(--ink); font-size: 15px; }
+    .hero-board { padding: 21px; border: 1px solid var(--dark-line); border-radius: 18px; color: white; background: linear-gradient(145deg, #221c30, #171420 85%); box-shadow: 0 24px 70px rgba(31,24,43,.19); }
+    .board-top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--dark-line); }
+    .board-label { color: var(--dark-muted); font: 14px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+    .live { display: flex; gap: 9px; align-items: center; color: #c7c1d0; font-size: 13px; }
+    .live::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 15px rgba(88,201,164,.6); }
+    .board-flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; position: relative; padding: 29px 0 21px; }
+    .board-flow::before { content: ""; position: absolute; left: 9%; right: 9%; top: 35px; height: 2px; background: #4a425a; }
+    .flow-item { position: relative; z-index: 1; text-align: center; color: #c5bdcf; font-size: 14px; line-height: 1.3; }
+    .flow-dot { display: grid; place-items: center; width: 32px; height: 32px; margin: -22px auto 8px; border: 2px solid #74678e; border-radius: 50%; background: var(--dark); color: white; font: 13px var(--mono); }
+    .flow-item.done .flow-dot { border-color: var(--mint); background: #1d463e; color: var(--mint); }
+    .flow-item.active { color: #e6d9ff; font-weight: 700; }
+    .flow-item.active .flow-dot { border-color: #c0a3f0; background: var(--violet); box-shadow: 0 0 0 5px rgba(140,98,204,.19); }
+    .board-meter { margin: 0 0 14px; }
+    .meter-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: #c1bacf; font-size: 13px; }
+    .meter-label strong { color: #e7def5; font: 13px var(--mono); }
+    .meter-track { height: 11px; overflow: hidden; border-radius: 99px; background: #302a3e; }
+    .meter-fill { width: 50%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3aa98c, #63c8a7); box-shadow: 0 0 14px rgba(58,169,140,.25); }
+    .board-current { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 16px; border: 1px solid #453b57; border-radius: 11px; background: rgba(255,255,255,.045); }
+    .board-current small { color: #c1bacf; font-size: 14px; }
+    .board-current strong { display: block; margin-top: 2px; font-size: 16px; }
+    .board-count { color: var(--mint); font: 17px var(--mono); white-space: nowrap; }
+    .board-foot { display: flex; justify-content: space-between; gap: 14px; padding: 13px 2px 0; color: #c1bacf; font: 13px var(--mono); }
+    .board-foot span:last-child { color: var(--mint); }
+
+    .section { padding: 62px 0; border-top: 1px solid rgba(203,199,218,.1); }
+    .section-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); gap: 52px; align-items: center; margin-bottom: 28px; }
+    h2 { margin: 9px 0 0; font-size: clamp(34px, 3.6vw, 46px); line-height: 1.07; letter-spacing: -.045em; font-weight: 740; }
+    .intro { max-width: 590px; margin: 0; color: var(--muted); font-size: 18px; line-height: 1.65; }
+
+    .process-section { padding-top: 66px; }
+    .process-flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; }
+    .phase-card { min-height: 192px; position: relative; padding: 19px 17px; border: 1px solid var(--line); border-radius: 13px; background: rgba(33,28,45,.85); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+    .phase-card:not(:last-child)::after { content: ""; position: absolute; z-index: 1; right: -17px; top: 40px; width: 12px; height: 12px; border-top: 2px solid #827393; border-right: 2px solid #827393; transform: rotate(45deg); }
+    .phase-card:nth-child(3) { border-color: #8667ac; background: linear-gradient(180deg, #30243f, #231d2e); }
+    .phase-number { display: flex; align-items: center; justify-content: center; width: 35px; height: 35px; margin-bottom: 18px; border-radius: 10px; color: var(--violet-2); background: var(--violet-pale); font: 13px var(--mono); }
+    .phase-card h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -.025em; }
+    .phase-card p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+    .human-rail { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center; margin-top: 19px; padding: 19px 22px; border: 1px solid #59456f; border-radius: 12px; color: white; background: linear-gradient(110deg, #30243e, #211b2d); }
+    .human-rail strong { font-size: 17px; white-space: nowrap; }
+    .human-rail p { margin: 0; color: rgba(255,255,255,.85); font-size: 15px; }
+    .gate-list { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 11px; }
+    .gate-chip { padding: 6px 10px; border: 1px solid #544862; border-radius: 99px; color: #e4d9f5; background: rgba(140,98,204,.12); font-size: 14px; }
+
+    .loop-section { color: white; background: linear-gradient(180deg, #191622, #171420); }
+    .loop-section .kicker { color: #c1a0f0; }
+    .loop-section .intro { color: #c1bacf; }
+    .loop-diagram { padding: 27px; border: 1px solid var(--dark-line); border-radius: 17px; background: linear-gradient(145deg, #211c2d, #1b1726); }
+    .loop-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; align-items: stretch; }
+    .loop-step { min-height: 137px; position: relative; padding: 17px 15px; border: 1px solid #4a4258; border-radius: 11px; background: rgba(255,255,255,.035); }
+    .loop-step:not(:last-child)::after { content: ""; position: absolute; top: 43px; right: -20px; width: 13px; border-top: 2px solid #84759c; }
+    .loop-step:nth-child(3) { border-color: #a686d1; background: rgba(112,70,174,.19); }
+    .loop-step .step-num { color: #c3a2ef; font: 14px var(--mono); }
+    .loop-step h3 { margin: 11px 0 5px; font-size: 17px; }
+    .loop-step p { margin: 0; color: #c1bacf; font-size: 14px; line-height: 1.45; }
+    .return-arrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; margin: 18px 0 0; color: #c1bacf; font-size: 14px; }
+    .return-arrow::before, .return-arrow::after { content: ""; height: 1px; background: #564a68; }
+    .return-arrow span { display: flex; align-items: center; gap: 9px; }
+    .return-arrow b { color: var(--mint); font-size: 18px; }
+    .branch-caption { margin: 27px 0 13px; color: #c1bacf; font-size: 14px; }
+    .branches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .branch { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; padding: 16px; border: 1px solid #3b3348; border-radius: 10px; background: rgba(255,255,255,.025); }
+    .branch-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; color: #d1b8f4; background: rgba(140,98,204,.19); font-size: 20px; }
+    .branch strong { display: block; font-size: 16px; }
+    .branch span { display: block; margin-top: 4px; color: #c1bacf; font-size: 14px; line-height: 1.45; }
+    .clean-exit { display: flex; align-items: center; gap: 12px; margin-top: 13px; padding: 12px 15px; border: 1px solid rgba(88,201,164,.35); border-radius: 9px; color: #d8efe8; background: rgba(45,125,101,.13); font-size: 15px; }
+    .clean-exit b { color: var(--mint); font: 18px var(--mono); }
+
+    .system-section { background: rgba(28,24,38,.76); }
+    .system-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 19px; }
+    .system-card { padding: 25px; border: 1px solid var(--line); border-radius: 15px; background: rgba(33,28,45,.84); box-shadow: 0 10px 32px rgba(0,0,0,.1); }
+    .system-card h3 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.025em; }
+    .system-card > p { color: var(--muted); font-size: 15px; line-height: 1.55; }
+    .context-stack { display: grid; gap: 7px; margin-top: 17px; }
+    .context-layer { display: grid; grid-template-columns: 48px 175px 1fr; gap: 11px; align-items: center; min-height: 48px; padding: 8px 12px; border: 1px solid #3a3348; border-radius: 8px; background: #191622; }
+    .context-layer span:first-child { color: var(--violet); font: 14px var(--mono); }
+    .context-layer strong { font-size: 14px; }
+    .context-layer span:last-child { color: var(--muted); font-size: 14px; }
+    .context-layer.session { border-color: #80629f; background: #2e243a; }
+    .context-note { margin-top: 12px; padding: 13px 15px; border-left: 3px solid var(--violet); color: var(--muted); background: #1a1724; font-size: 14px; line-height: 1.5; }
+    .state-flow { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr; align-items: center; gap: 5px; margin-top: 28px; }
+    .state-node { min-height: 105px; display: flex; flex-direction: column; justify-content: center; padding: 15px; border: 1px solid #40374f; border-radius: 10px; background: #191622; }
+    .state-node span { color: var(--violet); font: 14px var(--mono); text-transform: uppercase; }
+    .state-node strong { margin-top: 7px; font-size: 15px; line-height: 1.35; }
+    .state-arrow { color: var(--violet); text-align: center; font-size: 22px; }
+    .state-callout { display: flex; gap: 12px; align-items: start; margin-top: 14px; padding: 13px 15px; border: 1px solid rgba(88,201,164,.2); border-radius: 9px; color: #c9e8dc; background: rgba(45,125,101,.14); font-size: 14px; line-height: 1.5; }
+    .state-callout b { color: var(--mint); font-size: 19px; }
+
+    .closing { padding: 65px 0; }
+    .closing-card { display: flex; justify-content: space-between; align-items: center; gap: 28px; padding: 28px 32px; border-radius: 16px; color: white; background: linear-gradient(120deg, #4f2f7b, #7650ad); }
+    .closing-card .kicker { color: #e3d1ff; }
+    .closing-card h2 { margin: 7px 0 8px; font-size: clamp(27px, 3vw, 38px); }
+    .closing-card p { margin: 0; color: rgba(255,255,255,.83); font-size: 16px; }
+    .closing-card .button { flex: none; border-color: #eee8f8; color: #251b32; background: #eee8f8; box-shadow: none; }
+    .closing-card .button:hover { background: white; }
+    footer { padding: 23px 0 29px; border-top: 1px solid rgba(203,199,218,.12); color: var(--muted); font-size: 14px; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 20px; }
+    footer a { color: var(--violet-2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    :focus-visible { outline: 3px solid var(--violet-2); outline-offset: 4px; }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 38px; }
+      .hero-copy { max-width: 700px; }
+      .hero-board { max-width: 760px; }
+      .section-head { grid-template-columns: 1fr; gap: 16px; }
+      .process-flow { grid-template-columns: repeat(3, 1fr); }
+      .phase-card:not(:last-child)::after { display: none; }
+      .loop-row { grid-template-columns: repeat(3, 1fr); }
+      .loop-step:not(:last-child)::after { display: none; }
+      .system-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      body { font-size: 16px; }
+      .wrap { width: calc(100% - 34px); }
+      .topbar { height: 68px; }
+      .brand-subtitle { font-size: 13px; }
+      .nav { gap: 13px; }
+      .nav a { font-size: 14px; }
+      .nav a:nth-child(2) { display: none; }
+      .hero { padding: 45px 0 32px; }
+      h1 { font-size: clamp(48px, 13vw, 64px); }
+      .hero-copy { font-size: 17px; }
+      .hero-board { padding: 16px 13px; border-radius: 14px; }
+      .board-label { font-size: 13px; }
+      .flow-item { font-size: 13px; }
+      .board-foot { font-size: 13px; }
+      .section { padding: 59px 0; }
+      .process-section { padding-top: 53px; }
+      h2 { font-size: clamp(35px, 10vw, 45px); }
+      .intro { font-size: 16px; }
+      .process-flow { grid-template-columns: 1fr; gap: 10px; }
+      .phase-card { min-height: 0; display: grid; grid-template-columns: 46px 1fr; column-gap: 12px; padding: 15px; }
+      .phase-number { grid-row: span 2; margin: 1px 0 0; }
+      .phase-card h3 { margin: 0 0 4px; font-size: 18px; }
+      .phase-card p { font-size: 15px; }
+      .human-rail { grid-template-columns: 1fr; gap: 10px; padding: 16px; }
+      .human-rail strong { white-space: normal; }
+      .human-rail p { font-size: 14px; }
+      .gate-chip { font-size: 13px; }
+      .loop-diagram { padding: 14px; }
+      .loop-row { grid-template-columns: 1fr; gap: 9px; }
+      .loop-step { min-height: 0; display: grid; grid-template-columns: 40px 1fr; gap: 0 9px; padding: 13px; }
+      .loop-step .step-num { grid-row: span 2; }
+      .loop-step h3 { margin: 0 0 3px; font-size: 16px; }
+      .loop-step p { font-size: 14px; }
+      .return-arrow { grid-template-columns: 1fr auto 1fr; gap: 8px; font-size: 13px; }
+      .branches { grid-template-columns: 1fr; gap: 8px; }
+      .branch { padding: 13px; }
+      .branch strong { font-size: 15px; }
+      .branch span { font-size: 14px; }
+      .clean-exit { align-items: start; font-size: 14px; }
+      .system-card { padding: 18px 15px; }
+      .system-card h3 { font-size: 20px; }
+      .context-layer { grid-template-columns: 34px 1fr; gap: 7px 10px; padding: 9px 10px; }
+      .context-layer span:last-child { grid-column: 2; }
+      .state-flow { grid-template-columns: 1fr; gap: 6px; margin-top: 20px; }
+      .state-node { min-height: 76px; }
+      .state-arrow { transform: rotate(90deg); line-height: 1; }
+      .closing { padding: 42px 0; }
+      .closing-card { align-items: start; flex-direction: column; padding: 22px 18px; }
+      .closing-card p { font-size: 15px; }
+      .footer-inner { align-items: start; flex-direction: column; }
+      .footer-links { flex-direction: column; gap: 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="brand" href="#top" aria-label="Раннер задач">
+      <span class="brand-mark" aria-hidden="true">↻</span>
+      <span><span class="brand-title">Раннер задач</span><span class="brand-subtitle">Методология разработки с ИИ</span></span>
+    </a>
+    <nav class="nav" aria-label="Навигация по странице">
+      <a href="#algorithm">Алгоритм</a><a href="#review">Проверки</a><a href="#state">Состояние</a><a class="nav-source" href="task-runner.md">Полное описание ↗</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Алгоритм оркестрации ИИ-сессий</div>
+          <h1>От задачи —<br>к результату,<br><span>с человеком у руля.</span></h1>
+          <p class="hero-copy">Раннер превращает работу агента в понятный процесс: запускает нужные сессии, ведёт по проверкам, сохраняет ход задачи и ждёт решения человека на важных этапах.</p>
+          <div class="actions"><a class="button" href="#algorithm">Изучить алгоритм <span aria-hidden="true">↓</span></a><a class="button button-secondary" href="task-runner.md">Открыть исходное описание ↗</a></div>
+          <div class="hero-facts"><span class="fact-pill"><strong>5</strong> фаз</span><span class="fact-pill"><strong>13</strong> точек решения</span><span class="fact-pill">состояние между запусками</span></div>
+        </div>
+        <aside class="hero-board" aria-label="Схема продвижения задачи по фазам">
+          <div class="board-top"><span class="board-label">Маршрут одной задачи</span><span class="live">под контролем</span></div>
+          <div class="board-flow">
+            <div class="flow-item done"><span class="flow-dot">01</span>Разбор</div>
+            <div class="flow-item done"><span class="flow-dot">02</span>План</div>
+            <div class="flow-item active"><span class="flow-dot">03</span>Работа</div>
+            <div class="flow-item"><span class="flow-dot">04</span>Сдача</div>
+            <div class="flow-item"><span class="flow-dot">05</span>Отклик</div>
+          </div>
+          <div class="board-meter" aria-label="Пример проверки реализации: второй заход из четырёх">
+            <div class="meter-label"><span>Проверка реализации · пример</span><strong>2 / 4 захода</strong></div>
+            <div class="meter-track"><div class="meter-fill"></div></div>
+          </div>
+          <div class="board-current"><div><small>Текущий шаг</small><strong>Проверка результата</strong></div><span class="board-count">02 / 17</span></div>
+          <div class="board-foot"><span>прогресс по единицам работы</span><span>состояние сохранено</span></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section process-section" id="algorithm">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">01 / Сквозной маршрут</div><h2>Работа движется по фазам</h2></div><p class="intro">У каждой фазы свой артефакт и следующий шаг. Если проверка находит проблему, задача возвращается туда, где её можно исправить.</p></div>
+        <div class="process-flow" aria-label="Пять фаз алгоритма раннера">
+          <article class="phase-card"><span class="phase-number">01</span><h3>Разбор</h3><p>Собрать контекст, прояснить вопросы и оформить требования.</p></article>
+          <article class="phase-card"><span class="phase-number">02</span><h3>План</h3><p>Разложить требования на шаги и определить критерии результата.</p></article>
+          <article class="phase-card"><span class="phase-number">03</span><h3>Реализация</h3><p>Выполнять план, проверять изменения и устранять находки.</p></article>
+          <article class="phase-card"><span class="phase-number">04</span><h3>Сдача</h3><p>Перепроверить результат и подготовить передачу заказчику.</p></article>
+          <article class="phase-card"><span class="phase-number">05</span><h3>Обратная связь</h3><p>Начать следующий раунд по отклику или завершить задачу.</p></article>
+        </div>
+        <div class="human-rail"><strong>Решения человека встроены в маршрут</strong><div><p>Раннер останавливается у ворот, показывает материалы и ждёт подтверждение там, где важны ответственность и контекст.</p><div class="gate-list"><span class="gate-chip">ответить на вопрос</span><span class="gate-chip">утвердить требования и план</span><span class="gate-chip">принять проверку</span><span class="gate-chip">разрешить передачу</span></div></div></div>
+      </div>
+    </section>
+
+    <section class="section loop-section" id="review">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">02 / Цикл проверки</div><h2>Не просто «проверить». Довести до чистого результата.</h2></div><p class="intro">Для каждого этапа проверки раннер связывает автора, проверку и правку. Он считает заходы и не теряет место, с которого продолжать.</p></div>
+        <div class="loop-diagram">
+          <div class="loop-row" aria-label="Цикл авторства, проверки и исправления">
+            <article class="loop-step"><span class="step-num">01</span><h3>Артефакт</h3><p>Спецификация, план, изменения или результат сдачи.</p></article>
+            <article class="loop-step"><span class="step-num">02</span><h3>Проверка</h3><p>Независимая сессия ищет проблемы и подтверждения.</p></article>
+            <article class="loop-step"><span class="step-num">03</span><h3>Решение</h3><p>Человек читает находки и засчитывает заход.</p></article>
+            <article class="loop-step"><span class="step-num">04</span><h3>Правка</h3><p>Исполнитель устраняет существенные замечания.</p></article>
+            <article class="loop-step"><span class="step-num">05</span><h3>Повтор</h3><p>Раннер запускает следующую проверку по маршруту.</p></article>
+          </div>
+          <div class="return-arrow"><span><b aria-hidden="true">↶</b> правка возвращает артефакт на проверку</span></div>
+          <p class="branch-caption">Находка направляет задачу к нужному уровню:</p>
+          <div class="branches">
+            <div class="branch"><span class="branch-icon" aria-hidden="true">⌕</span><div><strong>Требования</strong><span>Вернуться к разбору и обновить опорные документы.</span></div></div>
+            <div class="branch"><span class="branch-icon" aria-hidden="true">↗</span><div><strong>План</strong><span>Уточнить шаги до продолжения реализации.</span></div></div>
+            <div class="branch"><span class="branch-icon" aria-hidden="true">⌘</span><div><strong>Реализация</strong><span>Исправить изменение и продолжить текущий этап.</span></div></div>
+          </div>
+          <div class="clean-exit"><b aria-hidden="true">✓</b><span>Чистая серия завершена → раннер переходит к следующим воротам.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section system-section" id="state">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">03 / Память и контекст</div><h2>Сессии меняются. Ход задачи сохраняется.</h2></div><p class="intro">Раннер отделяет устойчивый контекст от промпта конкретной сессии, а состояние программы записывает по мере прохождения цикла.</p></div>
+        <div class="system-grid">
+          <article class="system-card">
+            <h3>Контекст собирается слоями</h3>
+            <p>Стабильные материалы идут первыми; переменная инструкция сессии — последней.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>00</span><strong>Инструменты</strong><span>доступные действия</span></div>
+              <div class="context-layer"><span>01</span><strong>Общие правила</strong><span>основа для всех сессий</span></div>
+              <div class="context-layer"><span>02</span><strong>Материалы задачи</strong><span>источники и вложения</span></div>
+              <div class="context-layer"><span>03</span><strong>Утверждённые документы</strong><span>спецификация и план</span></div>
+              <div class="context-layer session"><span>04</span><strong>Промпт сессии</strong><span>текущий шаг работы</span></div>
+            </div>
+            <div class="context-note">Порядок сохраняет кеш стабильной части контекста при смене сессий.</div>
+          </article>
+          <article class="system-card">
+            <h3>После паузы — продолжить, а не начинать заново</h3>
+            <p>Программа помнит фазу, ближайшее действие, счётчики этапов и незавершённую сессию.</p>
+            <div class="state-flow" aria-label="Схема сохранения и восстановления состояния">
+              <div class="state-node"><span>Выполнение</span><strong>Прогресс и документы обновляются</strong></div><span class="state-arrow" aria-hidden="true">→</span>
+              <div class="state-node"><span>Сохранение</span><strong>Состояние фиксируется у перехода и ворот</strong></div><span class="state-arrow" aria-hidden="true">→</span>
+              <div class="state-node"><span>Продолжение</span><strong>Раннер возобновляет нужный шаг</strong></div>
+            </div>
+            <div class="state-callout"><b aria-hidden="true">↻</b><span>Если процесс оборвался посреди сессии, повторяется тот же запуск с тем же местом в цикле.</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="wrap"><div class="closing-card"><div><div class="kicker">Детали реализации</div><h2>Полный алгоритм раннера</h2><p>Форматы файлов, контрольные ворота, правила маршрутизации и сборки контекста.</p></div><a class="button" href="task-runner.md">Открыть task-runner.md <span aria-hidden="true">↗</span></a></div></div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-inner"><span>АЛГОРИТМ РАННЕРА ЗАДАЧ</span><div class="footer-links"><span>Автор: <a href="https://github.com/unitcraft">Евгений Головин</a></span><a href="https://github.com/unitcraft/ai-dev-methodology">Репозиторий ↗</a><a href="README.md">Методология ↗</a></div></div>
+  </footer>
+</body>
+</html>
