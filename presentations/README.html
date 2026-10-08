@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15121d">
+  <meta name="description" content="Карта переносимой методологии разработки: канон проекта, оркестрация задач, проверки и порядок внедрения.">
+  <title>Методология разработки с ИИ-исполнителями</title>
+  <link rel="stylesheet" href="presentation.css">
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="brand" href="README.html"><span class="brand-mark" aria-hidden="true">↻</span><span class="brand-text"><strong>Методология</strong><span>Разработка с ИИ-исполнителями</span></span></a>
+    <nav class="nav" aria-label="Материалы"><a aria-current="page" href="README.html">Методология</a><a href="task-algorithm.html">Алгоритм</a><a href="task-sessions.html">Сессии</a><a href="task-runner.html">Раннер</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="kicker">Переносимый способ работы</div>
+          <h1>От постановки —<br>до <em>доказанной</em><br>приёмки.</h1>
+          <p class="hero-copy">Методология соединяет правила самого проекта с оркестрацией ИИ-сессий. Она помогает довести задачу до результата, который проверен по исходному замыслу, а не только объявлен готовым.</p>
+          <div class="actions"><a class="button" href="#layers">Увидеть устройство <span aria-hidden="true">↓</span></a><a class="button secondary" href="../README.md">Читать README.md ↗</a></div>
+          <div class="hero-stats"><span class="stat-pill"><strong>2</strong> рабочих слоя</span><span class="stat-pill"><strong>23</strong> раздела методологии</span><span class="stat-pill"><strong>14</strong> шагов внедрения</span></div>
+        </div>
+        <aside class="hero-panel" aria-label="Два слоя методологии">
+          <div class="panel-head"><span class="panel-label">Система из двух слоёв</span><span class="live">переносимая основа</span></div>
+          <div class="hero-visual">
+            <div class="visual-row"><span class="visual-index">02</span><div><strong>Надстройка оркестратора</strong><p>Вратарь старта · задания · перепроверка · публикация · состояние</p></div></div>
+            <div class="visual-row"><span class="visual-index">01</span><div><strong>Канон проекта</strong><p>Роли · архитектура · договорённости · критерии «сделано»</p></div></div>
+          </div>
+          <div class="alert spaced-top">Новый проект заводит свой канон. Надстройка помогает исполнять и проверять его.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="layers">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">01 / Два слоя — разные обязанности</div><h2>Сначала правила проекта. Затем — управление исполнением.</h2></div><p class="intro">При переносе методологии эти слои важно не смешивать: один описывает договорённости команды, второй удерживает повторяемый процесс ИИ-сессий.</p></div>
+        <div class="two-col">
+          <article class="diagram">
+            <div class="diagram-title"><h3>Канон проекта</h3><span>НУЖНО ЗАВЕСТИ</span></div>
+            <div class="stack">
+              <div class="stack-layer"><span class="stack-num">A</span><div><h3>Источник истины</h3><p>Где живут требования, архитектурные решения и правила команды.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">B</span><div><h3>Роли и приёмка</h3><p>Кто ставит задачу, ревьюит, принимает и закрывает результат.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">C</span><div><h3>Границы работы</h3><p>Что значит «сделано», что можно публиковать и как устроены среды.</p></div></div>
+            </div>
+          </article>
+          <article class="diagram">
+            <div class="diagram-title"><h3>Надстройка оркестратора</h3><span>ПОВЕРХ КАНОНА</span></div>
+            <div class="stack">
+              <div class="stack-layer top"><span class="stack-num">01</span><div><h3>Вход и задание</h3><p>Проверить готовность задачи, собрать инструкцию и необходимые материалы.</p></div></div>
+              <div class="stack-layer top"><span class="stack-num">02</span><div><h3>Независимая проверка</h3><p>Проверить по вехам, вернуть находки на доработку и подтвердить доказательства.</p></div></div>
+              <div class="stack-layer top"><span class="stack-num">03</span><div><h3>Состояние и контроль</h3><p>Вести наблюдаемые статусы, следы, измерения и историю решений.</p></div></div>
+            </div>
+          </article>
+        </div>
+        <div class="callout"><strong>Опорное правило:</strong> отчёт исполнителя — это слова. Между «сделано» и «принято» должна быть независимая проверка.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">02 / Путь задачи в команде</div><h2>Задача проходит через видимые состояния</h2></div><p class="intro">Публикация, приёмка и закрытие — отдельные точки. Слияние результата само по себе не доказывает, что исходные сценарии выполнены.</p></div>
+        <div class="route" aria-label="Путь задачи от постановки до закрытия">
+          <div class="route-item"><span class="num">01</span><strong>Постановка</strong><p>Цель, границы, сценарии и ограничения.</p></div>
+          <div class="route-item"><span class="num">02</span><strong>Вратарь</strong><p>Проверка, готова ли задача к исполнению.</p></div>
+          <div class="route-item"><span class="num">03</span><strong>Исполнение</strong><p>Работа по алгоритму с артефактами и вердиктом.</p></div>
+          <div class="route-item"><span class="num">04</span><strong>Перепроверка</strong><p>Независимый поиск пропущенных ошибок.</p></div>
+          <div class="route-item"><span class="num">05</span><strong>Приёмка</strong><p>Ответ по каждому сценарию и закрытие.</p></div>
+        </div>
+        <div class="branch-grid spaced-top-sm">
+          <div class="branch"><strong>Обычный путь</strong><p>Задача проходит проверку, публикацию, приёмку и уборку.</p></div>
+          <div class="branch"><strong>Возврат с ревью</strong><p>Замечания превращаются в задание на доработку, а не теряются в переписке.</p></div>
+          <div class="branch"><strong>Блокировка</strong><p>Неизвестное или внешняя зависимость фиксируются как препятствие, а не маскируются под PASS.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">03 / Кому подходит</div><h2>Сильный контроль там, где цена пропуска высока</h2></div><p class="intro">Методология открыто учитывает свою цену: больше проверок, больше инструкций и необходимость грамотного оркестратора.</p></div>
+        <div class="cards">
+          <article class="card"><span class="num">ПОДХОДИТ</span><h3>Есть внешняя приёмка</h3><p>Результат оценивает не только тот, кто его подготовил.</p></article>
+          <article class="card"><span class="num">ПОДХОДИТ</span><h3>Есть цена ошибки</h3><p>Пропустить дефект дороже, чем сделать дополнительный круг проверки.</p></article>
+          <article class="card"><span class="num">НУЖНО УПРОСТИТЬ</span><h3>Исследование без результата</h3><p>Если нельзя задать критерии приёмки, часть контрольных точек не работает.</p></article>
+        </div>
+        <div class="alert spaced-top-sm">Это не метод управления сроками и бюджетом. В небольшом проекте без внешней приёмки полный объём может не окупиться.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">04 / Материалы цикла</div><h2>Три уровня исполнения одной задачи</h2></div><p class="intro">Методология даёт общий контекст, алгоритм описывает работу исполнителя, сессии и раннер задают способ запуска и повтора.</p></div>
+        <div class="related">
+          <a href="task-algorithm.html"><span><strong>Алгоритм исполнителя</strong><br><span class="muted">от входа к доказанному результату</span></span><span>↗</span></a>
+          <a href="task-sessions.html"><span><strong>Цикл сессий</strong><br><span class="muted">готовые промпты и правила повторов</span></span><span>↗</span></a>
+          <a href="task-runner.html"><span><strong>Раннер</strong><br><span class="muted">автоматизация маршрута и состояния</span></span><span>↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap cta"><div class="kicker">Сама методология</div><h2>Порядок внедрения — внутри README</h2><p>Читать сверху вниз, затем переносить шаги на свой проект и его договорённости.</p><a class="button" href="../README.md">Открыть README.md ↗</a></div>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>ПЕРЕНОСИМЫЙ КАНОН РАЗРАБОТКИ</span><div class="footer-links"><span>Автор: <a href="https://github.com/unitcraft">Евгений Головин</a></span><a href="https://github.com/unitcraft/ai-dev-methodology">Репозиторий ↗</a></div></div></footer>
+</body>
+</html>

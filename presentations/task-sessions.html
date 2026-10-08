@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15121d">
+  <meta name="description" content="Визуальная схема выполнения задания через независимые сессии, проверки, решения владельца и повторы.">
+  <title>Цикл сессий — от разбора до обратной связи</title>
+  <link rel="stylesheet" href="presentation.css">
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="brand" href="README.html"><span class="brand-mark" aria-hidden="true">↻</span><span class="brand-text"><strong>Цикл сессий</strong><span>Промпты · проверки · повторы</span></span></a>
+    <nav class="nav" aria-label="Материалы"><a href="README.html">Методология</a><a href="task-algorithm.html">Алгоритм</a><a aria-current="page" href="task-sessions.html">Сессии</a><a href="task-runner.html">Раннер</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="kicker">Выполнение задания агентом</div>
+          <h1>Новая сессия.<br>Общий <em>след.</em><br>Понятный возврат.</h1>
+          <p class="hero-copy">Сессии разделяют разбор, планирование, реализацию и проверку. Разговоры могут закончиться — задача продолжается по документам, решениям и номерам заходов.</p>
+          <div class="actions"><a class="button" href="#session-map">Посмотреть схему ↓</a><a class="button secondary" href="../task-sessions.md">Читать task-sessions.md ↗</a></div>
+          <div class="hero-stats"><span class="stat-pill"><strong>С1–С9</strong> роли сессий</span><span class="stat-pill">утверждение между планом и кодом</span></div>
+        </div>
+        <aside class="hero-panel" aria-label="Сессии и файлы состояния">
+          <div class="panel-head"><span class="panel-label">Одна задача · новые сессии</span><span class="live">след остаётся</span></div>
+          <div class="hero-visual">
+            <div class="visual-row"><span class="visual-index">С1–С2</span><div><strong>Разбор и проверка</strong><p>spec.md · вопросы · утверждение требований</p></div></div>
+            <div class="visual-row"><span class="visual-index">С3–С4</span><div><strong>План и проверка</strong><p>plan.md · решения владельца · утверждение плана</p></div></div>
+            <div class="visual-row"><span class="visual-index">С5–С8</span><div><strong>Реализация и сдача</strong><p>result.md · review-N.md · delivery/</p></div></div>
+            <div class="visual-row"><span class="visual-index">С9</span><div><strong>Обратная связь</strong><p>Новый раунд возвращается на нужный уровень.</p></div></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="session-map">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">01 / Карта сессий</div><h2>План утверждён — только потом начинается реализация</h2></div><p class="intro">Промпты работают по файлам, поэтому планирование и код могут разделять время и разные исполнители. Проверяющая сессия не пишет код, который проверяет.</p></div>
+        <div class="diagram">
+          <div class="diagram-title"><h3>Основной маршрут</h3><span>ЧЕРНОВИК → ПРОВЕРКА → РЕШЕНИЕ</span></div>
+          <div class="route">
+            <div class="route-item"><span class="num">С1 → С2</span><strong>Разобрать</strong><p>Источники → spec.md → проверка → вопросы.</p></div>
+            <div class="route-item"><span class="num">ВОРОТА 1</span><strong>Утвердить требования</strong><p>Ответы и подтверждение сценариев владельцем.</p></div>
+            <div class="route-item"><span class="num">С3 → С4</span><strong>Спланировать</strong><p>Шаги → plan.md → независимая проверка.</p></div>
+            <div class="route-item"><span class="num">ВОРОТА 2</span><strong>Утвердить план</strong><p>План зафиксирован; реализация может начаться.</p></div>
+            <div class="route-item"><span class="num">С5 → С8</span><strong>Сделать и сдать</strong><p>Реализация → проверка → сдача → проверка.</p></div>
+          </div>
+          <div class="callout"><strong>После передачи:</strong> С9 разбирает обратную связь и направляет следующий раунд к требованиям, плану или реализации.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">02 / Повтор проверки</div><h2>Чистый итог — это подтверждённая серия</h2></div><p class="intro">Один красивый отчёт не останавливает этап. Человек читает находки, проверяет пробы и засчитывает каждый заход.</p></div>
+        <div class="two-col">
+          <article class="diagram">
+            <div class="diagram-title"><h3>Петля одного этапа</h3><span>АВТОР · ПРОВЕРКА · ПРАВКА</span></div>
+            <div class="route">
+              <div class="route-item"><span class="num">01</span><strong>Автор</strong><p>Создаёт или обновляет артефакт.</p></div>
+              <div class="route-item"><span class="num">02</span><strong>Проверяющий</strong><p>Свежая сессия ищет пропуски и ошибки.</p></div>
+              <div class="route-item"><span class="num">03</span><strong>Владелец</strong><p>Читает все находки, решает и фиксирует.</p></div>
+              <div class="route-item"><span class="num">04</span><strong>Повтор</strong><p>Правка → новая проверка → следующий заход.</p></div>
+              <div class="route-item"><span class="num">05</span><strong>Выход</strong><p>Два чистых захода подряд с нужными пробами.</p></div>
+            </div>
+          </article>
+          <article class="diagram">
+            <div class="diagram-title"><h3>Ограничители цикла</h3><span>ПРАВИЛА ИЗ ДОКУМЕНТА</span></div>
+            <div class="stack">
+              <div class="stack-layer top"><span class="stack-num">2×</span><div><h3>Чистая серия</h3><p>Остановка после двух проверок подряд без существенных находок.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">3×</span><div><h3>Проба обязательна</h3><p>Чистый заход засчитывается только с тремя проверяемыми пробами.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">4×</span><div><h3>Потолок этапа</h3><p>Если существенные находки остались, решение принимает владелец.</p></div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">03 / Возврат по уровню</div><h2>Замечание ведёт к тому документу, который нужно менять</h2></div><p class="intro">После правки не перезапускается вся задача. Возврат сохраняет готовые срезы и продолжает с нужной проверки.</p></div>
+        <div class="branch-grid">
+          <div class="branch"><strong>Требования изменились</strong><p>С1 правка → С2 → повторное утверждение spec.md → план.</p></div>
+          <div class="branch"><strong>Нужна правка плана</strong><p>С3 правка → С4 → утверждение plan.md → продолжение реализации.</p></div>
+          <div class="branch"><strong>Замечание по коду</strong><p>С5 правка → С6; результат снова проходит нужные проверки.</p></div>
+        </div>
+        <div class="alert spaced-top">Сессия не опирается на историю чата: источники, решения, статусы и номера заходов находятся в файлах задачи.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">04 / Перед первым запуском</div><h2>Подготовить папку задачи — и сессии станут взаимозаменяемыми</h2></div><p class="intro">Минимальный цикл рассчитан на человека, задание и ИИ-агента без трекера и команды. Каждый запуск получает полный промпт и читает актуальное состояние из файлов.</p></div>
+        <div class="cards">
+          <article class="card"><span class="num">01 / ВХОД</span><h3>Собрать материалы</h3><p>Скопировать алгоритм, сохранить исходное задание и завести журнал.</p></article>
+          <article class="card"><span class="num">02 / ИЗОЛЯЦИЯ</span><h3>Одна задача — одно дерево</h3><p>Не смешивать незакоммиченные изменения разных задач.</p></article>
+          <article class="card"><span class="num">03 / СЕССИЯ</span><h3>История не переносится</h3><p>Новая сессия стартует свежей; оборвавшаяся повторяется тем же промптом.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap cta"><div class="kicker">Готовые промпты и полная схема</div><h2>Промпты С1–С9 и все правила повторов</h2><p>Откройте исходный документ для применения цикла на конкретной задаче.</p><a class="button" href="../task-sessions.md">Открыть task-sessions.md ↗</a></div>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>СЕССИИ ДЛЯ ОДНОЙ ЗАДАЧИ</span><div class="footer-links"><span>Автор: <a href="https://github.com/unitcraft">Евгений Головин</a></span><a href="https://github.com/unitcraft/ai-dev-methodology">Репозиторий ↗</a><a href="README.html">Методология</a><a href="task-algorithm.html">Алгоритм</a></div></div></footer>
+</body>
+</html>

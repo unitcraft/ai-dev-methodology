@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15121d">
+  <meta name="description" content="Визуальная карта алгоритма исполнителя: от входных материалов до результата с проверяемыми доказательствами.">
+  <title>Алгоритм исполнения — от запроса к доказательству</title>
+  <link rel="stylesheet" href="presentation.css">
+</head>
+<body>
+  <header class="topbar wrap">
+    <a class="brand" href="README.html"><span class="brand-mark" aria-hidden="true">↻</span><span class="brand-text"><strong>Алгоритм исполнителя</strong><span>Внутри одной задачи</span></span></a>
+    <nav class="nav" aria-label="Материалы"><a href="README.html">Методология</a><a aria-current="page" href="task-algorithm.html">Алгоритм</a><a href="task-sessions.html">Сессии</a><a href="task-runner.html">Раннер</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="kicker">Алгоритм выполнения задания</div>
+          <h1>Из сырого входа —<br>в <em>доказанный</em><br>результат.</h1>
+          <p class="hero-copy">Исполнитель собирает источники, отделяет факты от неизвестного, планирует работу и проверяет результат. Код — только часть пути; задача не готова, пока выполненное не подтверждено доказательствами.</p>
+          <div class="actions"><a class="button" href="#pipeline">Посмотреть конвейер ↓</a><a class="button secondary" href="../task-algorithm.md">Читать task-algorithm.md ↗</a></div>
+          <div class="hero-stats"><span class="stat-pill"><strong>18</strong> шагов алгоритма</span><span class="stat-pill">независимая проверка</span></div>
+        </div>
+        <aside class="hero-panel" aria-label="Принцип завершения задания">
+          <div class="panel-head"><span class="panel-label">Критерий завершения</span><span class="live">есть доказательства</span></div>
+          <div class="hero-visual">
+            <div class="visual-row"><span class="visual-index">01</span><div><strong>Требование связано с изменением</strong><p>У каждого пункта есть реализация и метод проверки.</p></div></div>
+            <div class="visual-row"><span class="visual-index">02</span><div><strong>Проверка повторяема</strong><p>Лог, команда, сценарий или другой открываемый артефакт.</p></div></div>
+            <div class="visual-row"><span class="visual-index">03</span><div><strong>Статус честный</strong><p>PASS, FAIL или NOT VERIFIED — с причиной и следом.</p></div></div>
+          </div>
+          <div class="callout"><strong>«Сделано» — это проверенное, не заявленное.</strong></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="pipeline">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">01 / Конвейер работы</div><h2>Каждый шаг превращает вход в более точный артефакт</h2></div><p class="intro">Уточнение и исследование идут до реализации. Пробел в исходных данных остаётся UNKNOWN, пока не получен ответ или решение с указанным источником.</p></div>
+        <div class="diagram">
+          <div class="diagram-title"><h3>Сквозная последовательность</h3><span>INPUT → DELIVER</span></div>
+          <div class="route">
+            <div class="route-item"><span class="num">01–03</span><strong>Вход</strong><p>INPUT · INGEST · NORMALIZE<br>Собрать и структурировать источники.</p></div>
+            <div class="route-item"><span class="num">04–07</span><strong>Понимание</strong><p>UNDERSTAND · DISCOVER<br>Закрыть неизвестное, исследовать систему.</p></div>
+            <div class="route-item"><span class="num">08–11</span><strong>Проектирование</strong><p>PLAN<br>Сверить требования, решение и критерии готовности.</p></div>
+            <div class="route-item"><span class="num">12–16</span><strong>Работа и проверка</strong><p>EXECUTE · VERIFY<br>Внести изменения и собрать доказательства.</p></div>
+            <div class="route-item"><span class="num">17–18</span><strong>Передача</strong><p>DELIVER · FEEDBACK<br>Передать результат, принять обратную связь.</p></div>
+          </div>
+          <div class="callout"><strong>Маршрут открыт для возврата.</strong> Ошибка ведёт к диагностике и исправлению; новый факт о требованиях возвращает к спецификации и плану.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">02 / Ошибка — это маршрут, не тупик</div><h2>Проверка падает → причина классифицируется → работа продолжается</h2></div><p class="intro">Исполнитель не возвращается к заказчику автоматически и не маскирует сбой повтором. Сначала он определяет, что именно не сработало.</p></div>
+        <div class="diagram">
+          <div class="route" aria-label="Цикл диагностики ошибки">
+            <div class="route-item"><span class="num">01</span><strong>VERIFY</strong><p>Проверка критерия завершения.</p></div>
+            <div class="route-item"><span class="num">02</span><strong>FAIL</strong><p>Сохранить наблюдаемое и доказательство.</p></div>
+            <div class="route-item"><span class="num">03</span><strong>DIAGNOSE</strong><p>Определить корень и тип проблемы.</p></div>
+            <div class="route-item"><span class="num">04</span><strong>FIX</strong><p>Исправить причину, а не симптом.</p></div>
+            <div class="route-item"><span class="num">05</span><strong>VERIFY AGAIN</strong><p>Повторить проверку на свежем результате.</p></div>
+          </div>
+          <div class="diagram-title diag-title"><h3>Куда ведёт диагноз</h3></div>
+          <div class="branch-grid">
+            <div class="branch"><strong>Ошибка реализации или теста</strong><p>Исправить причину, затем повторить проверку и доказательства.</p></div>
+            <div class="branch"><strong>Допущение или требование</strong><p>Вернуться к спецификации, уточнить факт и обновить план.</p></div>
+            <div class="branch"><strong>Среда или внешняя зависимость</strong><p>Восстановить условия или честно отметить NOT VERIFIED.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">03 / Результат с доказательствами</div><h2>Независимый взгляд — часть определения готовности</h2></div><p class="intro">Автор изменения и проверяющий разделены. Это снижает риск, что реализация и её собственные тесты пропустят одну и ту же ошибку.</p></div>
+        <div class="cards">
+          <article class="card"><span class="num">ТРЕБОВАНИЕ →</span><h3>Трассировка</h3><p>Каждый REQ, AC и запрет связан с местом реализации и методом проверки.</p></article>
+          <article class="card"><span class="num">ПРОВЕРКА →</span><h3>Доказательство</h3><p>PASS сопровождается путём к логу, скриншоту, команде или тесту.</p></article>
+          <article class="card"><span class="num">ИТОГ →</span><h3>Передача</h3><p>Ограничения и неизвестное перечислены; принимающий видит, что закрыто.</p></article>
+        </div>
+        <div class="alert spaced-top">После последнего изменения доказательства собираются заново. Если проверка невозможна — результат остаётся NOT VERIFIED, а задача переходит в BLOCKED / NEEDS_INPUT.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap cta"><div class="kicker">Полная спецификация алгоритма</div><h2>Все шаги, состояния, роли и правила диагностики</h2><p>Исходный документ — рабочая инструкция исполнителя, а эта страница показывает его общую механику.</p><a class="button" href="../task-algorithm.md">Открыть task-algorithm.md ↗</a></div>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>АЛГОРИТМ ИСПОЛНЕНИЯ ЗАДАНИЯ</span><div class="footer-links"><span>Автор: <a href="https://github.com/unitcraft">Евгений Головин</a></span><a href="https://github.com/unitcraft/ai-dev-methodology">Репозиторий ↗</a><a href="README.html">Методология</a><a href="task-sessions.html">Сессии</a></div></div></footer>
+</body>
+</html>
