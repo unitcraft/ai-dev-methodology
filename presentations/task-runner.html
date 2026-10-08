@@ -39,7 +39,7 @@
     .brand-subtitle { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; }
     .nav { display: flex; gap: 26px; align-items: center; }
     .nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 550; }
-    .nav a:hover { color: var(--ink); }
+    .nav a:hover, .nav a[aria-current="page"] { color: var(--violet-2); }
     .nav .nav-source { color: var(--violet-2); }
 
     .hero { position: relative; overflow: hidden; padding: 70px 0 48px; background: radial-gradient(ellipse at 85% 10%, rgba(107,63,160,.16), transparent 42%); }
@@ -227,12 +227,12 @@
 </head>
 <body>
   <header class="topbar wrap">
-    <a class="brand" href="#top" aria-label="Раннер задач">
+    <a class="brand" href="README.html" aria-label="Методология">
       <span class="brand-mark" aria-hidden="true">↻</span>
       <span><span class="brand-title">Раннер задач</span><span class="brand-subtitle">Методология разработки с ИИ</span></span>
     </a>
-    <nav class="nav" aria-label="Навигация по странице">
-      <a href="#algorithm">Алгоритм</a><a href="#review">Проверки</a><a href="#state">Состояние</a><a class="nav-source" href="https://github.com/unitcraft/ai-dev-methodology/blob/main/task-runner.md">Полное описание ↗</a>
+    <nav class="nav" aria-label="Материалы">
+      <a href="README.html">Методология</a><a href="task-algorithm.html">Алгоритм</a><a href="task-sessions.html">Сессии</a><a aria-current="page" href="task-runner.html">Раннер</a>
     </nav>
   </header>
 
