@@ -279,7 +279,7 @@ state
             stopped(«вопрос»):  fixed ← stopped(«вопрос»)                          # любое стоп-слово автора совещания читается как «вопрос»
                                 пока fixed = stopped(_):                          # автор может спросить ещё раз — снова В7
                                     answer ← gate(В7, вопрос автора)
-                                    fixed ← run(автор, source=answer, pass=state.pass[meeting])   # ответ сразу идёт автору; новая версия proposal.md — вход следующего захода
+                                    fixed ← run(автор, source=answer, pass=state.pass[meeting] − 1)   # номер захода с находками (state.pass уже увеличен); ответ сразу идёт автору; новая версия proposal.md — вход следующего захода
                                 если fixed = halt: log(«совещание остановлено: <причина>, незакрытые находки»); вернуть
                                 continue
             clean:              выйти
