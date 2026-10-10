@@ -284,7 +284,7 @@
 
     <section class="section loop-section" id="review">
       <div class="wrap">
-        <div class="section-head"><div><div class="kicker">02 / Цикл проверки</div><h2>Не просто «проверить». Довести до чистого результата.</h2></div><p class="intro">Для каждого этапа проверки раннер связывает автора, проверку и правку. Он считает заходы и не теряет место, с которого продолжать.</p></div>
+        <div class="section-head"><div><div class="kicker">02 / Цикл проверки</div><h2>Не просто «проверить». Довести до чистого результата.</h2></div><p class="intro">Для каждого цикла проверки раннер связывает автора, проверку и правку. Он считает заходы и не теряет место, с которого продолжать.</p></div>
         <div class="loop-diagram">
           <div class="loop-row" aria-label="Цикл авторства, проверки и исправления">
             <article class="loop-step"><span class="step-num">01</span><h3>Артефакт</h3><p>Спецификация, план, изменения или результат сдачи.</p></article>
@@ -298,7 +298,7 @@
           <div class="branches">
             <div class="branch"><span class="branch-icon" aria-hidden="true">⌕</span><div><strong>Требования</strong><span>Вернуться к разбору и обновить опорные документы.</span></div></div>
             <div class="branch"><span class="branch-icon" aria-hidden="true">↗</span><div><strong>План</strong><span>Уточнить шаги до продолжения реализации.</span></div></div>
-            <div class="branch"><span class="branch-icon" aria-hidden="true">⌘</span><div><strong>Реализация</strong><span>Исправить изменение и продолжить текущий этап.</span></div></div>
+            <div class="branch"><span class="branch-icon" aria-hidden="true">⌘</span><div><strong>Реализация</strong><span>Исправить изменение и продолжить текущий цикл проверки.</span></div></div>
           </div>
           <div class="clean-exit"><b aria-hidden="true">✓</b><span>Чистая серия завершена → раннер переходит к следующим воротам.</span></div>
         </div>
@@ -323,7 +323,7 @@
           </article>
           <article class="system-card">
             <h3>После паузы — продолжить, а не начинать заново</h3>
-            <p>Программа помнит фазу, ближайшее действие, счётчики этапов и незавершённую сессию.</p>
+            <p>Программа помнит фазу, ближайшее действие, счётчики циклов проверки и незавершённую сессию.</p>
             <div class="state-flow" aria-label="Схема сохранения и восстановления состояния">
               <div class="state-node"><span>Выполнение</span><strong>Прогресс и документы обновляются</strong></div><span class="state-arrow" aria-hidden="true">→</span>
               <div class="state-node"><span>Сохранение</span><strong>Состояние фиксируется у перехода и ворот</strong></div><span class="state-arrow" aria-hidden="true">→</span>
