@@ -276,8 +276,10 @@ state
         verdict ← loop_review(meeting)               # checker(meeting) — check_meeting, fixer(meeting) — автор
         выбор verdict:
             halt:               log(«совещание остановлено: <причина>, незакрытые находки»); вернуть     # итог не принимается
-            stopped(«вопрос»):  answer ← gate(В7, вопрос автора)                  # любое стоп-слово автора совещания читается как «вопрос»
-                                fixed ← run(автор, source=answer, pass=state.pass[meeting])        # ответ сразу идёт автору, как С5д после ответа; новая версия proposal.md — вход следующего захода
+            stopped(«вопрос»):  fixed ← stopped(«вопрос»)                          # любое стоп-слово автора совещания читается как «вопрос»
+                                пока fixed = stopped(_):                          # автор может спросить ещё раз — снова В7
+                                    answer ← gate(В7, вопрос автора)
+                                    fixed ← run(автор, source=answer, pass=state.pass[meeting])   # ответ сразу идёт автору; новая версия proposal.md — вход следующего захода
                                 если fixed = halt: log(«совещание остановлено: <причина>, незакрытые находки»); вернуть
                                 continue
             clean:              выйти
