@@ -59,18 +59,19 @@
         <div class="two-col">
           <article class="diagram">
             <div class="diagram-title"><h3>Петля одного цикла проверки</h3><span>АВТОР · ПРОВЕРКА · ПРАВКА</span></div>
-            <div class="route">
-              <div class="route-item"><span class="num">01</span><strong>Автор</strong><p>Создаёт или обновляет артефакт.</p></div>
-              <div class="route-item"><span class="num">02</span><strong>Проверяющий</strong><p>Свежая сессия ищет пропуски и ошибки.</p></div>
-              <div class="route-item"><span class="num">03</span><strong>Владелец</strong><p>Читает все находки, решает и фиксирует.</p></div>
-              <div class="route-item"><span class="num">04</span><strong>Повтор</strong><p>Правка → новая проверка → следующий заход.</p></div>
-              <div class="route-item"><span class="num">05</span><strong>Выход</strong><p>Два чистых захода подряд с нужными пробами.</p></div>
+            <div class="stack">
+              <div class="stack-layer"><span class="stack-num">01</span><div><h3>Автор</h3><p>Создаёт или обновляет артефакт.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">02</span><div><h3>Проверяющий</h3><p>Свежая сессия ищет пропуски и ошибки.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">03</span><div><h3>Владелец</h3><p>Читает все находки, решает и фиксирует.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">04</span><div><h3>Повтор</h3><p>Правка → новая проверка → следующий заход.</p></div></div>
+              <div class="stack-layer top"><span class="stack-num">05</span><div><h3>Выход</h3><p>Два чистых захода подряд с нужными пробами.</p></div></div>
             </div>
           </article>
           <article class="diagram">
             <div class="diagram-title"><h3>Ограничители цикла</h3><span>ПРАВИЛА ИЗ ДОКУМЕНТА</span></div>
             <div class="stack">
-              <div class="stack-layer top"><span class="stack-num">2×</span><div><h3>Чистая серия</h3><p>Остановка после двух проверок подряд без существенных находок.</p></div></div>
+              <div class="stack-layer top"><span class="stack-num">1×</span><div><h3>Свежая сессия</h3><p>Проверка идёт в новой сессии, не в той, что писала артефакт.</p></div></div>
+              <div class="stack-layer"><span class="stack-num">2×</span><div><h3>Чистая серия</h3><p>Остановка после двух проверок подряд без существенных находок.</p></div></div>
               <div class="stack-layer"><span class="stack-num">3×</span><div><h3>Проба обязательна</h3><p>Чистый заход засчитывается только с тремя проверяемыми пробами.</p></div></div>
               <div class="stack-layer"><span class="stack-num">4×</span><div><h3>Потолок цикла проверки</h3><p>Если существенные находки остались, решение принимает владелец.</p></div></div>
             </div>
