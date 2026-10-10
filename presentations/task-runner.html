@@ -335,6 +335,36 @@
       </div>
     </section>
 
+    <section class="section system-section" id="models">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">04 / Модель и учёт</div><h2>Модель выбирается по этапу. Цена видна.</h2></div><p class="intro">Этап — вид работы внутри фазы: артефакт или его проверка. Раннер может учитывать расход и сроки, не принимая решений за человека.</p></div>
+        <div class="system-grid">
+          <article class="system-card">
+            <h3>Этапы и проверка другой семьёй</h3>
+            <p>Явно задаются четыре этапа, остальные наследуют; проверяющий — другая семья моделей, чем автор.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>spec, spec_accept</strong><span>как план и проверка плана</span></div>
+              <div class="context-layer"><span>02</span><strong>plan, plan_accept</strong><span>задаются явно</span></div>
+              <div class="context-layer"><span>03</span><strong>develop, develop_accept</strong><span>задаются явно</span></div>
+              <div class="context-layer session"><span>04</span><strong>delivery, delivery_accept</strong><span>профиль сдачи</span></div>
+            </div>
+            <div class="context-note">Правка идёт в диалоге автора, проверка — всегда в новом.</div>
+          </article>
+          <article class="system-card">
+            <h3>Учёт и сроки — необязательные возможности</h3>
+            <p>Без них цикл исполняется, но цена процесса и причины повторов остаются неизвестными.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Запись о сессии</strong><span>время, модель, токены, стоимость</span></div>
+              <div class="context-layer"><span>02</span><strong>«Нет данных»</strong><span>причина вместо нуля</span></div>
+              <div class="context-layer"><span>03</span><strong>Плато и таймбокс</strong><span>сигнал человеку, а не молчаливая остановка</span></div>
+              <div class="context-layer session"><span>04</span><strong>Журналы</strong><span>возвраты и ворота</span></div>
+            </div>
+            <div class="context-note">Время работы самого человека раннер не знает — так и пишется.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="closing">
       <div class="wrap"><div class="closing-card"><div><div class="kicker">Детали реализации</div><h2>Полный алгоритм раннера</h2><p>Форматы файлов, контрольные ворота, правила маршрутизации и сборки контекста.</p></div><a class="button" href="https://github.com/unitcraft/ai-dev-methodology/blob/main/task-runner.md">Открыть task-runner.md <span aria-hidden="true">↗</span></a></div></div>
     </section>
