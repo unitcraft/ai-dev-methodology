@@ -127,6 +127,7 @@
     .system-section { background: rgba(28,24,38,.76); }
     .system-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 19px; }
     .system-card { padding: 25px; border: 1px solid var(--line); border-radius: 15px; background: rgba(33,28,45,.84); box-shadow: 0 10px 32px rgba(0,0,0,.1); }
+    .system-card.wide { grid-column: 1 / -1; }
     .system-card h3 { margin: 0 0 7px; font-size: 22px; letter-spacing: -.025em; }
     .system-card > p { color: var(--muted); font-size: 15px; line-height: 1.55; }
     .context-stack { display: grid; gap: 7px; margin-top: 17px; }
@@ -360,6 +361,16 @@
               <div class="context-layer session"><span>04</span><strong>Журналы</strong><span>возвраты и ворота</span></div>
             </div>
             <div class="context-note">Время работы самого человека раннер не знает — так и пишется.</div>
+          </article>
+          <article class="system-card wide">
+            <h3>Язык служебной работы — необязательный режим</h3>
+            <p>Роли работают на одном языке, обычно английском: русский текст занимает больше токенов. Перевод только на границах, оригинал остаётся источником.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Вход</strong><span>материалы человека и заказчика переводятся один раз отдельной копией</span></div>
+              <div class="context-layer"><span>02</span><strong>Внутри</strong><span>роли пишут по-английски сами, перевода между ролями нет</span></div>
+              <div class="context-layer session"><span>03</span><strong>Выход</strong><span>вопросы, итог и документы для ворот — на языке человека, показанный перевод сохраняется</span></div>
+            </div>
+            <div class="context-note">Цитаты, строки протокола и слово человека не переводятся. Раннер режим пока не выполняет.</div>
           </article>
         </div>
       </div>
