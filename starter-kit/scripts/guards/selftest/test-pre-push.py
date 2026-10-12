@@ -6,7 +6,9 @@
 Проверяет: чистая новая ветка и пуш в существующую ветку проходят; удаление ветки проходит (судить
     нечего); коммит от cherry-pick и от rebase --continue с выдуманным путём машины в файле отклоняет пуш,
     вывод называет коммит и файл и не содержит значения; коммит с не ASCII, без подписи и с именем из списка
-    отклоняет пуш; прежней головы нет локально - отказ «сначала git fetch»; пуш из связанного рабочего дерева.
+    отклоняет пуш; прежней головы нет локально - отказ «сначала git fetch»; пуш из связанного рабочего дерева;
+    страж гигиены под храповиком (RATCHET_GUARD): коммит в файл с записанным долгом проходит, новое нарушение
+    отклоняет пуш (ratchet-new).
 Не проверяет: диапазон сам по себе (test-commit-range.py), стражей по отдельности.
 Правило: README комплекта, «Секреты и пути машины», «Сообщение коммита».
 """
@@ -15,12 +17,14 @@ import sys
 sys.dont_write_bytecode = True
 
 import os
+import re
 
 import stlib
 
 P1 = "zorblax" + "-" + "project"
 WIN = "E" + ":/" + "Work2" + "/" + "proj" + "/x.txt"
 CYR = "привет"
+FFFD = chr(0xFFFD)
 
 
 def main():
@@ -188,6 +192,28 @@ def main():
         proc = push(wt, name)
         assert proc.returncode == 0, proc.out + proc.err
 
+    def ratchet_debt_and_new():
+        e = dict(env, GUARDS_CONF=stlib.conf_file(base, {"RATCHET_GUARD": "check-text-hygiene.py"}))
+        name = next_name("rt")
+        branch(repo, name)
+        # нарушение и его запись в базе входят одним коммитом: так долг принимают при включении храповика
+        stlib.write_files(repo, {"rt/a.txt": "old" + FFFD + "\n"})
+        stlib.git(repo, env, "add", "--", "rt/a.txt")
+        proc = stlib.guard("check-ratchet.py", repo, e)
+        keys = re.findall(r"ключ для базы: (\S+)", proc.out)
+        assert len(keys) == 1, proc.out
+        with open(os.path.join(repo, *stlib.GUARDS_DIR.split("/"), "ratchet.txt"), encoding="utf-8") as handle:
+            text = handle.read()
+        commit_nohooks(repo, stlib.GUARDS_DIR + "/ratchet.txt", text + keys[0] + ": debt before the guard\n")
+        commit_nohooks(repo, "rt/a.txt", "top\nold" + FFFD + "\n")
+        proc = stlib.run(("git", "push", "-q", "origin", name), cwd=repo, env=e)
+        assert proc.returncode == 0, proc.out + proc.err
+        commit_nohooks(repo, "rt/b.txt", "new" + FFFD + "\n")
+        proc = stlib.run(("git", "push", "-q", "origin", name), cwd=repo, env=e)
+        out = proc.out + proc.err
+        assert proc.returncode != 0 and "rt/b.txt:1: ratchet-new" in out and "rt/a.txt" not in out, out
+        stlib.git(repo, env, "checkout", "-q", "main")
+
     pr.probe("законное", "новая ветка, пуш в существующую, удаление ветки", legit_new_and_existing)
     pr.probe("законное", "связанное рабочее дерево: отказ, затем чистый пуш", linked_worktree_push)
     pr.probe("красная", "cherry-pick с путём машины: коммит и файл названы, значения нет", cherry_pick_machine_path)
@@ -195,6 +221,7 @@ def main():
     pr.probe("красная", "сообщение не ASCII", non_ascii_message)
     pr.probe("красная", "нет подписи", no_signoff)
     pr.probe("красная", "имя из списка в файле коммита", forbidden_name_in_file)
+    pr.probe("иной-синтаксис", "страж под храповиком: долг проходит, новое нарушение отклоняет пуш", ratchet_debt_and_new)
     pr.probe("иной-синтаксис", "плохой коммит вторым в ветке: назван именно он", second_commit_is_the_bad_one)
     pr.probe("мишень", "прежней головы нет локально: отказ «сначала git fetch»", old_head_not_fetched)
     pr.probe("мишень", "в guards.conf нет целевой ветки: отказ с подсказкой", main_branch_key_missing)

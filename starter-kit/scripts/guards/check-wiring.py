@@ -42,7 +42,7 @@ LABELS = ("Зачем:", "Проверяет:", "Не проверяет:", "П�
 HOOK_NAMES = {
     "pre-commit": ("guard-secrets.py", "run-all.sh"),
     "commit-msg": ("guard-commit-message.py",),
-    "pre-push": ("guard-secrets.py", "check-private-names.py", "check-text-hygiene.py",
+    "pre-push": ("guard-secrets.py", "check-private-names.py", "check-text-hygiene.py", "check-ratchet.py",
                  "guard-commit-message.py", "commit-range.sh"),
 }
 # что обязано быть в задании CI (пути относительно папки стражей)

@@ -4,7 +4,8 @@
 # Проверяет: каждый check-* выполняется, печатает последней строкой вердикт одной из четырёх форм
 #     («ок:», «судить нечего:», «пропущено:», «FAIL») и код возврата не противоречит вердикту.
 # Не проверяет: сами правила стражей; стражей вне маски (guard-secrets, guard-commit-message): их
-#     зовут свои хуки и CI явно.
+#     зовут свои хуки и CI явно. Стража под храповиком (RATCHET_GUARD) не зовёт: его находки по базе
+#     долга судит check-ratchet.py, если тот лежит в папке стражей.
 # Правило: README комплекта, «Договор стража» (четыре формы вердикта, подключение по маске).
 #
 # Использование: sh scripts/guards/run-all.sh [--root <папка>] [--index] [--ci] [--dir <папка стражей>]
@@ -66,13 +67,26 @@ run_one() {
   esac
 }
 
+# Стражи под храповиком (RATCHET_GUARD) напрямую не зовутся: их находки судит check-ratchet.py по базе долга.
+# Без храповика в папке или при нечитаемых параметрах зовутся все: пропуск не бывает молчаливым.
+wrapped=
+if [ -f "$guards_dir/check-ratchet.py" ]; then
+  wrapped=$($PYTHON "$here/lib/conf.py" get RATCHET_GUARD 2>/dev/null | tr '\n' ' ') || wrapped=
+fi
+
 : > "$tmp/table"
+: > "$tmp/wrapped"
 # порядок стражей не зависит от локали (вывод двух прогонов под разными локалями совпадает построчно)
 for guard in "$guards_dir"/check-*; do
   [ -f "$guard" ] && printf '%s\n' "$guard"
 done | LC_ALL=C sort > "$tmp/list"
 while IFS= read -r guard; do
   name=$(basename "$guard")
+  case " $wrapped " in
+    *" $name "*)
+      printf '%s -> под храповиком: его находки судит check-ratchet.py\n' "$name" >> "$tmp/wrapped"
+      continue ;;
+  esac
   count=$((count + 1))
   run_one "$guard" > "$tmp/out.$count" 2>"$tmp/err.$count" < /dev/null
   rc=$?
@@ -127,5 +141,6 @@ tab=$(printf '	')
 while IFS=$tab read -r name kind verdict; do
   printf '%s -> %s\n' "$name" "$verdict"
 done < "$tmp/table"
+cat "$tmp/wrapped"
 echo "итого: ок $n_ok, судить нечего $n_nothing, пропущено $n_skipped, FAIL $n_fail"
 exit "$rc"

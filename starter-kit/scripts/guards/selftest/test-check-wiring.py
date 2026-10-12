@@ -61,7 +61,7 @@ def good_tree():
         H + "/commit-msg": SH_HEADER + full("guard-commit-message.py") + "\n",
         G + "/selftest/test-commit-msg.py": "pass\n",
         H + "/pre-push": SH_HEADER + full("guard-secrets.py", "check-private-names.py", "check-text-hygiene.py",
-                                          "guard-commit-message.py", "commit-range.sh") + "\n",
+                                          "check-ratchet.py", "guard-commit-message.py", "commit-range.sh") + "\n",
         G + "/selftest/test-pre-push.py": "pass\n",
         WF: full("run-all.sh", "selftest/run-selftests.sh", "prove-red.sh", "probe-empty-root.sh", "check-wiring.py",
                  "guard-secrets.py", "guard-commit-message.py", "commit-range.sh", "ci-mask.sh") + " " + stlib.NAMES_VAR + "\n",

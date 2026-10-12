@@ -105,6 +105,22 @@ def parse_task_rule(value):
     return kind, compiled[0], compiled[1]
 
 
+RATCHET_GUARD_RE = re.compile(r"^check-[A-Za-z0-9_-]+\.(py|sh)$")
+
+
+def _ratchet_guards(values):
+    if values == ["off"]:
+        return None
+    if "off" in values:
+        return "off допустим только как единственное значение"
+    bad = [v for v in values if not RATCHET_GUARD_RE.match(v) or v == "check-ratchet.py"]
+    if bad:
+        return "нужно имя файла стража check-* из папки стражей (не сам храповик); не годится: " + ", ".join(bad)
+    if len(set(values)) != len(values):
+        return "страж назван дважды"
+    return None
+
+
 def _task_rules(values):
     if values == ["off"]:
         return None
@@ -152,8 +168,11 @@ SPEC = {
     "TEST_CHECK": (True, None, _regex, "образец проверки в тексте теста (нужен, если TEST_FILES не off)"),
     "TEST_COMMENT": (True, None, lambda v: None if v == "none" else _regex(v),
                      "образец комментария, вырезаемого перед поиском проверок, или none (нужен, если TEST_FILES не off)"),
+    "RATCHET_GUARD": (True, None, _ratchet_guards,
+                      "страж check-* под храповиком долга, имя файла (ключ повторяется) или off"),
+    "RATCHET_BASELINE": (False, "scripts/guards/ratchet.txt", _path, "файл базы храповика долга от корня репозитория"),
 }
-LISTS = ("TASK_DOC_RULE",)
+LISTS = ("TASK_DOC_RULE", "RATCHET_GUARD")
 # ключ нужен, только если другой ключ не выключен
 CONDITIONAL = {"TEST_CHECK": ("TEST_FILES", "off"), "TEST_COMMENT": ("TEST_FILES", "off")}
 
