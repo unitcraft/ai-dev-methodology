@@ -135,5 +135,6 @@
   "branch_name": "task/{n}-{slug}",
   "worktree_name": "{repo}-{n}-{slug}",
   "accepted_slot": "free",
-  "cleanup_limit": 10
+  "cleanup_limit": 10,
+  "acceptance_file": "task-acceptance.md"
 }
