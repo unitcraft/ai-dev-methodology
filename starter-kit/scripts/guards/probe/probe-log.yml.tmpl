@@ -1,0 +1,41 @@
+# Зачем: проба «в журнале публичного прогона CI нет значений секрета»: задание печатает значения выдуманного
+#     секрета и запускает стража имён на файле с одним из них, а человек (или скрипт) ищет значения в журнале.
+# Проверяет: что после ci-mask.sh значения заменены звёздочками, маркер PROBE-MARKER виден (положительный
+#     контроль), а вердикт стража называет файл, строку и номер образца без значения.
+# Не проверяет: настоящий список имён: он здесь не используется ни как секрет, ни как переменная.
+# Правило: README комплекта, «Запрещённые имена» (значения списка не печатаются нигде).
+#
+# Это ИСХОДНИК, а не задание CI: CI читает только папку заданий. Как пользоваться (README комплекта, «Проба
+# журнала CI»): завести секрет GUARDS_PRIVATE_NAMES_PROBE с выдуманными значениями, создать служебную ветку
+# probe/<имя>, скопировать этот файл в папку заданий CI под именем probe-log.yml и запушить ветку; затем найти
+# значения в журнале прогона. Имя секрета пробы — имя переменной списка (PRIVATE_NAMES_VAR) с суффиксом _PROBE.
+name: probe-log
+
+on:
+  push:
+    branches:
+      - "probe/**"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      GUARDS_PRIVATE_NAMES_PROBE: ${{ secrets.GUARDS_PRIVATE_NAMES_PROBE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Mask the probe values
+        run: sh scripts/guards/ci-mask.sh GUARDS_PRIVATE_NAMES_PROBE
+      - name: Print the probe values and the marker
+        run: |
+          printf '%s\n' "$GUARDS_PRIVATE_NAMES_PROBE"
+          echo PROBE-MARKER
+      - name: Names guard with the probe list
+        env:
+          GUARDS_PRIVATE_NAMES: ${{ secrets.GUARDS_PRIVATE_NAMES_PROBE }}
+        run: python scripts/guards/check-private-names.py
