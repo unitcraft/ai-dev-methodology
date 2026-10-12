@@ -3,3 +3,5 @@
 scripts/** text eol=lf
 .github/** text eol=lf
 .claude/** text eol=lf
+# Приёмка переносимости: файл комплекта, в новый проект не копируется (там строка ничего не задевает).
+/verify-portability.sh text eol=lf

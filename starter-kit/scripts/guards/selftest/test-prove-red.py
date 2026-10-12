@@ -8,7 +8,7 @@
     засчитана; страж без самотеста не засчитан; самотест на .sh засчитывается; итог «доказано N из N»; на
     настоящем корне один страж доказывается, а рабочее дерево не меняется (git status до и после).
 Не проверяет: полный прогон по всем настоящим стражам (его делает сам prove-red.sh на шаге приёмки).
-Правило: README комплекта, «Страж с самотестом и вызывающим».
+Правило: docs/guards.md (README комплекта), «Страж с самотестом и вызывающим».
 """
 import sys
 
@@ -132,9 +132,10 @@ def main():
         assert proc.returncode == 1 and "FAIL: мишень потеряна" in proc.out, proc.out
 
     def real_root_one_guard_tree_unchanged():
-        before = stlib.git(stlib.REPO, env, "status", "--porcelain").out
+        # --no-optional-locks: status не переписывает индекс общего дерева, параллельный прогон его не делит
+        before = stlib.git(stlib.REPO, env, "--no-optional-locks", "status", "--porcelain").out
         proc = stlib.run(("sh", PROVE, "--only", "check-tests-have-checks"), env=env)
-        after = stlib.git(stlib.REPO, env, "status", "--porcelain").out
+        after = stlib.git(stlib.REPO, env, "--no-optional-locks", "status", "--porcelain").out
         assert proc.returncode == 0 and proc.out.strip().splitlines()[-1] == "ок: доказано 1 из 1", proc.out
         assert before == after, "рабочее дерево изменилось"
 

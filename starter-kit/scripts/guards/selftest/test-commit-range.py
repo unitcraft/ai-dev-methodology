@@ -10,7 +10,7 @@
     локально - код 3 «сначала git fetch»; новая ветка без точки отсчёта - код 3; подпись по коммитам
     диапазона в режиме --ci (коммит без подписи красный, с подписью зелёный).
 Не проверяет: сами хуки (test-pre-push.py).
-Правило: README комплекта, «Сообщение коммита».
+Правило: docs/guards.md (README комплекта), «Сообщение коммита».
 """
 import sys
 
@@ -120,6 +120,26 @@ def main():
         proc = stlib.run(("sh", RANGE), cwd=other, env=env)
         assert proc.returncode == 2
 
+    def first_push_to_empty_remote():
+        empty = os.path.join(base, "empty.git")
+        os.makedirs(empty)
+        stlib.git(empty, env, "init", "-q", "--bare")
+        first = stlib.make_repo(base, env, {"a.txt": "x\n"}, name="first")
+        f2 = stlib.commit_file(first, env, "b.txt", "y\n", "Second")
+        f1 = stlib.git(first, env, "rev-parse", "HEAD~1").out.strip()
+        stlib.git(first, env, "remote", "add", "origin", empty)
+        proc = stlib.run(("sh", RANGE, "--old", ZERO, "--new", f2, "--remote", "origin",
+                          "--main", "refs/remotes/origin/main"), cwd=first, env=env)
+        assert proc.returncode == 0 and hashes(proc) == [f1, f2], (proc.returncode, proc.out, proc.err)
+
+    def not_fetched_remote():
+        other = stlib.make_repo(base, env, {"c.txt": "x\n"}, name="unfetched")
+        stlib.git(other, env, "remote", "add", "origin", remote)
+        head = stlib.head(other, env)
+        proc = stlib.run(("sh", RANGE, "--old", ZERO, "--new", head, "--remote", "origin",
+                          "--main", "refs/remotes/origin/main"), cwd=other, env=env)
+        assert proc.returncode == 3 and "git fetch" in proc.err, (proc.returncode, proc.out, proc.err)
+
     def signature_in_ci_by_range():
         proc = rng("--old", pushed, "--new", c4, "--remote", "origin")
         bad = []
@@ -143,11 +163,13 @@ def main():
     pr.probe("законное", "пуш в существующую ветку: между прежней и новой головой", existing_branch)
     pr.probe("законное", "первый пуш новой ветки: нет в удалённом репозитории", new_branch)
     pr.probe("законное", "новая ветка от основной: только её коммиты", new_branch_never_pushed)
+    pr.probe("законное", "первый пуш в пустой удалённый репозиторий: все коммиты ветки", first_push_to_empty_remote)
     pr.probe("законное", "запрос на слияние: от базы до головы", pull_request)
     pr.probe("законное", "пустой диапазон", empty_range)
     pr.probe("законное", "коммит слияния входит в диапазон", merge_commit_included)
     pr.probe("красная", "подпись в CI по диапазону: красный только коммит без подписи", signature_in_ci_by_range)
     pr.probe("красная", "прежней головы нет локально: код 3 и «git fetch»", old_head_missing)
+    pr.probe("красная", "удалённый не пуст, но не получен: код 3 и «git fetch»", not_fetched_remote)
     pr.probe("иной-синтаксис", "прошлые коммиты основной ветки не входят и красные, если их судить", old_main_commit_never_in_range)
     pr.probe("мишень", "новая ветка без точки отсчёта и вызов без аргументов", new_branch_without_anchor)
     return pr.done()

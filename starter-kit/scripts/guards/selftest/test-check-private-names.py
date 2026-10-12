@@ -10,7 +10,7 @@
     значения в выводе с положительным контролем.
 Не проверяет: сообщения коммитов (test-guard-commit-message.py); журнал CI (проба по шаблону
     probe/probe-log.yml.tmpl).
-Правило: README комплекта, «Запрещённые имена».
+Правило: docs/guards.md (README комплекта), «Запрещённые имена».
 
 Список для проб — выдуманный, собирается при прогоне во временной папке.
 """
@@ -167,7 +167,7 @@ def main():
             env = dict(with_list([P1]), GUARDS_CONF=stlib.conf_file(base, {key: None}))
             proc = check(repo, env)
             stlib.expect(proc, 1, "FAIL: предпосылка")
-            assert "нет обязательного ключа " + key in proc.out and "README" in proc.out, (key, proc.out)
+            assert "нет обязательного ключа " + key in proc.out and "docs/guards.md" in proc.out, (key, proc.out)
 
     def positive_control_in_output():
         # поиск значения в выводе: 0 совпадений, при том что известная строка того же вывода находится

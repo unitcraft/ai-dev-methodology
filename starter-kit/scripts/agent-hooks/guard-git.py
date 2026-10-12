@@ -20,7 +20,7 @@
     флаги, смену каталога, -c и окружение git, команду внутри bash -c, sh -c и powershell -Command,
     запуск git из скрипта, правку .git/config инструментом записи файлов. Ошибка разбора — код 0.
     Дисциплину целевой ветки держит её защита в хостинге кода, а не этот хук.
-Правило: README комплекта, «Хук агента».
+Правило: docs/guards.md (README комплекта), «Хук агента».
 
 Вход: JSON на stdin (tool_name, tool_input.command), аргумент --conf <путь к guards.conf>. Выход: код 2
 и причина в stderr — отказ, код 0 — проход. Запись в настройках агента вызывает хук обёрткой sh: при
@@ -468,7 +468,8 @@ def main(argv=None):
         rules, problem = load_rules(conf_path)
         if problem:
             if git_calls(lex(command, tool == "PowerShell")):
-                sys.stderr.write("REFUSED (conf): %s; fix guards.conf (see the starter kit README)\n" % problem)
+                sys.stderr.write("REFUSED (conf): %s; fix guards.conf (see docs/guards.md, project parameters)\n"
+                                 % problem)
                 return 2
             return 0
         verdict = decide(command, tool, rules)
