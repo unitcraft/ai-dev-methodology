@@ -10,7 +10,7 @@
     в guards.conf нет целевой ветки - отказ с подсказкой; COMMIT_AUTHOR_EMAIL_CHECK=no - адрес не нужен и не
     пишется.
 Не проверяет: работу самих хуков (test-pre-commit.py, test-commit-msg.py, test-pre-push.py).
-Правило: README комплекта, «Установка».
+Правило: docs/guards.md (README комплекта), «Установка».
 """
 import sys
 

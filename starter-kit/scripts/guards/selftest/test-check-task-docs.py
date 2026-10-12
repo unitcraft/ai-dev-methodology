@@ -12,7 +12,7 @@
     неизвестный вид, битое регулярное выражение — красная предпосылка с подсказкой; нет файлов под
     образцами (в том числе после переименования папки) и пустой репозиторий — мишень потеряна.
 Не проверяет: содержание документов и формы конкретного проекта (их выбирает проект).
-Правило: README комплекта, «Формат документов задач».
+Правило: docs/guards.md (README комплекта), «Формат документов задач».
 
 Формы в правилах ниже — данные пробы (похожи на формы документов методологии), а не формат комплекта.
 """
@@ -97,7 +97,7 @@ def main():
         e = dict(env0, GUARDS_CONF=stlib.conf_file(base, {"TASK_DOC_RULE": None}))
         proc = check(fresh(good), env=e)
         stlib.expect(proc, 1, "FAIL: предпосылка")
-        assert "нет обязательного ключа TASK_DOC_RULE" in proc.out and "README" in proc.out, proc.out
+        assert "нет обязательного ключа TASK_DOC_RULE" in proc.out and "docs/guards.md" in proc.out, proc.out
 
     def bad_rules():
         for value, words in ((["frist-line ^a$ ^b"], "вид «frist-line» неизвестен"),

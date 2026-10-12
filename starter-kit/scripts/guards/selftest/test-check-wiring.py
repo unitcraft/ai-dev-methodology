@@ -12,7 +12,7 @@
     значение не по форме, файла параметров нет в репозитории; самотест на .sh принимается; хук не из HOOKS
     не требуется; нет папки стражей - мишень потеряна.
 Не проверяет: содержание настоящих стражей (это их самотесты).
-Правило: README комплекта, «Страж с самотестом и вызывающим».
+Правило: docs/guards.md (README комплекта), «Страж с самотестом и вызывающим».
 """
 import sys
 
@@ -214,7 +214,7 @@ def main():
         proc = check(repo, env=e)
         stlib.expect(proc, 1, "FAIL: check-wiring: 1 нарушений")
         assert stlib.has_line(proc, ": conf: в") and "нет обязательного ключа MAIN_BRANCH" in proc.out, proc.out
-        assert "README" in proc.out, "нет подсказки, где описаны ключи"
+        assert "docs/guards.md" in proc.out, "нет подсказки, где описаны ключи"
 
     def conf_bad_values():
         repo = build()
