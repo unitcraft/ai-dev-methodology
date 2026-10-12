@@ -48,7 +48,9 @@ if [ "$source_mode" = archive ]; then
     exit 1
   }
   prefix=${prefix%/}
-  if ! git -C "$here" archive --format=tar "HEAD${prefix:+:$prefix}" > "$tmp/kit.tar" 2>"$tmp/archive.err"; then
+  top=$(git -C "$here" rev-parse --show-toplevel) || exit 1
+  # архив — от корня репозитория: запущенный из подпапки, git archive ещё раз сужает дерево до неё
+  if ! git -C "$top" archive --format=tar "HEAD${prefix:+:$prefix}" > "$tmp/kit.tar" 2>"$tmp/archive.err"; then
     cat "$tmp/archive.err"
     echo "FAIL: предпосылка: комплекта нет в HEAD (не закоммичен?); закоммитьте или запустите с --worktree"
     exit 1
