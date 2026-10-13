@@ -185,7 +185,11 @@ def main():
         r = repo()
         stage_new(r)
         attempt(r, ("-s", "-m", "Keep this"), ok=True)
-        attempt(r, ("--amend", "--no-edit"), ok=True)
+        # --no-edit preserves the tree and message; fix the committer timestamp so
+        # the amended commit object must differ even when both commits happen in
+        # the same clock second.
+        e = dict(env, GIT_COMMITTER_DATE="2001-01-01T00:00:00+00:00")
+        attempt(r, ("--amend", "--no-edit"), e=e, ok=True)
 
     def linked_worktree():
         r = repo()
