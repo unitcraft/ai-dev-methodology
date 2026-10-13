@@ -240,6 +240,14 @@ def main():
     def with_conf(changes, env_base=None):
         return dict(env_base or env, GUARDS_CONF=stlib.conf_file(base, changes))
 
+    # Правила с отрицательными пробами требуют строгий тестовый профиль независимо от
+    # поставляемого профиля; отдельно проверяется, что штатный профиль принимает сообщение без подписи.
+    env["GUARDS_CONF"] = stlib.conf_file(base, {"COMMIT_SIGNOFF": "required"})
+
+    def shipped_policy_allows_no_signoff():
+        e = dict(env, GUARDS_CONF=stlib.CONF)
+        stlib.expect(run("Plain subject\n", "message", env=e), 0, "ок: осмотрено 1 сообщений")
+
     def policy_off():
         e = with_conf({"COMMIT_SIGNOFF": "off", "COMMIT_ASCII_ONLY": "no", "COMMIT_FORBIDDEN_TRAILERS": "none",
                        "COMMIT_AUTHOR_EMAIL_CHECK": "no"})
@@ -287,6 +295,7 @@ def main():
     pr.probe("законное", "режим --commit: правильный коммит", commit_good)
     pr.probe("законное", "режим --ci: адрес не сверяется, подпись равна автору", commit_ci_signoff_matches_author)
     pr.probe("законное", "режим --ci без настройки: судить нечего по правилу адреса", ci_no_setting_nothing_to_judge)
+    pr.probe("законное", "поставляемая политика принимает сообщение без Signed-off-by", shipped_policy_allows_no_signoff)
     pr.probe("красная", "нет Signed-off-by", red("Subject only\n", "message", "signoff-missing"))
     pr.probe("красная", "подпись не автора (имя)", red("S\n\nSigned-off-by: Other Name <%s>\n" % EMAIL, "message", "signoff-author"))
     pr.probe("красная", "подпись не автора (адрес)", red("S\n\nSigned-off-by: %s <x@example.test>\n" % NAME, "message", "signoff-author"))

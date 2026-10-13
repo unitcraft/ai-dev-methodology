@@ -29,7 +29,8 @@ def main():
     base = pr.mkdtemp()
     env = stlib.isolated_env(base)
     names = stlib.names_file(base, ["zorblax-nothing"])
-    env = dict(env, **{stlib.NAMES_FILE_VAR: names})
+    env = dict(env, **{stlib.NAMES_FILE_VAR: names,
+                       "GUARDS_CONF": stlib.conf_file(base, {"COMMIT_SIGNOFF": "required"})})
 
     remote = os.path.join(base, "remote.git")
     os.makedirs(remote)
