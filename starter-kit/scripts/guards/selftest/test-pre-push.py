@@ -32,7 +32,8 @@ def main():
     base = pr.mkdtemp()
     env0 = stlib.isolated_env(base)
     names = stlib.names_file(base, [P1])
-    env = dict(env0, **{stlib.NAMES_FILE_VAR: names})
+    env = dict(env0, **{stlib.NAMES_FILE_VAR: names,
+                       "GUARDS_CONF": stlib.conf_file(base, {"COMMIT_SIGNOFF": "required"})})
     nohooks = os.path.join(base, "nohooks")
     os.makedirs(nohooks)
     counter = [0]

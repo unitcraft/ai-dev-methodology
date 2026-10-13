@@ -38,7 +38,8 @@ def main():
     base = pr.mkdtemp()
     env0 = stlib.isolated_env(base)
     names = stlib.names_file(base, [P1])
-    env = dict(env0, **{stlib.NAMES_FILE_VAR: names})
+    env = dict(env0, **{stlib.NAMES_FILE_VAR: names,
+                       "GUARDS_CONF": stlib.conf_file(base, {"COMMIT_SIGNOFF": "required"})})
     editor_path = os.path.join(base, "editor.py")
     with open(editor_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(EDITOR)

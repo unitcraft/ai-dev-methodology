@@ -117,10 +117,9 @@ verify-portability.sh             приёмка переносимости; в 
 - `MAIN_BRANCH=main`;
 - `PRIVATE_NAMES_VAR=GUARDS_PRIVATE_NAMES`, `PRIVATE_NAMES_FILE_VAR=GUARDS_PRIVATE_NAMES_FILE`,
   `PRIVATE_NAMES_FILE=~/.config/guards/private-names.txt` (меняя имя переменной, поменяйте его и в задании CI);
-- **политика коммитов из коробки — строгая политика проекта-источника, смените её под проект:**
-  `COMMIT_SIGNOFF=required` (строка Signed-off-by автора в каждом коммите), `COMMIT_FORBIDDEN_TRAILERS=Co-authored-by`,
-  `COMMIT_ASCII_ONLY=yes`, `COMMIT_AUTHOR_EMAIL_CHECK=yes`; без этих требований —
-  `COMMIT_SIGNOFF=off`, `COMMIT_FORBIDDEN_TRAILERS=none`, `COMMIT_ASCII_ONLY=no`, `COMMIT_AUTHOR_EMAIL_CHECK=no`;
+- **политика сообщений коммитов из коробки совпадает с каноном приёмки методологии: без подписей и трейлеров;**
+  более строгие режимы включаются ключами `COMMIT_SIGNOFF=required`, `COMMIT_FORBIDDEN_TRAILERS`,
+  `COMMIT_ASCII_ONLY=yes` и `COMMIT_AUTHOR_EMAIL_CHECK=yes`;
 - `AGENT_HOOK_RULES` — все правила хука агента (`none` выключает все).
 
 Ключи форматов (`TASK_DOC_RULE`, `STATUS_TABLE_TASK_PATH`, `TEST_FILES`) и `RATCHET_GUARD` поставляются со
