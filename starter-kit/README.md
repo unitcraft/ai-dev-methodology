@@ -31,6 +31,8 @@ scripts/guards/probe/             шаблон пробы журнала CI (н�
 scripts/githooks/                 хуки git: pre-commit, commit-msg, pre-push
 scripts/agent-hooks/guard-git.py  хук ИИ-агента на команды оболочки (подсказка против опасного git)
 scripts/install-hooks.sh          установщик хуков git
+LICENSE-APACHE                    текст лицензии на код комплекта; копируется в корень проекта
+LICENSE-MIT                       текст лицензии на код комплекта; копируется в корень проекта
 .github/workflows/guards.yml      задание CI: стражи, самотесты, доказательство красного, пустой корень
 .claude/settings.json             запись хука агента (PreToolUse на Bash и PowerShell)
 .gitattributes                    концы строк LF для скриптов, хуков и настроек
@@ -43,6 +45,7 @@ verify-portability.sh             приёмка переносимости; в 
 Без установщика хуки git не работают: git не берёт их из репозитория сам. Шаги:
 
 1. Скопируйте содержимое папки комплекта, кроме `README.md` и `verify-portability.sh`, в корень проекта;
+   `LICENSE-APACHE` и `LICENSE-MIT` явно копируются туда же, в корень (это тексты лицензий на код комплекта).
    `README.md` положите в `docs/guards.md`.
 2. Заполните `scripts/guards/guards.conf` (раздел «Параметры проекта»). Обязательные ключи без
    значения дают красный вердикт с подсказкой, а не чужое значение по умолчанию. Поставляемые значения
@@ -51,7 +54,7 @@ verify-portability.sh             приёмка переносимости; в 
    `~/.config/guards/private-names.txt`), образец на строку, решётка — комментарий. В CI — секрет с именем
    из `PRIVATE_NAMES_VAR` (заводится в настройках CI хостинга кода).
 4. Добавьте файлы в git с битом исполнения у хуков и скриптов sh (на машине без битов исполнения в файловой
-   системе git его сам не поставит): `git add -- scripts .github .claude .gitattributes docs/guards.md`, затем
+   системе git его сам не поставит): `git add -- scripts .github .claude .gitattributes docs/guards.md LICENSE-APACHE LICENSE-MIT`, затем
    `git add --chmod=+x -- scripts/githooks/* scripts/*.sh scripts/guards/*.sh scripts/guards/lib/*.sh scripts/guards/selftest/*.sh`.
 5. Подключите хуки: `sh scripts/install-hooks.sh`. Установщик пишет `core.hooksPath` и, если политика
    сверяет адрес автора, ожидаемый адрес в ключ `EXPECTED_EMAIL_KEY`; повтор ничего не меняет, чужая

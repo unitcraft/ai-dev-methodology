@@ -60,7 +60,7 @@ else
   cp -R "$here/." "$kit/" || { echo "FAIL: предпосылка: комплект не скопировался"; exit 1; }
   find "$kit" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null
 fi
-for need in README.md scripts/guards/guards.conf scripts/guards/lib/find-python.sh scripts/install-hooks.sh; do
+for need in README.md LICENSE-APACHE LICENSE-MIT scripts/guards/guards.conf scripts/guards/lib/find-python.sh scripts/install-hooks.sh; do
   [ -f "$kit/$need" ] || { echo "FAIL: мишень потеряна: в комплекте нет $need"; exit 1; }
 done
 
@@ -171,7 +171,7 @@ new_repo() {
 }
 # stage_kit: шаг 4 README — файлы в git с битами исполнения.
 stage_kit() {
-  (cd "$repo" && git add -- scripts .github .claude .gitattributes docs/guards.md &&
+  (cd "$repo" && git add -- scripts .github .claude .gitattributes docs/guards.md LICENSE-APACHE LICENSE-MIT &&
     git add --chmod=+x -- scripts/githooks/* scripts/*.sh scripts/guards/*.sh scripts/guards/lib/*.sh scripts/guards/selftest/*.sh)
 }
 # install_hooks: шаг 5 README.
@@ -272,6 +272,24 @@ case_honest() {
     in_repo "$repo.prove" sh scripts/guards/prove-red.sh
     want_rc ok "prove-red.sh"
   fi
+}
+
+# Лицензии кода комплекта должны попасть в корень нового проекта и первый коммит.
+case_licenses() {
+  set_up || return
+  for license in LICENSE-APACHE LICENSE-MIT; do
+    if [ ! -f "$repo/$license" ]; then
+      need "в корне нового репозитория нет $license"
+      continue
+    fi
+    if ! git -C "$repo" ls-files --error-unmatch -- "$license" >/dev/null 2>&1; then
+      need "$license не добавлен в git"
+      continue
+    fi
+    if ! git -C "$repo" cat-file -e "HEAD:$license" 2>/dev/null; then
+      need "$license не закоммичен"
+    fi
+  done
 }
 
 # leak <образец> <адрес и правило>: красный коммит с адресом, без значения образца, история не сдвинулась
@@ -408,6 +426,7 @@ run_case() {  # run_case <имя> <функция>
 }
 
 run_case "а-честный-вход" case_honest
+run_case "а2-лицензии-в-корне-и-коммите" case_licenses
 run_case "б1-секрет" case_secret
 run_case "б2-путь-машины" case_path
 run_case "б3-запрещённое-имя" case_name
