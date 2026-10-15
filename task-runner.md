@@ -589,7 +589,7 @@ state
     n ← 1 + наибольший номер запуска в state.launches и в строках `запуск` progress.log
     state.launches += {n, session, размер(progress.log), now, группа}; save(state)   # запись целиком до строки, только дописывается; обрыв до строки — строка в log.md, не находка
     дописать в progress.log «<код> 0/0 [время] запуск №<n>»
-    off_p ← размер(progress.log); off_h ← размер(profile.log); off_r ← число строк «пункт n: сделан» в result.md
+    off_p ← размер(progress.log); off_h ← размер(profile.log); off_r ← число строк «пункт n: сделан» и «шаг n: сделан» в result.md
     state.running ← {session, source, pass, now, группа}; save(state)
     response ← call_model(conv, prompt, profile, stream=вкл, deadline=срок_бездействия)   # срок задан только в совещании; наблюдатель прерывает ожидание, если нет байтов потока (включая служебные события), вызова инструмента и новой строки progress.log дольше срока профиля роли; в очереди общего ресурса срок приостановлен, очередь дольше срока затяжки поднимается человеку
         # перед каждым запросом (и каждым ходом с инструментами): state.prefix[kind].last_request_started_at ← время старта; save
