@@ -12,7 +12,7 @@
 | [task-algorithm.md](task-algorithm.md) | Алгоритм исполнителя для одной задачи. |
 | [task-sessions.md](task-sessions.md) | Схема сессий, проверок и повторов. |
 | [task-runner.md](task-runner.md) | Алгоритм оркестратора, который ведёт задачу между сессиями. |
-| [completeness-check.md](completeness-check.md) | Источники и проверка полноты методологии. |
+| [completeness-check.md](completeness-check.md) | Реестр норм: откуда норма и подтверждена ли практикой. |
 | [presentations/](presentations/) | HTML-презентации методологии и отдельных частей процесса. |
 
 Методология абстрактна: проект переносит подходящие правила и заводит собственный канон, роли и договорённости.
