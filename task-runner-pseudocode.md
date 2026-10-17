@@ -17,7 +17,7 @@
 
         РАЗБОР:
             если state.next[РАЗБОР]:
-                (s, src) ← state.next[РАЗБОР]; state.next[РАЗБОР] ← пусто
+                (s, src) ← state.next[РАЗБОР]; state.next[РАЗБОР] ← пустое значение
                 fixed ← run(s, source=src)
                 если fixed = stopped(«вопрос»): answers ← gate(В4); write_answers(spec.md, answers); run(С1п, source=«Ответы»); owner_fix(spec); continue
             иначе если нет spec.md: run(С1)
@@ -36,7 +36,7 @@
 
         ПЛАН:
             если state.next[ПЛАН]:
-                (s, src) ← state.next[ПЛАН]; state.next[ПЛАН] ← пусто
+                (s, src) ← state.next[ПЛАН]; state.next[ПЛАН] ← пустое значение
                 fixed ← run(s, source=src)
                 выбор fixed:
                     stopped(«требования»): to_requirements(source=«последний абзац plan.md»); continue
@@ -60,7 +60,7 @@
 
         РЕАЛИЗАЦИЯ:
             если state.next[РЕАЛИЗАЦИЯ]:
-                (s, src) ← state.next[РЕАЛИЗАЦИЯ]; state.next[РЕАЛИЗАЦИЯ] ← пусто
+                (s, src) ← state.next[РЕАЛИЗАЦИЯ]; state.next[РЕАЛИЗАЦИЯ] ← пустое значение
                 outcome ← run(s, source=src)         # С5п после находок или обратной связи, С5д после ответа
             иначе если нет result.md или status(result.md) = «в работе»:
                 outcome ← run(С5)                    # старт или возобновление: С5 сам читает result.md
@@ -84,7 +84,7 @@
                                      continue
                 clean:               пропуск
             decisions ← gate(В8, строки FAIL / NOT VERIFIED / Known limitations, state.out_of_scope)
-            write_owner_marks(result.md, decisions); state.out_of_scope ← пусто; owner_fix(review)
+            write_owner_marks(result.md, decisions); state.out_of_scope ← пустой список; owner_fix(review)
             если среди decisions «закрыть руками»: gate(В8, «подтвердите, что закрыто»); state.clean_streak[review] ← 0; continue
             если среди decisions «урезать объём»: state.next[РЕАЛИЗАЦИЯ] ← (С5п, «решение владельца»); to_requirements(source=decisions); continue
             state.phase ← СДАЧА
@@ -149,7 +149,7 @@
 
 алгоритм loop_review(stage):
     пока state.clean_streak[stage] < ЧИСТЫХ_ПОДРЯД:
-        n ← state.pass[stage]; extra ← пусто
+        n ← state.pass[stage]; extra ← пустой текст
         review ← (stage = meeting) ? check_meeting(n) : run(checker(stage), pass=n)   # run не возвращает ошибок: В13 внутри
         если review = halt: вернуть halt                              # только совещание: остановка до разбора сводки
         summary ← parse_summary(review)              # в совещании — строка «Заход N: критических K, значимых Z, желательных D, проб P»: K — критические, Z и D не читаются
@@ -209,7 +209,7 @@
     # вне совещания «остановить» — остановить группу процессов агента и выйти из программы
     state.step ← session; save(state)
     N ← count_units(session)
-    profile ← choose_profile(session, defaults, state.hint); state.hint ← пусто
+    profile ← choose_profile(session, defaults, state.hint); state.hint ← пустой текст
     gate(В2, profile, оценка цены)
     prompt ← PROMPTS[session] + TAIL_SESSION(session)
         # подстановки: <репозиторий> ← state.repo_dir; <папка задачи> ← state.task_dir; <источник правок> ← source;
@@ -243,7 +243,7 @@
     проверка журнала: существенные нарушения из «Строк progress.log» (строки `запуск`, которых нет в state.launches, повтор номера запуска, строки после итоговой, коды без запуска, ошибка в ключевом слове итоговой строки, `готово` при k меньше N из старта без исправления, `готово` без старта или после второго старта) → строка в log.md (не ход на исправление)
     если session — автор или правка:
         state.transcript[author(session)] ← {conv, started_at = state.prefix[kind].last_request_started_at, ttl, profile}
-    state.running ← пусто; save(state)
+    state.running ← пустое значение; save(state)
     вернуть outcome(артефакт)
         # статус «готово» или файл без стоп-слова → done; стоп-слово в последнем абзаце → stopped(слово)
 
@@ -282,7 +282,7 @@
 
 
 алгоритм invalidate(file):
-    первая строка file ← «Статус: черновик»; approvals[file] ← пусто
+    первая строка file ← «Статус: черновик»; approvals[file] ← пустое значение
     закрыть диалоги, в слое 3 которых был file: plan.md — диалог С5; spec.md — диалоги С3 и С5
         # диалог автора файла (С1 для spec.md, С3 для plan.md) не закрывается: его слои 0–3 не изменились,
         # правка идёт его ходом, если он жив
