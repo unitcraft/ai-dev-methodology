@@ -17,7 +17,7 @@
 
         РАЗБОР:
             если state.next[РАЗБОР]:
-                (s, src) ← state.next[РАЗБОР]; state.next[РАЗБОР] ← пустое значение
+                (s, src) ← state.next[РАЗБОР]; state.next[РАЗБОР] ← нет
                 fixed ← run(s, source=src)
                 если fixed = stopped(«вопрос»): answers ← gate(В4); write_answers(spec.md, answers); run(С1п, source=«Ответы»); owner_fix(spec); continue
             иначе если нет spec.md: run(С1)
@@ -36,7 +36,7 @@
 
         ПЛАН:
             если state.next[ПЛАН]:
-                (s, src) ← state.next[ПЛАН]; state.next[ПЛАН] ← пустое значение
+                (s, src) ← state.next[ПЛАН]; state.next[ПЛАН] ← нет
                 fixed ← run(s, source=src)
                 выбор fixed:
                     stopped(«требования»): to_requirements(source=«последний абзац plan.md»); continue
@@ -60,7 +60,7 @@
 
         РЕАЛИЗАЦИЯ:
             если state.next[РЕАЛИЗАЦИЯ]:
-                (s, src) ← state.next[РЕАЛИЗАЦИЯ]; state.next[РЕАЛИЗАЦИЯ] ← пустое значение
+                (s, src) ← state.next[РЕАЛИЗАЦИЯ]; state.next[РЕАЛИЗАЦИЯ] ← нет
                 outcome ← run(s, source=src)         # С5п после находок или обратной связи, С5д после ответа
             иначе если нет result.md или status(result.md) = «в работе»:
                 outcome ← run(С5)                    # старт или возобновление: С5 сам читает result.md
@@ -236,14 +236,14 @@
         # бездействие дольше срока → ожидание прервано, группа процессов агента остановлена целиком, log(«роль не ответила: <роль>»); для линзы — остановить группу процессов агента и вернуть failed, иначе gate(В13), исходы те же (в совещании «остановить» → halt)
     параллельно: tail(progress.log, от off_p, строки кода этой сессии) → k/N
     record_usage(response.usage); check_cache(response, kind)      # правило «Проверка после каждого запроса»
-    если session ∉ {КОММИТ, ПУШ}: state.hint ← parse(profile.log, от off_h) или пусто с log(«ПРОФИЛЬ не получен от <код>»)
+    если session ∉ {КОММИТ, ПУШ}: state.hint ← parse(profile.log, от off_h) или пустой текст с log(«ПРОФИЛЬ не получен от <код>»)
     если артефакта сессии нет: gate(В13, последнее сообщение агента)       # «повторить» / «остановить»
     verify_formats(артефакт)
         # нарушены → один ход «исправь форму файла: …» в том же диалоге; снова нарушены → gate(В13)
     проверка журнала: существенные нарушения из «Строк progress.log» (строки `запуск`, которых нет в state.launches, повтор номера запуска, строки после итоговой, коды без запуска, ошибка в ключевом слове итоговой строки, `готово` при k меньше N из старта без исправления, `готово` без старта или после второго старта) → строка в log.md (не ход на исправление)
     если session — автор или правка:
         state.transcript[author(session)] ← {conv, started_at = state.prefix[kind].last_request_started_at, ttl, profile}
-    state.running ← пустое значение; save(state)
+    state.running ← нет; save(state)
     вернуть outcome(артефакт)
         # статус «готово» или файл без стоп-слова → done; стоп-слово в последнем абзаце → stopped(слово)
 
@@ -282,7 +282,7 @@
 
 
 алгоритм invalidate(file):
-    первая строка file ← «Статус: черновик»; approvals[file] ← пустое значение
+    первая строка file ← «Статус: черновик»; approvals[file] ← нет
     закрыть диалоги, в слое 3 которых был file: plan.md — диалог С5; spec.md — диалоги С3 и С5
         # диалог автора файла (С1 для spec.md, С3 для plan.md) не закрывается: его слои 0–3 не изменились,
         # правка идёт его ходом, если он жив
