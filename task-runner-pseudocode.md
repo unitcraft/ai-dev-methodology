@@ -167,7 +167,7 @@
         state.pass[stage] += 1
         если verdict = не_засчитан: log(«заход n: пробы — не пробы, не засчитан»); continue
         если verdict.K = 0:
-            если stage = meeting: state.open[meeting] += желательные находки verdict; если state.clean_streak[stage] + 1 ≥ ЧИСТЫХ_ПОДРЯД: state.open[meeting] += значимые находки verdict   # без дублей; значимые правятся только в заходе с критическими, у чистого захода правки нет, значимые последнего захода идут в открытые (methodology.md, раздел 18)
+            если stage = meeting: state.open[meeting] += желательные находки verdict; если state.clean_streak[stage] + 1 ≥ ЧИСТЫХ_ПОДРЯД: state.open[meeting] += значимые находки verdict   # без дублей; значимые правятся только в заходе с критическими, у чистого захода правки нет, значимые последнего захода идут в открытые (methodology.md, раздел 18); значимые не последнего чистого захода в открытые не идут: следующий заход их повторит или нет
             state.clean_streak[stage] += 1; continue
         state.clean_streak[stage] ← 0
         если stage = meeting: state.open[meeting] += желательные находки verdict и значимые с полем «повтор:»   # значимая правится одной попыткой (methodology.md, раздел 18)
