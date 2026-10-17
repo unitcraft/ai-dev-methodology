@@ -1,6 +1,6 @@
 # Совещание агентов: стейт-машина
 
-Та же схема, что в [task-runner.md](task-runner.md), «Совещание агентов» (псевдокод `meeting`, `check_meeting` и `loop_review(meeting)`), записанная состояниями и переходами. Нормы — [methodology.md](methodology.md), раздел 18, «Согласование решения несколькими агентами»; при расхождении с `task-runner.md` верен он. Опытный режим: раннером не выполняется.
+Та же схема, что в [task-runner.md](task-runner.md), «Совещание агентов», и в псевдокоде ([task-runner-meeting-pseudocode.md](task-runner-meeting-pseudocode.md): `meeting`, `check_meeting`; [task-runner-pseudocode.md](task-runner-pseudocode.md): `loop_review(meeting)`), записанная состояниями и переходами. Нормы — [methodology.md](methodology.md), раздел 18, «Согласование решения несколькими агентами»; при расхождении верны `task-runner.md` и псевдокод. Опытный режим: раннером не выполняется.
 
 ## Данные
 
