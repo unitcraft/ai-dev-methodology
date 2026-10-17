@@ -84,7 +84,7 @@
                                      continue
                 clean:               пропуск
             decisions ← gate(В8, строки FAIL / NOT VERIFIED / Known limitations, state.out_of_scope)
-            write_owner_marks(result.md, decisions); state.out_of_scope ← пустой список; owner_fix(review)
+            write_owner_marks(result.md, decisions); state.out_of_scope ← []; owner_fix(review)
             если среди decisions «закрыть руками»: gate(В8, «подтвердите, что закрыто»); state.clean_streak[review] ← 0; continue
             если среди decisions «урезать объём»: state.next[РЕАЛИЗАЦИЯ] ← (С5п, «решение владельца»); to_requirements(source=decisions); continue
             state.phase ← СДАЧА
@@ -149,7 +149,7 @@
 
 алгоритм loop_review(stage):
     пока state.clean_streak[stage] < ЧИСТЫХ_ПОДРЯД:
-        n ← state.pass[stage]; extra ← пустой текст
+        n ← state.pass[stage]; extra ← ""
         review ← (stage = meeting) ? check_meeting(n) : run(checker(stage), pass=n)   # run не возвращает ошибок: В13 внутри
         если review = halt: вернуть halt                              # только совещание: остановка до разбора сводки
         summary ← parse_summary(review)              # в совещании — строка «Заход N: критических K, значимых Z, желательных D, проб P»: K — критические, Z и D не читаются
@@ -209,7 +209,7 @@
     # вне совещания «остановить» — остановить группу процессов агента и выйти из программы
     state.step ← session; save(state)
     N ← count_units(session)
-    profile ← choose_profile(session, defaults, state.hint); state.hint ← пустой текст
+    profile ← choose_profile(session, defaults, state.hint); state.hint ← ""
     gate(В2, profile, оценка цены)
     prompt ← PROMPTS[session] + TAIL_SESSION(session)
         # подстановки: <репозиторий> ← state.repo_dir; <папка задачи> ← state.task_dir; <источник правок> ← source;
@@ -236,7 +236,7 @@
         # бездействие дольше срока → ожидание прервано, группа процессов агента остановлена целиком, log(«роль не ответила: <роль>»); для линзы — остановить группу процессов агента и вернуть failed, иначе gate(В13), исходы те же (в совещании «остановить» → halt)
     параллельно: tail(progress.log, от off_p, строки кода этой сессии) → k/N
     record_usage(response.usage); check_cache(response, kind)      # правило «Проверка после каждого запроса»
-    если session ∉ {КОММИТ, ПУШ}: state.hint ← parse(profile.log, от off_h) или пустой текст с log(«ПРОФИЛЬ не получен от <код>»)
+    если session ∉ {КОММИТ, ПУШ}: state.hint ← parse(profile.log, от off_h) или "" с log(«ПРОФИЛЬ не получен от <код>»)
     если артефакта сессии нет: gate(В13, последнее сообщение агента)       # «повторить» / «остановить»
     verify_formats(артефакт)
         # нарушены → один ход «исправь форму файла: …» в том же диалоге; снова нарушены → gate(В13)
