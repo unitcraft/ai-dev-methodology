@@ -99,36 +99,50 @@
 ### Типы на Нове
 
 ```
+/// Линза
 type Lens { id str, lost int, probes int, attempt int }
+/// Запрос
 type Request[T] { id str, attempt int, party str, input T, idle_term int, trace str, step int }
+/// Ответ
 type Response[R] enum
 | Result(Reply[R])
 | Refusal(Rejection)
+/// Ответ (с результатом)
 type Reply[R] { request str, party str, result R, trace str, step int }
+/// Ответ (отказ)
 type Rejection { request str, party str, reason FailCode, text str, trace str, step int }
+/// КодСбоя
 type FailCode enum
 | NoResult
 | ModelRefused
 | ConnectionLost
 | FormNotFixed
 | Timeout
+/// ОтветСвидетеля
 type WitnessAnswer enum
 | Answered(Claim)
 | NotMeasured(str)
+/// ОтветСвидетеля (с утверждением)
 type Claim { kind str, statement str, source str, excerpt Option[str], check Check }
+/// сверка
 type Check enum
 | Confirmed
 | ChannelDistortion
 | NotConfirmed
+/// ИтогПравки
 type EditResult enum
 | Done(str)
 | Asked(Asking)
+/// ИтогПравки (вопрос)
 type Asking { proposal str, question str }
+/// Находка
 type Finding { severity Severity, evidence str, repeat bool }
+/// критичность
 type Severity enum
 | Critical
 | Significant
 | Desirable
+/// Свод
 type Summary { k int, p int }
 ```
 
