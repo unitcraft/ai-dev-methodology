@@ -1,6 +1,6 @@
 # Совещание агентов: псевдокод
 
-Вынесено из [task-runner.md](task-runner.md), «Совещание агентов»: там правила режима, здесь `meeting` и `check_meeting`; `loop_review` — [task-runner-pseudocode.md](task-runner-pseudocode.md). Схема опытного режима, раннером не выполняется. Та же схема состояниями — [task-runner-meeting-states.md](task-runner-meeting-states.md).
+Вынесено из [task-runner.md](../task-runner.md), «Совещание агентов»: там правила режима, здесь `meeting` и `check_meeting`; `loop_review` — [task-runner-pseudocode.md](task-runner-pseudocode.md). Схема опытного режима, раннером не выполняется. Та же схема состояниями — [task-runner-meeting-states.md](task-runner-meeting-states.md).
 
 > **Устарело (2026-10-17).** Схема не приведена к контракту машины (`state-machine-spec.md`, правило 35: вызов, один ответ, отмена, пауза цепочки, коды отказа). Актуальна форма состояниями — [task-runner-meeting-states.md](task-runner-meeting-states.md); приведение этого файла — открытый вопрос со сроком 2026-11-15 (`doc/open-questions.md`).
 
