@@ -7,6 +7,7 @@
 | [state-machine-spec.md](state-machine-spec.md) | спецификация стейт-машин: правила записи, сверки, контракт вызова, подключаемый фрагмент |
 | [state-machine-engine-automaton.md](state-machine-engine-automaton.md) | движок любой машины: исполнитель, эффекты, протокол `Автомат`, контракт вызова (код на Нова) |
 | [state-machine-methodology-automaton.md](state-machine-methodology-automaton.md) | слой методики между движком и машинами: общие типы, ворота, цикл, запись расхода, запрос агента |
+| [state-machine-call-protocol.md](state-machine-call-protocol.md) | проводной формат контракта вызова (строчный обмен, сообщения, доставка, коды отказов) и набор проверок соответствия |
 | [state-machine-pause-states.md](state-machine-pause-states.md) | подключаемый фрагмент «Пауза» и общих остановок |
 | [state-machine-agent-step-states.md](state-machine-agent-step-states.md)<br>[state-machine-agent-step-automaton.md](state-machine-agent-step-automaton.md) | машина «Шаг агента»: один вызов агента с типизированным запросом и ответом |
 | [task-runner-session-states.md](task-runner-session-states.md)<br>[task-runner-session-automaton.md](task-runner-session-automaton.md) | машина «Запуск сессии» |
