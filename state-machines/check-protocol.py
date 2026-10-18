@@ -797,6 +797,8 @@ class Reference:
                 if rid not in self.paused:
                     left -= now - last
                 last = now
+            with self.lock:
+                n = self.starts[rid]  # число запусков работы на момент ответа: повторный запуск виден в ответе
             self.reply(rid, p, {'delay': d, 'starts': n})
         else:
             self.refuse(rid, p, 'NoResult', 'неизвестная сторона')
