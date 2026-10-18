@@ -263,7 +263,7 @@
           <h1>От задачи —<br>к результату,<br><span>с человеком у руля.</span></h1>
           <p class="hero-copy">Раннер превращает работу агента в понятный процесс: запускает нужные сессии, ведёт по проверкам, сохраняет ход задачи и ждёт решения человека на важных этапах.</p>
           <div class="actions"><a class="button" href="#algorithm">Изучить алгоритм <span aria-hidden="true">↓</span></a><a class="button button-secondary" href="https://github.com/unitcraft/ai-dev-methodology/blob/main/task-runner.md">Открыть исходное описание ↗</a></div>
-          <div class="hero-facts"><span class="fact-pill"><strong>5</strong> фаз</span><span class="fact-pill"><strong>13</strong> точек решения</span><span class="fact-pill">состояние между запусками</span></div>
+          <div class="hero-facts"><span class="fact-pill"><strong>5</strong> фаз</span><span class="fact-pill"><strong>14</strong> точек решения</span><span class="fact-pill">состояние между запусками</span></div>
         </div>
         <aside class="hero-board" aria-label="Схема продвижения задачи по фазам">
           <div class="board-top"><span class="board-label">Маршрут одной задачи</span><span class="live">под контролем</span></div>
@@ -422,6 +422,71 @@
               <div class="context-layer session"><span>03</span><strong>Очередь ворот</strong><span>код и название ворот, которые ждут человека</span></div>
             </div>
             <div class="context-note">Содержание находок и отчётов не показывается: человек читает файлы на воротах.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section system-section" id="route">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">06 / Маршрут задачи</div><h2>Полный или быстрый — выбор до первой дорогой работы</h2></div><p class="intro">Маршрут — данные задачи, а не исключение из цикла. Он задаёт три числа цикла и то, как сжимаются фазы; решает человек на воротах В14.</p></div>
+        <div class="system-grid">
+          <article class="system-card">
+            <h3>Числа цикла по маршрутам</h3>
+            <p>Значения по умолчанию задаёт методика; проект меняет их в настройках, но не ниже минимумов.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Потолок заходов</strong><span>полный 4, быстрый 2</span></div>
+              <div class="context-layer"><span>02</span><strong>Чистых заходов подряд</strong><span>полный 2, быстрый 1; минимум методики — 1</span></div>
+              <div class="context-layer session"><span>03</span><strong>Проб в чистом заходе</strong><span>3 у обоих; минимум методики — 3</span></div>
+            </div>
+            <div class="context-note">Настройка ниже минимума или с ослаблением инварианта отклоняется: быстрая задача идёт на полный маршрут, а человек получает ворота В14; у полного маршрута задача останавливается до исправления настроек.</div>
+          </article>
+          <article class="system-card">
+            <h3>Что сжимает быстрый маршрут</h3>
+            <p>Фазы сжимаются, но их результаты не исчезают.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Постановка вместо spec.md</strong><span>слово «заводи &lt;номер&gt;» на В14 — утверждение, В5 пропускается</span></div>
+              <div class="context-layer"><span>02</span><strong>План пропускается</strong><span>plan.md нет, план — первый раздел result.md</span></div>
+              <div class="context-layer"><span>03</span><strong>Реализация и проверка</strong><span>одна сессия С5, один чистый заход С6 с тремя пробами</span></div>
+              <div class="context-layer session"><span>04</span><strong>Ворота сдачи остаются</strong><span>В10 — коммит, пуш, отправка; В12 — секреты</span></div>
+            </div>
+            <div class="context-note">Правило выбора: признаков нет, любой не записан, помощник предложил «полный», порог превышен, действие необратимо, причина неизвестна или задача касается нормы — «полный». Слово человека старше правила.</div>
+          </article>
+          <article class="system-card wide">
+            <h3>Девять инвариантов, которые не снимает никакая настройка</h3>
+            <p>Чем держится каждый — построением машины или требованием к реализации, — записано одной таблицей в состояниях раннера.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Решает человек</strong><span>закрытый список владельца и ворота коммита, пуша и отправки наружу</span></div>
+              <div class="context-layer"><span>02</span><strong>Источник ответа записан</strong><span>на воротах</span></div>
+              <div class="context-layer"><span>03</span><strong>След и журнал</strong><span>шаги ведутся с конвертом</span></div>
+              <div class="context-layer"><span>04</span><strong>Красный тест до кода</strong><span>по сценарию приёмки</span></div>
+              <div class="context-layer"><span>05</span><strong>Проверяющий не автор</strong><span>новая сессия без истории цикла, вид проверяющего записан</span></div>
+              <div class="context-layer"><span>06</span><strong>Чистый заход без проб</strong><span>не засчитывается</span></div>
+              <div class="context-layer"><span>07</span><strong>Секреты</strong><span>исходящее проверяется до отправки</span></div>
+              <div class="context-layer"><span>08</span><strong>Один запрос — один ответ</strong><span>перезапуск — повторный вход в сохранённое состояние</span></div>
+              <div class="context-layer session"><span>09</span><strong>Нестабильный красный прогон</strong><span>не засчитывается за доказательство и не прячется</span></div>
+            </div>
+            <div class="context-note">Возврат на полный маршрут — словом человека на воротах быстрого маршрута (В5, В8, В10а) или сам, если проверка нашла находку уровня «требования» или «план». Возврат ничего не стирает.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section system-section" id="machines">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">07 / Состояния и переходы</div><h2>Алгоритм раннера записан стейт-машинами</h2></div><p class="intro">Старый псевдокод устарел: первоисточник — файлы состояний в каталоге state-machines.</p></div>
+        <div class="system-grid">
+          <article class="system-card wide">
+            <h3>Пять машин на общем движке</h3>
+            <p>Каждая описана файлом состояний и файлом кода автомата; общее вынесено в движок и слой методики.</p>
+            <div class="context-stack">
+              <div class="context-layer"><span>01</span><strong>Раннер</strong><span>фазы цикла, ворота и маршрут задачи</span></div>
+              <div class="context-layer"><span>02</span><strong>Проверка цикла</strong><span>заходы, находки, остановка и потолок</span></div>
+              <div class="context-layer"><span>03</span><strong>Запуск сессии</strong><span>одна сессия, вызывает шаг агента</span></div>
+              <div class="context-layer"><span>04</span><strong>Шаг агента</strong><span>один вызов агента с типизированным запросом и ответом</span></div>
+              <div class="context-layer session"><span>05</span><strong>Совещание агентов</strong><span>необязательный режим секретаря</span></div>
+            </div>
+            <div class="context-note">Индекс — <a href="https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/README.md">state-machines/README.md ↗</a>.</div>
           </article>
         </div>
       </div>
