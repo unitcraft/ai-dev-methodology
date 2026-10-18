@@ -337,7 +337,7 @@ state
 
 ## Алгоритм
 
-Псевдокод цикла задачи — [task-runner-pseudocode.md](task-runner-pseudocode.md) (устарел). Та же схема состояниями и переходами — [task-runner-states.md](task-runner-states.md) (фазы и ворота) и [task-runner-review-states.md](task-runner-review-states.md) (проверка цикла, `loop_review`); их код автомата — [task-runner-automaton.md](task-runner-automaton.md) (раннер) и [task-runner-review-automaton.md](task-runner-review-automaton.md) (проверка цикла) на движке [state-machine-engine-automaton.md](state-machine-engine-automaton.md) и слое методики [state-machine-methodology-automaton.md](state-machine-methodology-automaton.md).
+Псевдокод цикла задачи — [task-runner-pseudocode.md](task-runner-pseudocode.md) (устарел). Та же схема состояниями и переходами — [task-runner-states.md](task-runner-states.md) (фазы и ворота) и [task-runner-review-states.md](task-runner-review-states.md) (проверка цикла, `loop_review`) и [task-runner-session-states.md](task-runner-session-states.md) (запуск одной сессии, `run`); их код автомата — [task-runner-automaton.md](task-runner-automaton.md) (раннер), [task-runner-review-automaton.md](task-runner-review-automaton.md) (проверка цикла) и [task-runner-session-automaton.md](task-runner-session-automaton.md) (запуск сессии) на движке [state-machine-engine-automaton.md](state-machine-engine-automaton.md) и слое методики [state-machine-methodology-automaton.md](state-machine-methodology-automaton.md).
 
 ## Ворота
 
