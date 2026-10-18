@@ -172,14 +172,14 @@
 - Кто шлёт какие строки, написано над блоком: «Проверяющая сторона шлёт строки 1 и 3; проверяемая программа отвечает строками 2 и 4».
 - Вид строки: есть `method` и `id` — запрос (ждут ответ); есть `method`, нет `id` — уведомление (ответа нет); есть `result` или `error` (ровно одно) — ответ на запрос с тем же `id`.
 - Ключи внутри: `party` — кто выполняет работу; `attempt` — номер попытки; `input` — вход вызова; `idle_term` — срок молчания в миллисекундах (0 — без срока); `trace` и `step` — трасса и номер шага.
-- Имена вроде «эхо» — проверочные стороны (условие 3).
+- Имена вроде «echo» — проверочные стороны (условие 3).
 - Строки первого примера, C1, разобраны по одной под блоком; ещё один разбор — у C37.
 
 ### Условия набора
 
 1. **Проверяющая сторона** (подставная) — вторая сторона соединения, написанная под набор. Если проверяется получатель, проверяющая сторона играет вызывающего; если проверяется вызывающий — получателя. Проверяемая программа — та, которую проверяют (какого играет проверяющая сторона — сказано в случае).
 2. **Каждый случай, кроме C1, C2 и C20, начинается с обмена `hello` версии 1** (в блоках он не повторяется): проверяющая сторона шлёт `{"jsonrpc":"2.0","method":"hello","id":"hello-1","params":{"version":1,"role":"caller","kind":"machine","fail_codes":["NoResult"],"methods":["hello","call","cancel","signal"]}}`, проверяемая программа шлёт свой `hello` и ответы на оба (форма ответа — случай C1). Нумерация строк случая начинается после этого обмена.
-3. **Проверочные стороны получателя** (получатель обязан открыть их в режиме проверки; без них набор для него не исполняется): `эхо` — отвечает сразу, `result.result` равен `input`; `ожидание` — вход `{"delay": <миллисекунды>}`, отвечает через `delay` результатом `{"delay": <миллисекунды>, "starts": <сколько раз началась работа по этому id>}`; на паузе отсчёт стоит; `отказ` — вход `{"reason": <код>, "text": <текст>}`, отвечает отказом с этим кодом и текстом.
+3. **Проверочные стороны получателя** (получатель обязан открыть их в режиме проверки; без них набор для него не исполняется): `echo` — отвечает сразу, `result.result` равен `input`; `wait` — вход `{"delay": <миллисекунды>}`, отвечает через `delay` результатом `{"delay": <миллисекунды>, "starts": <сколько раз началась работа по этому id>}`; на паузе отсчёт стоит; `refuse` — вход `{"reason": <код>, "text": <текст>}`, отвечает отказом с этим кодом и текстом.
 4. **Наблюдение журнала:** для случаев «со строкой журнала» проверяемая программа отдаёт строки своего журнала проверке; формат строки не задан (правило 17), проверяется появление новой строки, в которой есть идентификатор запроса или сигнала.
 5. **Моменты и порядок.** В блоке строки идут в порядке обмена. Блоки ```` ```text ```` содержат строки, которые не разбираются как JSON; остальные блоки — только объекты JSON-RPC. В описании случая сказано, какие строки шлёт проверяющая сторона, а какие должна прислать проверяемая программа; ожидание «ответа нет» длится не меньше двух вторых значений `delay` либо пока проверяющая сторона не пошлёт следующую строку. Случай, у которого не названа роль проверяемой программы, проверяется обеими ролями с переставленными направлениями строк.
 6. **Обязательность:** «П» — обязательно для получателя (программы роли или машины); «В» — обязательно для вызывающего (машины); «П*» — только если получатель называет `signal` в `methods` (машина-получатель называет обязательно).
@@ -251,7 +251,7 @@
 ```json
 {"jsonrpc":"2.0","method":"hello","id":"hello-1","params":{"version":2,"role":"caller","kind":"machine","fail_codes":["NoResult"],"methods":["hello","call","reply"]}}
 {"jsonrpc":"2.0","id":"hello-1","error":{"code":-32001,"message":"версия не поддерживается","data":{"version":1}}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-1","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-1","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
 ```
 
 ### C3. Запрос и ответ с записью расхода
@@ -261,37 +261,37 @@
 - Критерий: ровно один `reply`; `request`, `party`, `trace`, `step` совпадают с запросом; `result` разбирается как `AgentReply` (обязательное `usage` с обязательными полями раздела G).
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"агент-1","params":{"attempt":1,"party":"агент","input":{"kind":"ChatTurn","profile":{"family":"f1","model":"m1","effort":null},"session":"s-1","dialog_kind":"chat","context":"вопрос","limits":{"silence_term":600000,"token_budget":null,"cost_budget":null,"turn_limit":null},"trace":"т-7.1","step":2},"idle_term":600000,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"агент-1","result":{"party":"агент","result":{"text":"ответ","artifact":null,"usage":{"session":"s-1","result":"done","family":"f1","model":{"id":"m1","provider":"p1","variant":null},"tokens":{"input":120,"output":40,"reasoning":null,"cache_read":0,"cache_write":null},"cost":0.0021,"created":1792301400000,"updated":1792301405000,"context_used":null,"trace":"т-7.1","step":2},"request_started":1792301400000},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"agent-1","params":{"attempt":1,"party":"agent","input":{"kind":"ChatTurn","profile":{"family":"f1","model":"m1","effort":null},"session":"s-1","dialog_kind":"chat","context":"вопрос","limits":{"silence_term":600000,"token_budget":null,"cost_budget":null,"turn_limit":null},"trace":"t-7.1","step":2},"idle_term":600000,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"agent-1","result":{"party":"agent","result":{"text":"ответ","artifact":null,"usage":{"session":"s-1","result":"done","family":"f1","model":{"id":"m1","provider":"p1","variant":null},"tokens":{"input":120,"output":40,"reasoning":null,"cache_read":0,"cache_write":null},"cost":0.0021,"created":1792301400000,"updated":1792301405000,"context_used":null,"trace":"t-7.1","step":2},"request_started":1792301400000},"trace":"t-7","step":3}}
 ```
 
 ### C4. Отказ с каждым кодом
 
 - Проверяет: получатель и вызывающий.
 - Получатель: проверяющая сторона шлёт нечётные строки, проверяемая программа отвечает чётными. Вызывающий: проверяемая программа шлёт нечётные строки, проверяющая сторона отвечает чётными.
-- Критерий: на каждый запрос ровно один `refusal` (ответ с `error`, `code` равен −32000); `error.data.reason` и `error.data.text` как в запросе, `error.message` равен `text`; ни один отказ не несёт `result`; коды `Cancelled` и `StoppedByHuman` в этом случае порождены стороной `отказ` по входу, настоящие пути к ним — C7 и C13. Вызывающий принимает каждый отказ один раз и разбирает как сбой вызова с этим кодом.
+- Критерий: на каждый запрос ровно один `refusal` (ответ с `error`, `code` равен −32000); `error.data.reason` и `error.data.text` как в запросе, `error.message` равен `text`; ни один отказ не несёт `result`; коды `Cancelled` и `StoppedByHuman` в этом случае порождены стороной `refuse` по входу, настоящие пути к ним — C7 и C13. Вызывающий принимает каждый отказ один раз и разбирает как сбой вызова с этим кодом.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"отказ-1","params":{"attempt":1,"party":"отказ","input":{"reason":"NoResult","text":"текст NoResult"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-1","error":{"code":-32000,"message":"текст NoResult","data":{"reason":"NoResult","text":"текст NoResult","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-2","params":{"attempt":2,"party":"отказ","input":{"reason":"ModelRefused","text":"текст ModelRefused"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-2","error":{"code":-32000,"message":"текст ModelRefused","data":{"reason":"ModelRefused","text":"текст ModelRefused","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-3","params":{"attempt":3,"party":"отказ","input":{"reason":"ConnectionLost","text":"текст ConnectionLost"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-3","error":{"code":-32000,"message":"текст ConnectionLost","data":{"reason":"ConnectionLost","text":"текст ConnectionLost","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-4","params":{"attempt":4,"party":"отказ","input":{"reason":"FormNotFixed","text":"текст FormNotFixed"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-4","error":{"code":-32000,"message":"текст FormNotFixed","data":{"reason":"FormNotFixed","text":"текст FormNotFixed","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-5","params":{"attempt":5,"party":"отказ","input":{"reason":"Timeout","text":"текст Timeout"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-5","error":{"code":-32000,"message":"текст Timeout","data":{"reason":"Timeout","text":"текст Timeout","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-6","params":{"attempt":6,"party":"отказ","input":{"reason":"StoppedByHuman","text":"текст StoppedByHuman"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-6","error":{"code":-32000,"message":"текст StoppedByHuman","data":{"reason":"StoppedByHuman","text":"текст StoppedByHuman","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-7","params":{"attempt":7,"party":"отказ","input":{"reason":"CeilingReached","text":"текст CeilingReached"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-7","error":{"code":-32000,"message":"текст CeilingReached","data":{"reason":"CeilingReached","text":"текст CeilingReached","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-8","params":{"attempt":8,"party":"отказ","input":{"reason":"Cancelled","text":"текст Cancelled"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-8","error":{"code":-32000,"message":"текст Cancelled","data":{"reason":"Cancelled","text":"текст Cancelled","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-9","params":{"attempt":9,"party":"отказ","input":{"reason":"MaxTokens","text":"текст MaxTokens"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-9","error":{"code":-32000,"message":"текст MaxTokens","data":{"reason":"MaxTokens","text":"текст MaxTokens","trace":"т-7","step":3,"party":"отказ"}}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-10","params":{"attempt":10,"party":"отказ","input":{"reason":"MaxTurnRequests","text":"текст MaxTurnRequests"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-10","error":{"code":-32000,"message":"текст MaxTurnRequests","data":{"reason":"MaxTurnRequests","text":"текст MaxTurnRequests","trace":"т-7","step":3,"party":"отказ"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-1","params":{"attempt":1,"party":"refuse","input":{"reason":"NoResult","text":"текст NoResult"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-1","error":{"code":-32000,"message":"текст NoResult","data":{"reason":"NoResult","text":"текст NoResult","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-2","params":{"attempt":2,"party":"refuse","input":{"reason":"ModelRefused","text":"текст ModelRefused"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-2","error":{"code":-32000,"message":"текст ModelRefused","data":{"reason":"ModelRefused","text":"текст ModelRefused","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-3","params":{"attempt":3,"party":"refuse","input":{"reason":"ConnectionLost","text":"текст ConnectionLost"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-3","error":{"code":-32000,"message":"текст ConnectionLost","data":{"reason":"ConnectionLost","text":"текст ConnectionLost","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-4","params":{"attempt":4,"party":"refuse","input":{"reason":"FormNotFixed","text":"текст FormNotFixed"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-4","error":{"code":-32000,"message":"текст FormNotFixed","data":{"reason":"FormNotFixed","text":"текст FormNotFixed","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-5","params":{"attempt":5,"party":"refuse","input":{"reason":"Timeout","text":"текст Timeout"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-5","error":{"code":-32000,"message":"текст Timeout","data":{"reason":"Timeout","text":"текст Timeout","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-6","params":{"attempt":6,"party":"refuse","input":{"reason":"StoppedByHuman","text":"текст StoppedByHuman"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-6","error":{"code":-32000,"message":"текст StoppedByHuman","data":{"reason":"StoppedByHuman","text":"текст StoppedByHuman","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-7","params":{"attempt":7,"party":"refuse","input":{"reason":"CeilingReached","text":"текст CeilingReached"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-7","error":{"code":-32000,"message":"текст CeilingReached","data":{"reason":"CeilingReached","text":"текст CeilingReached","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-8","params":{"attempt":8,"party":"refuse","input":{"reason":"Cancelled","text":"текст Cancelled"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-8","error":{"code":-32000,"message":"текст Cancelled","data":{"reason":"Cancelled","text":"текст Cancelled","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-9","params":{"attempt":9,"party":"refuse","input":{"reason":"MaxTokens","text":"текст MaxTokens"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-9","error":{"code":-32000,"message":"текст MaxTokens","data":{"reason":"MaxTokens","text":"текст MaxTokens","trace":"t-7","step":3,"party":"refuse"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-10","params":{"attempt":10,"party":"refuse","input":{"reason":"MaxTurnRequests","text":"текст MaxTurnRequests"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-10","error":{"code":-32000,"message":"текст MaxTurnRequests","data":{"reason":"MaxTurnRequests","text":"текст MaxTurnRequests","trace":"t-7","step":3,"party":"refuse"}}}
 ```
 
 ### C5. Дубликат запроса, пока идёт работа
@@ -301,9 +301,9 @@
 - Критерий: ровно один `reply`; `starts` равен 1 (работа не началась второй раз); строки журнала о дубликате не требуется.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-1","params":{"attempt":1,"party":"ожидание","input":{"delay":3000},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-1","params":{"attempt":1,"party":"ожидание","input":{"delay":3000},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-1","result":{"party":"ожидание","result":{"delay":3000,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-1","params":{"attempt":1,"party":"wait","input":{"delay":3000},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-1","params":{"attempt":1,"party":"wait","input":{"delay":3000},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-1","result":{"party":"wait","result":{"delay":3000,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C6. Дубликат запроса после ответа
@@ -313,10 +313,10 @@
 - Критерий: строка 4 повторяет строку 2 (те же поля и значения; порядок ключей не важен); `starts` остаётся 1.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-2","params":{"attempt":1,"party":"ожидание","input":{"delay":0},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-2","result":{"party":"ожидание","result":{"delay":0,"starts":1},"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-2","params":{"attempt":1,"party":"ожидание","input":{"delay":0},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-2","result":{"party":"ожидание","result":{"delay":0,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-2","params":{"attempt":1,"party":"wait","input":{"delay":0},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-2","result":{"party":"wait","result":{"delay":0,"starts":1},"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-2","params":{"attempt":1,"party":"wait","input":{"delay":0},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-2","result":{"party":"wait","result":{"delay":0,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C7. Отмена до ответа
@@ -326,35 +326,35 @@
 - Критерий: ровно один `refusal` с кодом `Cancelled`; `reply` по этому `id` не приходит ни тогда, ни позже.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-3","params":{"attempt":1,"party":"ожидание","input":{"delay":60000},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"cancel","params":{"request":"ожидание-3"}}
-{"jsonrpc":"2.0","id":"ожидание-3","error":{"code":-32000,"message":"отменено родителем","data":{"reason":"Cancelled","text":"отменено родителем","trace":"т-7","step":3,"party":"ожидание"}}}
+{"jsonrpc":"2.0","method":"call","id":"wait-3","params":{"attempt":1,"party":"wait","input":{"delay":60000},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"cancel","params":{"request":"wait-3"}}
+{"jsonrpc":"2.0","id":"wait-3","error":{"code":-32000,"message":"отменено родителем","data":{"reason":"Cancelled","text":"отменено родителем","trace":"t-7","step":3,"party":"wait"}}}
 ```
 
 ### C8. Отмена после ответа
 
 - Проверяет: получатель.
 - Проверяющая сторона шлёт строки 1, 3 и 4; проверяемая программа отвечает строками 2 и 5.
-- Критерий: на строку 3 ничего не приходит (ни отказа, ни второго ответа); в журнале новая строка с `эхо-2`; соединение работает (строка 5).
+- Критерий: на строку 3 ничего не приходит (ни отказа, ни второго ответа); в журнале новая строка с `echo-2`; соединение работает (строка 5).
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-2","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-2","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"cancel","params":{"request":"эхо-2"}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-3","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":4}}
-{"jsonrpc":"2.0","id":"эхо-3","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":4}}
+{"jsonrpc":"2.0","method":"call","id":"echo-2","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-2","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"cancel","params":{"request":"echo-2"}}
+{"jsonrpc":"2.0","method":"call","id":"echo-3","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":4}}
+{"jsonrpc":"2.0","id":"echo-3","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":4}}
 ```
 
 ### C9. Отмена чужого запроса
 
 - Проверяет: получатель.
 - Проверяющая сторона шлёт строки 1 и 2; проверяемая программа отвечает строкой 3.
-- Критерий: на строку 1 ответа нет, в журнале новая строка с `чужой-9`; ответ приходит только на строку 2.
+- Критерий: на строку 1 ответа нет, в журнале новая строка с `foreign-9`; ответ приходит только на строку 2.
 
 ```json
-{"jsonrpc":"2.0","method":"cancel","params":{"request":"чужой-9"}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-4","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-4","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"cancel","params":{"request":"foreign-9"}}
+{"jsonrpc":"2.0","method":"call","id":"echo-4","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-4","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C10. «Стоп» и «продолжить» человека
@@ -364,10 +364,10 @@
 - Критерий: между строками 2 и 3 ответа нет (работа на паузе, отсчёт `delay` стоит); после строки 3 приходит один `reply` со `starts` равным 1. Подтверждений сигналов нет.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-4","params":{"attempt":1,"party":"ожидание","input":{"delay":1000},"idle_term":0,"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-4","params":{"attempt":1,"party":"wait","input":{"delay":1000},"idle_term":0,"trace":"t-7","step":3}}
 {"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"human","text":"подожди","author":"владелец","source":"чат, 2026-10-18"}}
 {"jsonrpc":"2.0","method":"signal","params":{"kind":"continue","origin":"human","text":"давай","author":"владелец","source":"чат, 2026-10-18"}}
-{"jsonrpc":"2.0","id":"ожидание-4","result":{"party":"ожидание","result":{"delay":1000,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-4","result":{"party":"wait","result":{"delay":1000,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C11. «Стоп» и «продолжить» родителя
@@ -377,22 +377,22 @@
 - Критерий: пауза и возврат как в C10; причина паузы в журнале — «стоп от родителя», слов человека у машины нет (в её данных они пусты).
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-5","params":{"attempt":1,"party":"ожидание","input":{"delay":1000},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"ожидание-5","text":"не должно читаться","author":"никто","source":"нигде"}}
-{"jsonrpc":"2.0","method":"signal","params":{"kind":"continue","origin":"parent","request":"ожидание-5"}}
-{"jsonrpc":"2.0","id":"ожидание-5","result":{"party":"ожидание","result":{"delay":1000,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-5","params":{"attempt":1,"party":"wait","input":{"delay":1000},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"wait-5","text":"не должно читаться","author":"никто","source":"нигде"}}
+{"jsonrpc":"2.0","method":"signal","params":{"kind":"continue","origin":"parent","request":"wait-5"}}
+{"jsonrpc":"2.0","id":"wait-5","result":{"party":"wait","result":{"delay":1000,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C12. Сигнал родителя с чужим запросом
 
 - Проверяет: получатель (П*).
 - Проверяющая сторона шлёт строки 1 и 2; проверяемая программа отвечает строкой 3.
-- Критерий: сигнал отброшен, в журнале новая строка с `чужой-1`; работа не вставала на паузу — ответ приходит около `delay` (500 мс) после строки 1.
+- Критерий: сигнал отброшен, в журнале новая строка с `foreign-1`; работа не вставала на паузу — ответ приходит около `delay` (500 мс) после строки 1.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-6","params":{"attempt":1,"party":"ожидание","input":{"delay":500},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"чужой-1"}}
-{"jsonrpc":"2.0","id":"ожидание-6","result":{"party":"ожидание","result":{"delay":500,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-6","params":{"attempt":1,"party":"wait","input":{"delay":500},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"foreign-1"}}
+{"jsonrpc":"2.0","id":"wait-6","result":{"party":"wait","result":{"delay":500,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C13. «Остановить» человека и родителя
@@ -402,48 +402,48 @@
 - Критерий: на каждый запрос ровно один `refusal` с кодом `StoppedByHuman`; `reply` не приходит.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-7","params":{"attempt":1,"party":"ожидание","input":{"delay":60000},"idle_term":0,"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-7","params":{"attempt":1,"party":"wait","input":{"delay":60000},"idle_term":0,"trace":"t-7","step":3}}
 {"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"human","text":"стоп","author":"владелец","source":"чат, 2026-10-18"}}
 {"jsonrpc":"2.0","method":"signal","params":{"kind":"halt","origin":"human"}}
-{"jsonrpc":"2.0","id":"ожидание-7","error":{"code":-32000,"message":"остановлено человеком","data":{"reason":"StoppedByHuman","text":"остановлено человеком","trace":"т-7","step":3,"party":"ожидание"}}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-8","params":{"attempt":1,"party":"ожидание","input":{"delay":60000},"idle_term":0,"trace":"т-7","step":4}}
-{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"ожидание-8"}}
-{"jsonrpc":"2.0","method":"signal","params":{"kind":"halt","origin":"parent","request":"ожидание-8"}}
-{"jsonrpc":"2.0","id":"ожидание-8","error":{"code":-32000,"message":"остановлено человеком","data":{"reason":"StoppedByHuman","text":"остановлено человеком","trace":"т-7","step":4,"party":"ожидание"}}}
+{"jsonrpc":"2.0","id":"wait-7","error":{"code":-32000,"message":"остановлено человеком","data":{"reason":"StoppedByHuman","text":"остановлено человеком","trace":"t-7","step":3,"party":"wait"}}}
+{"jsonrpc":"2.0","method":"call","id":"wait-8","params":{"attempt":1,"party":"wait","input":{"delay":60000},"idle_term":0,"trace":"t-7","step":4}}
+{"jsonrpc":"2.0","method":"signal","params":{"kind":"stop","origin":"parent","request":"wait-8"}}
+{"jsonrpc":"2.0","method":"signal","params":{"kind":"halt","origin":"parent","request":"wait-8"}}
+{"jsonrpc":"2.0","id":"wait-8","error":{"code":-32000,"message":"остановлено человеком","data":{"reason":"StoppedByHuman","text":"остановлено человеком","trace":"t-7","step":4,"party":"wait"}}}
 ```
 
 ### C14. Поздний ответ
 
 - Проверяет: вызывающий. Запрос идёт по транспорту к программе, `idle_term` мал.
 - Проверяемая программа шлёт строку 1 (и больше ничего); проверяющая сторона молчит дольше `idle_term` и потом отвечает строкой 2.
-- Критерий: по истечении срока у проверяемой программы одно событие «нет ответа в срок» (код `Timeout`) и запрос закрыт; строка 2 отброшена, в журнале новая строка с `программа-1`; второго события нет.
+- Критерий: по истечении срока у проверяемой программы одно событие «нет ответа в срок» (код `Timeout`) и запрос закрыт; строка 2 отброшена, в журнале новая строка с `program-1`; второго события нет.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"программа-1","params":{"attempt":1,"party":"программа","input":{"stage":"Plan"},"idle_term":100,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"программа-1","result":{"party":"программа","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"program-1","params":{"attempt":1,"party":"program","input":{"stage":"Plan"},"idle_term":100,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"program-1","result":{"party":"program","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C15. Чужой ответ
 
 - Проверяет: вызывающий.
 - Проверяющая сторона шлёт строки 1 и 2 (у проверяемой программы нет открытых запросов с такими `id`).
-- Критерий: обе строки отброшены, на каждую в журнале новая строка с `чужой-2` или `чужой-3`; состояние проверяемой программы не меняется, событий нет.
+- Критерий: обе строки отброшены, на каждую в журнале новая строка с `foreign-2` или `foreign-3`; состояние проверяемой программы не меняется, событий нет.
 
 ```json
-{"jsonrpc":"2.0","id":"чужой-2","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"чужой-3","error":{"code":-32000,"message":"не твой","data":{"reason":"NoResult","text":"не твой","trace":"т-7","step":3,"party":"эхо"}}}
+{"jsonrpc":"2.0","id":"foreign-2","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"foreign-3","error":{"code":-32000,"message":"не твой","data":{"reason":"NoResult","text":"не твой","trace":"t-7","step":3,"party":"echo"}}}
 ```
 
 ### C16. Повторный ответ
 
 - Проверяет: вызывающий.
 - Проверяемая программа шлёт строку 1; проверяющая сторона отвечает строками 2 и 3 (вторая — копия первой).
-- Критерий: у проверяемой программы одно событие по запросу; строка 3 отброшена, в журнале новая строка с `эхо-6`; повторного ответа не было.
+- Критерий: у проверяемой программы одно событие по запросу; строка 3 отброшена, в журнале новая строка с `echo-6`; повторного ответа не было.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-6","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-6","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-6","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-6","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-6","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-6","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C17. Неизвестные поля
@@ -453,8 +453,8 @@
 - Критерий: лишние поля игнорируются, ответ нормальный; проверяемая программа лишних полей не требует и не отвергает сообщение из-за них.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-7","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3,"priority":1},"labels":["а","б"]}
-{"jsonrpc":"2.0","id":"эхо-7","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3,"debug":{"ms":12}},"extra":true}
+{"jsonrpc":"2.0","method":"call","id":"echo-7","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3,"priority":1},"labels":["а","б"]}
+{"jsonrpc":"2.0","id":"echo-7","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3,"debug":{"ms":12}},"extra":true}
 ```
 
 ### C18. Неизвестное уведомление игнорируется
@@ -464,9 +464,9 @@
 - Критерий: строка 1 — уведомление (нет `id`) неизвестного метода: игнорируется со строкой в журнале, ответа нет, соединение не закрывается; запрос из строки 2 обслуживается. Неизвестный метод в **запросе** (с `id`) — не это, а ошибка −32601 (C36).
 
 ```json
-{"jsonrpc":"2.0","method":"ping","params":{"id":"п-1"}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-8","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-8","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"ping","params":{"id":"p-1"}}
+{"jsonrpc":"2.0","method":"call","id":"echo-8","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-8","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C19. Неизвестный код
@@ -476,8 +476,8 @@
 - Критерий: отказ принят один раз как отказ с кодом `NoResult`; текст «лимит исчерпан» сохранён; в журнале новая строка с исходной строкой `error.data.reason` равной `QuotaExceeded`.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-9","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-9","error":{"code":-32000,"message":"лимит исчерпан","data":{"reason":"QuotaExceeded","text":"лимит исчерпан","trace":"т-7","step":3,"party":"эхо"}}}
+{"jsonrpc":"2.0","method":"call","id":"echo-9","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-9","error":{"code":-32000,"message":"лимит исчерпан","data":{"reason":"QuotaExceeded","text":"лимит исчерпан","trace":"t-7","step":3,"party":"echo"}}}
 ```
 
 ### C20. Перезапуск получателя
@@ -488,13 +488,13 @@
 
 ```json
 {"jsonrpc":"2.0","method":"hello","id":"hello-1","params":{"version":1,"role":"caller","kind":"machine","fail_codes":["NoResult"],"methods":["hello","call"]}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-9","params":{"party":"ожидание","attempt":1,"input":{"delay":4000},"idle_term":0,"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-9","params":{"party":"wait","attempt":1,"input":{"delay":4000},"idle_term":0,"trace":"t-7","step":3}}
 {"jsonrpc":"2.0","method":"hello","id":"hello-1","params":{"version":1,"role":"receiver","kind":"program","fail_codes":["NoResult"],"methods":["hello","call"]}}
 {"jsonrpc":"2.0","method":"hello","id":"hello-2","params":{"version":1,"role":"caller","kind":"machine","fail_codes":["NoResult"],"methods":["hello","call"]}}
 {"jsonrpc":"2.0","id":"hello-2","result":{"version":1,"role":"receiver","kind":"program","fail_codes":["NoResult"],"methods":["hello","call"]}}
 {"jsonrpc":"2.0","id":"hello-1","result":{"version":1,"role":"caller","kind":"machine","fail_codes":["NoResult"],"methods":["hello","call"]}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-9","params":{"party":"ожидание","attempt":1,"input":{"delay":4000},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-9","result":{"party":"ожидание","result":{"delay":4000,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-9","params":{"party":"wait","attempt":1,"input":{"delay":4000},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-9","result":{"party":"wait","result":{"delay":4000,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C21. Трасса и номер шага
@@ -504,11 +504,11 @@
 - Критерий: и в `reply`, и в `refusal` `trace` равен `т-9.2.4`, `step` равен 17 (как в запросе), `party` повторён.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-10","params":{"attempt":1,"party":"эхо","input":{"stage":"Plan"},"idle_term":0,"trace":"т-9.2.4","step":17}}
-{"jsonrpc":"2.0","id":"эхо-10","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-9.2.4","step":17}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-10","params":{"attempt":1,"party":"ожидание","input":{"delay":60000},"idle_term":0,"trace":"т-9.2.4","step":18}}
-{"jsonrpc":"2.0","method":"cancel","params":{"request":"ожидание-10"}}
-{"jsonrpc":"2.0","id":"ожидание-10","error":{"code":-32000,"message":"отменено родителем","data":{"reason":"Cancelled","text":"отменено родителем","trace":"т-9.2.4","step":18,"party":"ожидание"}}}
+{"jsonrpc":"2.0","method":"call","id":"echo-10","params":{"attempt":1,"party":"echo","input":{"stage":"Plan"},"idle_term":0,"trace":"т-9.2.4","step":17}}
+{"jsonrpc":"2.0","id":"echo-10","result":{"party":"echo","result":{"stage":"Plan"},"trace":"т-9.2.4","step":17}}
+{"jsonrpc":"2.0","method":"call","id":"wait-10","params":{"attempt":1,"party":"wait","input":{"delay":60000},"idle_term":0,"trace":"т-9.2.4","step":18}}
+{"jsonrpc":"2.0","method":"cancel","params":{"request":"wait-10"}}
+{"jsonrpc":"2.0","id":"wait-10","error":{"code":-32000,"message":"отменено родителем","data":{"reason":"Cancelled","text":"отменено родителем","trace":"т-9.2.4","step":18,"party":"wait"}}}
 ```
 
 ### C22. Вход неверной формы и неизвестная сторона
@@ -518,10 +518,10 @@
 - Критерий: на каждый запрос ровно один `refusal` с кодом `NoResult` и непустым `text`; процесс и соединение живы; повторного ответа нет.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-11","params":{"attempt":1,"party":"ожидание","input":{"delay":"долго"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-11","error":{"code":-32000,"message":"вход не разобран: delay должен быть целым числом","data":{"reason":"NoResult","text":"вход не разобран: delay должен быть целым числом","trace":"т-7","step":3,"party":"ожидание"}}}
-{"jsonrpc":"2.0","method":"call","id":"нет-такой-1","params":{"attempt":1,"party":"нет-такой","input":{},"idle_term":0,"trace":"т-7","step":4}}
-{"jsonrpc":"2.0","id":"нет-такой-1","error":{"code":-32000,"message":"неизвестная сторона","data":{"reason":"NoResult","text":"неизвестная сторона","trace":"т-7","step":4,"party":"нет-такой"}}}
+{"jsonrpc":"2.0","method":"call","id":"wait-11","params":{"attempt":1,"party":"wait","input":{"delay":"долго"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-11","error":{"code":-32000,"message":"вход не разобран: delay должен быть целым числом","data":{"reason":"NoResult","text":"вход не разобран: delay должен быть целым числом","trace":"t-7","step":3,"party":"wait"}}}
+{"jsonrpc":"2.0","method":"call","id":"unknown-1","params":{"attempt":1,"party":"unknown","input":{},"idle_term":0,"trace":"t-7","step":4}}
+{"jsonrpc":"2.0","id":"unknown-1","error":{"code":-32000,"message":"неизвестная сторона","data":{"reason":"NoResult","text":"неизвестная сторона","trace":"t-7","step":4,"party":"unknown"}}}
 ```
 
 ### C23. Срок бездействия у вызова по транспорту
@@ -531,9 +531,9 @@
 - Критерий: у вызова программы по истечении 100 мс событие с кодом `Timeout`, запрос закрыт (поздний ответ — C14); у вызова машины (`idle_term` равен 0) события «нет ответа в срок» нет, проверяемая программа ждёт и принимает ответ строки 4.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"программа-2","params":{"attempt":1,"party":"программа","input":{"stage":"Plan"},"idle_term":100,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"call","id":"вложенная-1","params":{"attempt":1,"party":"вложенная","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":4}}
-{"jsonrpc":"2.0","id":"вложенная-1","result":{"party":"вложенная","result":{"stage":"Plan"},"trace":"т-7","step":4}}
+{"jsonrpc":"2.0","method":"call","id":"program-2","params":{"attempt":1,"party":"program","input":{"stage":"Plan"},"idle_term":100,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"nested-1","params":{"attempt":1,"party":"nested","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":4}}
+{"jsonrpc":"2.0","id":"nested-1","result":{"party":"nested","result":{"stage":"Plan"},"trace":"t-7","step":4}}
 ```
 
 ### C24. Получатель не обрывает по `idle_term`
@@ -543,8 +543,8 @@
 - Критерий: работа длится 500 мс при `idle_term` равном 100; получатель не отвечает отказом `Timeout` сам; приходит `reply`.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-12","params":{"attempt":1,"party":"ожидание","input":{"delay":500},"idle_term":100,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-12","result":{"party":"ожидание","result":{"delay":500,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-12","params":{"attempt":1,"party":"wait","input":{"delay":500},"idle_term":100,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-12","result":{"party":"wait","result":{"delay":500,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C25. Запись расхода с пустыми полями
@@ -554,8 +554,8 @@
 - Критерий: ответ принят; пустые поля `tokens`, `cost`, `context_used`, `variant` не ошибка и в запись расхода пишутся как «нет».
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"агент-3","params":{"attempt":1,"party":"агент","input":{"kind":"Lens","profile":{"family":"f1","model":"m1","effort":null},"session":"s-2","dialog_kind":"lens","context":"текст","limits":{"silence_term":null,"token_budget":null,"cost_budget":null,"turn_limit":null},"trace":"т-7.2","step":1},"idle_term":0,"trace":"т-7","step":5}}
-{"jsonrpc":"2.0","id":"агент-3","result":{"party":"агент","result":{"text":null,"artifact":"attempt-1.md","usage":{"session":"s-2","result":"done","family":"f1","model":{"id":"m1","provider":"p1","variant":null},"tokens":{"input":null,"output":null,"reasoning":null,"cache_read":null,"cache_write":null},"cost":null,"created":1792301400000,"updated":1792301401000,"context_used":null,"trace":"т-7.2","step":1},"request_started":null},"trace":"т-7","step":5}}
+{"jsonrpc":"2.0","method":"call","id":"agent-3","params":{"attempt":1,"party":"agent","input":{"kind":"Lens","profile":{"family":"f1","model":"m1","effort":null},"session":"s-2","dialog_kind":"lens","context":"текст","limits":{"silence_term":null,"token_budget":null,"cost_budget":null,"turn_limit":null},"trace":"t-7.2","step":1},"idle_term":0,"trace":"t-7","step":5}}
+{"jsonrpc":"2.0","id":"agent-3","result":{"party":"agent","result":{"text":null,"artifact":"attempt-1.md","usage":{"session":"s-2","result":"done","family":"f1","model":{"id":"m1","provider":"p1","variant":null},"tokens":{"input":null,"output":null,"reasoning":null,"cache_read":null,"cache_write":null},"cost":null,"created":1792301400000,"updated":1792301401000,"context_used":null,"trace":"t-7.2","step":1},"request_started":null},"trace":"t-7","step":5}}
 ```
 
 ### C26. Предел длины текста
@@ -566,8 +566,8 @@
 
 ```json
 {"jsonrpc":"2.0","method":"hello","id":"hello-1","params":{"version":1,"role":"caller","kind":"machine","fail_codes":["NoResult"],"max_text":10,"methods":["hello","call"]}}
-{"jsonrpc":"2.0","method":"call","id":"отказ-11","params":{"attempt":1,"party":"отказ","input":{"reason":"NoResult","text":"очень длинный текст отказа"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"отказ-11","error":{"code":-32000,"message":"очень длин","data":{"reason":"NoResult","text":"очень длин","trace":"т-7","step":3,"party":"отказ"}}}
+{"jsonrpc":"2.0","method":"call","id":"refuse-11","params":{"attempt":1,"party":"refuse","input":{"reason":"NoResult","text":"очень длинный текст отказа"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"refuse-11","error":{"code":-32000,"message":"очень длин","data":{"reason":"NoResult","text":"очень длин","trace":"t-7","step":3,"party":"refuse"}}}
 ```
 
 ### C27. Ответ, пришедший на паузе вызывающего
@@ -577,32 +577,32 @@
 - Критерий: ответ принят при поступлении и сохранён (не отброшен как поздний); обработан проверяемой программой после «продолжить», ровно один раз; подтверждений проверяющая сторона не ждёт.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-13","params":{"attempt":1,"party":"ожидание","input":{"delay":0},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-13","result":{"party":"ожидание","result":{"delay":0,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-13","params":{"attempt":1,"party":"wait","input":{"delay":0},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-13","result":{"party":"wait","result":{"delay":0,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C28. Объект, не являющийся сообщением
 
 - Проверяет: получатель и вызывающий. Строки, не являющиеся объектом JSON или не разбирающиеся как JSON, — случай C34; пакет — C33.
 - Проверяющая сторона шлёт строку 1 (объект без `jsonrpc` и `method`) и строку 3; проверяемая программа отвечает строками 2 и 4.
-- Критерий: получатель отвечает на строку 1 ошибкой −32600 с `id` равным `"эхо-11"` (он читается) и пишет строку в журнал; соединение не закрывается; запрос строки 3 обслуживается. Вызывающий такой объект от получателя отбрасывает со строкой в журнале и **не отвечает** (ответ-ошибка на ответ-ошибку цикла не заводит).
+- Критерий: получатель отвечает на строку 1 ошибкой −32600 с `id` равным `"echo-11"` (он читается) и пишет строку в журнал; соединение не закрывается; запрос строки 3 обслуживается. Вызывающий такой объект от получателя отбрасывает со строкой в журнале и **не отвечает** (ответ-ошибка на ответ-ошибку цикла не заводит).
 
 ```json
-{"id":"эхо-11"}
-{"jsonrpc":"2.0","id":"эхо-11","error":{"code":-32600,"message":"не запрос, не ответ и не уведомление","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-12","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-12","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"id":"echo-11"}
+{"jsonrpc":"2.0","id":"echo-11","error":{"code":-32600,"message":"не запрос, не ответ и не уведомление","data":null}}
+{"jsonrpc":"2.0","method":"call","id":"echo-12","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-12","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C29. Процесс умер до ответа
 
 - Проверяет: вызывающий, привязка к процессу (раздел J). Проверяющая сторона — программа, запущенная вызывающим как процесс.
 - Проверяемая программа шлёт строку 1; проверяющая сторона читает строку 1 и завершается (код выхода 1), не ответив; строка 2 по проводу не идёт: это исход, который порождает сам вызывающий.
-- Критерий: у запроса `программа-3` вызывающий порождает отказ с кодом `ConnectionLost` (не программа); запрос закрыт; в журнале запись с кодом выхода; после смерти процесса вызывающий в него не пишет.
+- Критерий: у запроса `program-3` вызывающий порождает отказ с кодом `ConnectionLost` (не программа); запрос закрыт; в журнале запись с кодом выхода; после смерти процесса вызывающий в него не пишет.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"программа-3","params":{"attempt":1,"party":"программа","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"программа-3","error":{"code":-32000,"message":"процесс завершился до ответа","data":{"reason":"ConnectionLost","text":"процесс завершился до ответа","trace":"т-7","step":3,"party":"программа"}}}
+{"jsonrpc":"2.0","method":"call","id":"program-3","params":{"attempt":1,"party":"program","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"program-3","error":{"code":-32000,"message":"процесс завершился до ответа","data":{"reason":"ConnectionLost","text":"процесс завершился до ответа","trace":"t-7","step":3,"party":"program"}}}
 ```
 
 ### C30. Тишина дольше `idle_term` у процесса
@@ -612,19 +612,19 @@
 - Критерий: через 100 мс тишины вызывающий закрывает стандартный ввод, убивает процесс и порождает отказ с кодом `Timeout`; запрос закрыт; поздняя строка, если процесс успел её записать, отбрасывается (C14); в журнале запись.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"программа-4","params":{"attempt":1,"party":"программа","input":{"stage":"Plan"},"idle_term":100,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"программа-4","error":{"code":-32000,"message":"нет ответа в срок","data":{"reason":"Timeout","text":"нет ответа в срок","trace":"т-7","step":3,"party":"программа"}}}
+{"jsonrpc":"2.0","method":"call","id":"program-4","params":{"attempt":1,"party":"program","input":{"stage":"Plan"},"idle_term":100,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"program-4","error":{"code":-32000,"message":"нет ответа в срок","data":{"reason":"Timeout","text":"нет ответа в срок","trace":"t-7","step":3,"party":"program"}}}
 ```
 
 ### C31. Мусорные строки в стандартном выводе
 
-- Проверяет: вызывающий, привязка к процессу (раздел J). Проверяющая сторона перед ответом пишет в стандартный вывод строки, которые не записать блоком: обрывок текста (`загрузка модели...`), оборванный объект (`{"jsonrpc":"2.0","id":"программа-5"`) и массив `[1,2]`; вызывающий их не отвечает ошибкой, а только отбрасывает.
+- Проверяет: вызывающий, привязка к процессу (раздел J). Проверяющая сторона перед ответом пишет в стандартный вывод строки, которые не записать блоком: обрывок текста (`загрузка модели...`), оборванный объект (`{"jsonrpc":"2.0","id":"program-5"`) и массив `[1,2]`; вызывающий их не отвечает ошибкой, а только отбрасывает.
 - Проверяемая программа шлёт строку 1; проверяющая сторона шлёт мусорные строки, затем отвечает строкой 2.
 - Критерий: каждая мусорная строка отброшена с отдельной строкой в журнале; обмен не прерван; ответ строки 2 принят ровно один раз; процесс не объявлен неисправным, пока число мусорных строк не дошло до предела проекта.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"программа-5","params":{"attempt":1,"party":"программа","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"программа-5","result":{"party":"программа","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"program-5","params":{"attempt":1,"party":"program","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"program-5","result":{"party":"program","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C32. Повторный запрос в режиме «процесс на запрос»
@@ -635,23 +635,23 @@
 - Критерий: у идемпотентной программы ответ повтора совпадает с сохранённым; у неидемпотентной на строку 3 приходит ровно один ответ, и дубликат протоколом не отсекается.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"ожидание-14","params":{"attempt":1,"party":"ожидание","input":{"delay":0},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-14","result":{"party":"ожидание","result":{"delay":0,"starts":1},"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","method":"call","id":"ожидание-14","params":{"attempt":1,"party":"ожидание","input":{"delay":0},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"ожидание-14","result":{"party":"ожидание","result":{"delay":0,"starts":1},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-14","params":{"attempt":1,"party":"wait","input":{"delay":0},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-14","result":{"party":"wait","result":{"delay":0,"starts":1},"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"wait-14","params":{"attempt":1,"party":"wait","input":{"delay":0},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"wait-14","result":{"party":"wait","result":{"delay":0,"starts":1},"trace":"t-7","step":3}}
 ```
 
 ### C33. Пакет отвергается
 
 - Проверяет: получатель. Пакетов (массив сообщений) протокол не знает.
 - Проверяющая сторона шлёт строки 1 и 3; проверяемая программа отвечает строками 2 и 4.
-- Критерий: на строку 1 ровно одна ошибка −32600 с `id` равным `null`; ни одна из вложенных строк не выполняется (ответов `эхо-13`, `эхо-14` нет, в журнале запись); соединение живёт; запрос строки 3 обслуживается.
+- Критерий: на строку 1 ровно одна ошибка −32600 с `id` равным `null`; ни одна из вложенных строк не выполняется (ответов `echo-13`, `echo-14` нет, в журнале запись); соединение живёт; запрос строки 3 обслуживается.
 
 ```json
-[{"jsonrpc":"2.0","method":"call","id":"эхо-13","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}},{"jsonrpc":"2.0","method":"call","id":"эхо-14","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}]
+[{"jsonrpc":"2.0","method":"call","id":"echo-13","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}},{"jsonrpc":"2.0","method":"call","id":"echo-14","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}]
 {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"пакеты не поддерживаются","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-15","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-15","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-15","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-15","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C34. Строка не JSON
@@ -661,13 +661,13 @@
 - Критерий: получатель отвечает на строку 1 ошибкой −32700 с `id` равным `null` и пишет строку в журнал; соединение живёт; запрос строки 3 обслуживается; ответ с `id` равным `null` ни получатель, ни вызывающий не отвечают.
 
 ```text
-{"jsonrpc":"2.0","method":"call","id":"эхо-16","params":
+{"jsonrpc":"2.0","method":"call","id":"echo-16","params":
 ```
 
 ```json
 {"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"строка не разобрана как JSON","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-17","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-17","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-17","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-17","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C35. Неверный запрос
@@ -677,14 +677,14 @@
 - Критерий: строка 1 (нет `method`) и строка 3 (`jsonrpc` не `"2.0"`) — ошибка −32600 с `id` из сообщения; строка 5 (`id` — число, а не строка) — ошибка −32600 с `id` равным `null`; процесс и соединение живы; запрос строки 7 обслуживается.
 
 ```json
-{"jsonrpc":"2.0","id":"эхо-18","params":{"party":"эхо"}}
-{"jsonrpc":"2.0","id":"эхо-18","error":{"code":-32600,"message":"нет метода","data":null}}
-{"jsonrpc":"1.0","method":"call","id":"эхо-19","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-19","error":{"code":-32600,"message":"версия конверта не 2.0","data":null}}
-{"jsonrpc":"2.0","method":"call","id":7,"params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-18","params":{"party":"echo"}}
+{"jsonrpc":"2.0","id":"echo-18","error":{"code":-32600,"message":"нет метода","data":null}}
+{"jsonrpc":"1.0","method":"call","id":"echo-19","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-19","error":{"code":-32600,"message":"версия конверта не 2.0","data":null}}
+{"jsonrpc":"2.0","method":"call","id":7,"params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
 {"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"id должен быть строкой","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-20","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-20","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-20","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-20","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C36. Неизвестный метод запроса
@@ -694,28 +694,28 @@
 - Критерий: на строку 1 (запрос с `id`, метод которого не `hello`, `call`) ровно одна ошибка −32601 с тем же `id` и запись в журнале; соединение живёт; запрос строки 3 обслуживается. Вызывающий, получивший −32601 на свой `call`, читает его как отказ `NoResult` и пишет числовой код в журнал.
 
 ```json
-{"jsonrpc":"2.0","method":"status","id":"с-1","params":{}}
-{"jsonrpc":"2.0","id":"с-1","error":{"code":-32601,"message":"метод status не поддерживается","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-21","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-21","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"status","id":"s-1","params":{}}
+{"jsonrpc":"2.0","id":"s-1","error":{"code":-32601,"message":"метод status не поддерживается","data":null}}
+{"jsonrpc":"2.0","method":"call","id":"echo-21","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-21","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 ### C37. Неверные `params`
 
 - Проверяет: получатель. Разница с C22: там `params` разобраны, а `input` не подходит стороне (обычный отказ `NoResult`); здесь `params` не разобрать вовсе.
 - Проверяющая сторона шлёт строки 1 и 3; проверяемая программа отвечает строками 2 и 4.
-- Критерий: на строку 1 (в `params` нет `party`, а `attempt` — строка) ровно одна ошибка −32602 с `id` равным `"эхо-22"`; работа не начата; запрос строки 3 обслуживается.
+- Критерий: на строку 1 (в `params` нет `party`, а `attempt` — строка) ровно одна ошибка −32602 с `id` равным `"echo-22"`; работа не начата; запрос строки 3 обслуживается.
 
 ```json
-{"jsonrpc":"2.0","method":"call","id":"эхо-22","params":{"attempt":"один","input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-22","error":{"code":-32602,"message":"params: нет party, attempt не число","data":null}}
-{"jsonrpc":"2.0","method":"call","id":"эхо-23","params":{"party":"эхо","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"т-7","step":3}}
-{"jsonrpc":"2.0","id":"эхо-23","result":{"party":"эхо","result":{"stage":"Plan"},"trace":"т-7","step":3}}
+{"jsonrpc":"2.0","method":"call","id":"echo-22","params":{"attempt":"один","input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-22","error":{"code":-32602,"message":"params: нет party, attempt не число","data":null}}
+{"jsonrpc":"2.0","method":"call","id":"echo-23","params":{"party":"echo","attempt":1,"input":{"stage":"Plan"},"idle_term":0,"trace":"t-7","step":3}}
+{"jsonrpc":"2.0","id":"echo-23","result":{"party":"echo","result":{"stage":"Plan"},"trace":"t-7","step":3}}
 ```
 
 - Строка 1 — проверяющая сторона шлёт запрос `call` с испорченными `params`: нет `party`, а `attempt` — строка «один».
-- Строка 2 — ответ проверяемой программы: `error` с кодом −32602 («неверные `params`») и тем же `id` `эхо-22`; работа не начата.
-- Строка 3 — исправный запрос к стороне `эхо`: `input` равен `{"stage":"Plan"}`.
+- Строка 2 — ответ проверяемой программы: `error` с кодом −32602 («неверные `params`») и тем же `id` `echo-22`; работа не начата.
+- Строка 3 — исправный запрос к стороне `echo`: `input` равен `{"stage":"Plan"}`.
 - Строка 4 — ответ `result` на строку 3 с тем же `id`: эхо возвращает свой `input`.
 
 ## I. Соответствие правилам спецификации
@@ -781,7 +781,7 @@
 10. **Нет места для записи расхода у ответов, кроме `AgentReply`.** Роль без агента расхода не сообщает; протокол места не вводит.
 11. **Нет признака типа полезной нагрузки.** `input` и `result` определяются стороной `party`; версия типа нагрузки в протоколе не передаётся.
 12. **Сигнал человека напрямую к программе** (не к машине): контракт описывает паузу только у машин; программа без паузы не называет `signal` в `methods`, и что делает человек, если ему нужно остановить такую программу, контракт не говорит.
-13. **Обязательные стороны проверки (`эхо`, `ожидание`, `отказ`)** — требование набора, а не контракта; у вложенной машины, не умеющей их открыть, набор частично неисполним.
+13. **Обязательные стороны проверки (`echo`, `wait`, `refuse`)** — требование набора, а не контракта; у вложенной машины, не умеющей их открыть, набор частично неисполним.
 14. **У набора нет исполнителя.** Блоки заданы, прогонщика (подставной проверяющей стороны и сверки) не написано; до его появления соответствие проверяется вручную.
 15. **Нет сигнала «жив» при долгой тихой работе.** Программа, которая долго работает без вывода, неотличима от зависшей: срок `idle_term` её убьёт, а продлить его программа не может. JSON-RPC пульса не даёт; уведомление от получателя к вызывающему (метод вроде `alive`) было бы совместимым расширением, но не введено.
 16. **Пределы привязки к процессу — параметры проекта,** протокол чисел не задаёт: наибольший размер сообщения, допустимое число мусорных строк, срок ожидания выхода после закрытия ввода.
