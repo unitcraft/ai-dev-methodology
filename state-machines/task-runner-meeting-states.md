@@ -173,7 +173,7 @@ type Severity enum
 | Desirable
 
 /// Свод
-type Summary { k int, p int }
+type Summary { critical int, probes int }
 
 /// ВходСовещания
 type MeetingInput { proposal str, lens_order []str, author_question Option[str] }

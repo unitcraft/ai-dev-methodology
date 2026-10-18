@@ -199,7 +199,7 @@ type ArtifactStatus enum
 
 /// Стоп-слово
 type StopWord enum
-| None
+| NoWord
 | Revision
 | Plan
 | Requirements
