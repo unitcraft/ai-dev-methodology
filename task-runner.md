@@ -337,7 +337,7 @@ state
 
 ## Алгоритм
 
-Псевдокод цикла задачи — [task-runner-pseudocode.md](task-runner-pseudocode.md).
+Псевдокод цикла задачи — [task-runner-pseudocode.md](task-runner-pseudocode.md) (устарел). Та же схема состояниями и переходами — [task-runner-states.md](task-runner-states.md) (фазы и ворота) и [task-runner-review-states.md](task-runner-review-states.md) (проверка цикла, `loop_review`); с 2026-10-18 для схемы раннера первичны они.
 
 ## Ворота
 
