@@ -16,6 +16,7 @@
 | [task-runner-states.md](task-runner-states.md)<br>[task-runner-automaton.md](task-runner-automaton.md) | машина «Раннер», фазы цикла и маршрут задачи |
 | [task-runner-meeting-states.md](task-runner-meeting-states.md)<br>[task-runner-meeting-automaton.md](task-runner-meeting-automaton.md) | машина «Совещание агентов» |
 | [check-tables.py](check-tables.py) | сверка таблиц состояний с кодом автоматов (имена, виды, стороны, «Куда», достижимость); запуск `python state-machines/check-tables.py` из корня, код 1 при расхождениях |
+| [check-protocol.py](check-protocol.py) | прогонщик набора проверок протокола вызова (раздел H) для получателя: играет вызывающего, запускает программу дочерним процессом, сверяет ответы; есть встроенный эталонный получатель и самопроверка мутациями; запуск `python state-machines/check-protocol.py -- <команда>` или `--selftest` из корня, код 1 при провале |
 | [task-runner-pseudocode.md](task-runner-pseudocode.md), [task-runner-meeting-pseudocode.md](task-runner-meeting-pseudocode.md) | старые схемы раннера и совещания; устарели, первоисточник — файлы состояний |
 
 Слои: движок — любая машина; слой методики — общее для машин методики; машины — совещание, раннер, проверка цикла, запуск сессии, шаг агента. Корневые документы методики остаются в корне репозитория: [methodology.md](../methodology.md), [task-sessions.md](../task-sessions.md), [task-runner.md](../task-runner.md).
