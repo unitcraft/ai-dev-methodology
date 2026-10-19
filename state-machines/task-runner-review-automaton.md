@@ -586,16 +586,16 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     if @stage == Stage.Meeting { return Go(Pass) }
     // ВХОД_ПРОВЕРКИ #2: стадия отлична от «совещание», и чистых_подряд меньше МИНИМУМ_ЧИСТЫХ_ПОДРЯД
     if @stage != Stage.Meeting && @clean_needed < MIN_CLEAN_NEEDED {
-      return environment.machine_error("ошибка машины: чистых_подряд ниже минимума методики")
+      return environment.machine_error(journal_event("clean_needed_below_min", []JournalParam.new()))
     }
     // ВХОД_ПРОВЕРКИ #3: стадия отлична от «совещание», чистых_подряд не меньше МИНИМУМ_ЧИСТЫХ_ПОДРЯД, и проб_в_чистом меньше МИНИМУМ_ПРОБ_В_ЧИСТОМ
     if @stage != Stage.Meeting && @clean_needed >= MIN_CLEAN_NEEDED && @probes_min < MIN_PROBES {
-      return environment.machine_error("ошибка машины: проб_в_чистом ниже минимума методики")
+      return environment.machine_error(journal_event("probes_min_below_min", []JournalParam.new()))
     }
     // ВХОД_ПРОВЕРКИ #4: стадия отлична от «совещание», чистых_подряд не меньше МИНИМУМ_ЧИСТЫХ_ПОДРЯД, и проб_в_чистом не меньше МИНИМУМ_ПРОБ_В_ЧИСТОМ
     if @stage != Stage.Meeting && @clean_needed >= MIN_CLEAN_NEEDED && @probes_min >= MIN_PROBES { return Go(Pass) }
     // ВХОД_ПРОВЕРКИ #5: иначе
-    environment.machine_error("ошибка машины: развилка ReviewEntry, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ReviewEntry")]))
   }
 
   // ===================== ЗАХОД — развилка =====================
@@ -614,7 +614,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(End)
     }
     // ЗАХОД #4: иначе
-    environment.machine_error("ошибка машины: развилка Pass, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Pass")]))
   }
 
   // ===================== СОВЕЩАНИЕ — обращение =====================
@@ -626,7 +626,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // СОВЕЩАНИЕ #2: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal("совещание остановлено: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("meeting_stopped", [param("reason", "${fail_code_word(reason)}")]))
       @verdict = "stopped"
       Go(End)
     }
@@ -645,7 +645,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ЗАПУСК_СЕССИИ #2: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("запуск сессии ${@session} не дал итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("session_launch_failed", [param("session", "${@session}"), param("reason", "${fail_code_word(reason)}")]))
       Go(SessionFailure)
     }
     _ => NotAwaited
@@ -664,7 +664,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Halted)
     }
     // ОТКАЗ_СЕССИИ #3: иначе
-    environment.machine_error("ошибка машины: развилка SessionFailure, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "SessionFailure")]))
   }
 
   // ===================== ПОСЛЕ_СЕССИИ — развилка =====================
@@ -684,14 +684,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(End)
     }
     // ПОСЛЕ_СЕССИИ #5: иначе
-    environment.machine_error("ошибка машины: развилка AfterSession, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "AfterSession")]))
   }
 
   // ===================== СВОДКА — развилка =====================
   SummaryParsing => match @summary(@number) {
     // СВОДКА #1: итога свода нет
     None => {
-      environment.write_journal("итоговой строки нет, все находки считаются существенными")
+      environment.write_journal(journal_event("no_summary_line_all_significant", []JournalParam.new()))
       @no_probes = 0
       Go(Gate3)
     }
@@ -707,13 +707,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // СВОДКА #4: итог свода есть, существенных нет, и проб меньше проб_в_чистом
     Some(outcome) if outcome.essential == 0 && outcome.probes < @probes_min => {
-      environment.write_journal("заход ${@number}: чистый без проб, не засчитан")
+      environment.write_journal(journal_event("pass_clean_without_probes", [param("pass", "${@number}")]))
       @number += 1
       @no_probes += 1
       Go(NoProbes)
     }
     // СВОДКА #5: иначе
-    _ => environment.machine_error("ошибка машины: развилка SummaryParsing, ни одно условие не подошло")
+    _ => environment.machine_error(journal_event("fork_no_match", [param("fork", "SummaryParsing")]))
   }
 
   // ===================== БЕЗ_ПРОБ — развилка =====================
@@ -724,7 +724,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       // БЕЗ_ПРОБ #2: без_проб_подряд больше 1
       Some(AskHuman) => Go(Retry)
       // БЕЗ_ПРОБ #3: иначе
-      None => environment.machine_error("ошибка машины: развилка NoProbes, ни одно условие не подошло")
+      None => environment.machine_error(journal_event("fork_no_match", [param("fork", "NoProbes")]))
     }
   }
 
@@ -744,7 +744,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate3 => match event_body {
     // В3 #1: В3: «не засчитан»
     Gate3NotCounted => {
-      environment.write_journal("заход ${@number}: пробы — не пробы, не засчитан")
+      environment.write_journal(journal_event("pass_probes_not_probes", [param("pass", "${@number}")]))
       @number += 1
       Go(Pass)
     }
@@ -773,7 +773,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(CriterionNotConverging)
     }
     // ИТОГ_ЗАХОДА #3: иначе
-    environment.machine_error("ошибка машины: развилка PassOutcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "PassOutcome")]))
   }
 
   // ===================== КРИТЕРИЙ_НЕ_СХОДИТСЯ — развилка =====================
@@ -783,7 +783,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // КРИТЕРИЙ_НЕ_СХОДИТСЯ #2: наибольший_счётчик(проходов_по_доказательству) не меньше ПОТОЛОК_ДОКАЗАТЕЛЬСТВА
     if max_counter(@passes_by_evidence) >= PROOF_CEILING { return Go(Gate15) }
     // КРИТЕРИЙ_НЕ_СХОДИТСЯ #3: иначе
-    environment.machine_error("ошибка машины: развилка CriterionNotConverging, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "CriterionNotConverging")]))
   }
 
   // ===================== В15 — обращение =====================
@@ -791,7 +791,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate15 => match event_body {
     // В15 #1: В15: «сузить» (что_теряем: Текст)
     Gate15Narrow { loss } => {
-      environment.write_journal("решение владельца: сужено: ${loss}")
+      environment.write_journal(journal_event("owner_narrowed", [param("loss", "${loss}")]))
       @narrowed = concat_texts(@narrowed, narrowing_notes(@gate3_findings, @passes_by_evidence, loss))
       @gate3_findings = without_reached(@gate3_findings, @passes_by_evidence)
       @passes_by_evidence = reset_reached(@passes_by_evidence)
@@ -817,7 +817,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПОСЛЕ_СУЖЕНИЯ #2: находки_В3 не равны `[]`
     if @gate3_findings.len() > 0 { return Go(Ceiling) }
     // ПОСЛЕ_СУЖЕНИЯ #3: иначе
-    environment.machine_error("ошибка машины: развилка AfterNarrowing, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "AfterNarrowing")]))
   }
 
   // ===================== ПОТОЛОК — развилка =====================
@@ -827,7 +827,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПОТОЛОК #2: (номер_захода − 1) − заход_отсчёта + 1 не меньше потолок_заходов
     if ceiling_reached(@cycle(), @ceiling) { return Go(Gate9) }
     // ПОТОЛОК #3: иначе
-    environment.machine_error("ошибка машины: развилка Ceiling, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Ceiling")]))
   }
 
   // ===================== В9 — обращение =====================
@@ -883,7 +883,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СТАДИЯ_ОСТАНОВКИ #4: стадия = «план»
     if @stage == Stage.Plan { return Go(Levels) }
     // СТАДИЯ_ОСТАНОВКИ #5: иначе
-    environment.machine_error("ошибка машины: развилка StopStage, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "StopStage")]))
   }
 
   // ===================== УРОВНИ — развилка =====================
@@ -922,7 +922,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(SessionLaunch)
     }
     // УРОВНИ #7: иначе
-    environment.machine_error("ошибка машины: развилка Levels, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Levels")]))
   }
 
   // ===================== ИТОГ_ПРАВКИ — развилка =====================
@@ -953,7 +953,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(End)
     }
     // ИТОГ_ПРАВКИ #6: иначе
-    environment.machine_error("ошибка машины: развилка FixOutcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "FixOutcome")]))
   }
 
   // ===================== ПАУЗА — обращение =====================
@@ -1018,7 +1018,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   //   (движок: `отменить_все_открытые_запросы`); в журнал — «проверка цикла остановлена: <остановка>»; вызвавшая машина получает `Refusal` (таблица «конец → ответ»).
   Halted => {
     environment.add_irreversible(Irreversible.StopAgentGroup)
-    environment.write_journal("проверка цикла остановлена: ${@stop_reason}")
+    environment.write_journal(journal_event("review_stopped", [param("reason", "${@stop_reason}")]))
   }
   // ОШИБКА: группа процессов агента останавливается; в журнал — запись из перехода и данные машины; вызвавшая машина получает `Refusal`; решает человек вне машины.
   Errored => {
@@ -1028,7 +1028,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   }
   // КОНЕЦ: в журнал — вердикт, источник маршрута и счётчики цикла; ответ `Answer` с итогом проверки уходит вызвавшей машине.
   End => {
-    environment.write_journal("проверка цикла: вердикт ${@verdict}, источник ${@verdict_source}, номер_захода ${@number}, заход_отсчёта ${@origin}, серия_чистых ${@streak}, без_проб_подряд ${@no_probes}, записей сужено ${@narrowed.len()}")
+    environment.write_journal(journal_event("review_state", [param("verdict", "${@verdict}"), param("source", "${@verdict_source}"), param("pass", "${@number}"), param("origin", "${@origin}"), param("streak", "${@streak}"), param("no_probes", "${@no_probes}"), param("narrowed", "${@narrowed.len()}")]))
   }
   _ => ()
 }

@@ -398,7 +398,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ОБЪЁМ #2: объём_запуска = «не помещается»
     if launch_scope() == "does_not_fit" { return Go(Gate1) }
     // ОБЪЁМ #3: иначе
-    environment.machine_error("ошибка машины: развилка Scope, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Scope")]))
   }
 
   // ===================== В1 — обращение =====================
@@ -424,7 +424,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СЕССИЯ #2: сбой (причина: КодСбоя)
     Failure { reason, refusal_text: text } => {
       @refusal_text = text
-      environment.write_journal("сессия ${@session} не завершилась: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("session_not_finished", [param("session", "${@session}"), param("reason", "${fail_code_word(reason)}")]))
       Go(Gate13Session)
     }
     _ => NotAwaited
@@ -514,7 +514,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   //   вызывающая машина получает `Refusal` (таблица «конец → ответ»).
   Halted => {
     environment.add_irreversible(Irreversible.StopAgentGroup)
-    environment.write_journal("запуск сессии остановлен: ${@stop_reason}")
+    environment.write_journal(journal_event("session_launch_stopped", [param("reason", "${@stop_reason}")]))
   }
   // ОШИБКА: группа процессов агента останавливается; в журнал — запись из перехода и данные машины; вызывающая машина получает `Refusal`; решает человек вне машины.
   Errored => {
@@ -525,7 +525,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   // КОНЕЦ: в журнал — код сессии и итог сессии; ответ `Answer` с итогом запуска уходит вызывающей машине.
   End => {
     ro outcome = required(@result, "End: the session outcome is recorded in Session")
-    environment.write_journal("запуск сессии: сессия ${@session}, итог ${outcome_word(outcome)}")
+    environment.write_journal(journal_event("session_result", [param("session", "${@session}"), param("outcome", "${outcome_word(outcome)}")]))
   }
   _ => ()
 }

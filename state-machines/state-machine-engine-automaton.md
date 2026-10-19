@@ -118,8 +118,14 @@ type Message enum
 /// Запись движка: сколько запрос ждёт ответа — для «нет ответа в срок» (срок бездействия — данные запроса, правило 19)
 type Waiting { sent int, term int }
 
-/// Запись журнала: конверт трассировки и текст строки (правило 31); `счёт_по_моделям` — буфер строк счёта по моделям, пишется при фиксации
-type JournalEntry { trace str, step int, cause str, state str, request str, at Timestamp, text str, model_tally str }
+/// Параметр события журнала: имя и значение-строка (значение вызывающий делает сам, `"${x}"`)
+type JournalParam { name str, value str }
+
+/// Событие журнала со структурой: код — латинский ключ события, по нему обработчик берёт русский шаблон из [state-machine-journal.md](state-machine-journal.md); готового русского текста в событии нет
+type JournalEvent { code str, params []JournalParam }
+
+/// Запись журнала: конверт трассировки и событие строки (правило 31); `счёт_по_моделям` — буфер строк счёта по моделям, пишется при фиксации
+type JournalEntry { trace str, step int, cause str, state str, request str, at Timestamp, event JournalEvent, model_tally str }
 
 /// Запись движка: как состояние-обращение обращается к сторонам (правила 15, 21, 35).
 /// `вложенная` — сторона запроса вложенная машина: ей идут сигналы «стоп», «продолжить», «остановить», «отмена», её запрос после перезапуска повторяется тем же идентификатором;
@@ -148,7 +154,7 @@ type EngineState[State] {
   nested_signals []NestedSignal,        // сигналы вложенным машинам («стоп», «продолжить», «остановить», «отмена») с идентификаторами их запросов, поставленные шагом; после фиксации их передаёт и очищает исполнитель (правило 35)
   waiting HashMap[str, Waiting],             // открытые запросы и их сроки: «нет ответа в срок» рождается из сравнения с `Time`; в снимок не входит осмысленно: после перезапуска сбрасывается
   model_tally str,                         // буфер строк счёта по моделям: пишется в журнал при фиксации
-  transition_note str,                         // текст журнала перехода в ОШИБКУ; пишет ошибка_машины
+  transition_note JournalEvent,                // событие журнала перехода в ОШИБКУ; пишет ошибка_машины; до первой ошибки — событие с пустым кодом
   human_words str,                          // слово человека с автором и источником, ключ — идентификатор события; никакой шаг не читает
   failure_texts str,                            // свободный текст отказа, ключ — идентификатор события сбоя; никакой шаг не читает, в журнал не идёт
   nested_ids []str,                             // идентификаторы запросов к вложенным машинам (по `вложенная` описания обращения): пишет отправка; открытыми считаются те из них, что лежат в открытые_запросы
@@ -169,7 +175,7 @@ fn EngineState.new(initial State) -> EngineState[State] => {
   nested_signals: []NestedSignal.new(),
   waiting: HashMap[str, Waiting].new(),
   model_tally: "",
-  transition_note: "",
+  transition_note: JournalEvent { code: "", params: []JournalParam.new() },
   human_words: "",
   failure_texts: "",
   nested_ids: []str.new(),
@@ -182,8 +188,8 @@ fn EngineState.new(initial State) -> EngineState[State] => {
 /// Среда: что движок даёт машине внутри перехода — служебные операции и данные движка (правила 8, 13, 14, 17, 18, 19, 21, 35).
 /// Машина меняет данные движка только через неё.
 type Environment[State, Event, Action] protocol {
-  mut @write_journal(text str) Journal Time -> ()                                   // строка журнала с конвертом: трасса, номер_шага, причина_шага, состояние, идентификатор запроса, время (правило 31)
-  mut @machine_error(text str) Journal Time -> Transition[State]             // писать_журнал(текст); запись_перехода = текст; Куда(состояние ошибки)
+  mut @write_journal(event JournalEvent) Journal Time -> ()                         // строка журнала с конвертом: трасса, номер_шага, причина_шага, состояние, идентификатор запроса, время (правило 31)
+  mut @machine_error(event JournalEvent) Journal Time -> Transition[State]   // писать_журнал(событие); запись_перехода = событие; Куда(состояние ошибки)
   mut @record_human_word(event Incoming[Event], word str, author str, source str) Journal Time -> ()
   mut @discard(event Incoming[Event]) Journal Time -> ()                       // чужой или поздний сигнал: строка журнала, состояние то же (правило 17)
   mut @pass_to_nested(signal str)
@@ -194,7 +200,7 @@ type Environment[State, Event, Action] protocol {
   @open_requests() -> []str
   @previous() -> str
   @call_request_id() -> str
-  @transition_note() -> str
+  @transition_note() -> JournalEvent
 }
 
 /// Автомат: что движок требует от машины. Любая машина, у которой есть эти методы, подходит (соответствие структурное, `impl` не нужен).
@@ -339,15 +345,15 @@ fn Engine @at_end_or_pause(state State) -> bool => @at_end(state) || state == @m
 // псевдокод: ресивер передаётся как значение протокола
 fn Engine @environment() -> Environment[State, Event, Action]
 // строка журнала с конвертом: трасса, номер_шага, причина_шага, состояние, идентификатор запроса, время (правило 31)
-fn Engine mut @write_journal(text str) Journal Time -> () {
+fn Engine mut @write_journal(event JournalEvent) Journal Time -> () {
   Journal.write(JournalEntry {
     trace: @engine_state.trace, step: @engine_state.step, cause: @engine_state.cause, state: @machine.state_name(@engine_state.state),
-    request: @engine_state.call_request_id, at: Time.now(), text, model_tally: @engine_state.model_tally })
+    request: @engine_state.call_request_id, at: Time.now(), event, model_tally: @engine_state.model_tally })
 }
-// писать_журнал(текст); запись_перехода = текст; Куда(состояние ошибки)
-fn Engine mut @machine_error(text str) Journal Time -> Transition[State] {
-  @write_journal(text)
-  @engine_state.transition_note = text
+// писать_журнал(событие); запись_перехода = событие; Куда(состояние ошибки)
+fn Engine mut @machine_error(event JournalEvent) Journal Time -> Transition[State] {
+  @write_journal(event)
+  @engine_state.transition_note = event
   Go(@machine.error_state())
 }
 // «слова_человека», ключ — событие.идентификатор; ссылка в журнале (правила 19, 31)
@@ -398,7 +404,7 @@ fn Engine mut @return_first_to_send(party str) {
 fn Engine @open_requests() -> []str => @engine_state.open_requests
 fn Engine @previous() -> str => @engine_state.previous
 fn Engine @call_request_id() -> str => @engine_state.call_request_id
-fn Engine @transition_note() -> str => @engine_state.transition_note
+fn Engine @transition_note() -> JournalEvent => @engine_state.transition_note
 // последний этап фиксации: выполняет необратимые действия шага, повторяемые без вреда (снять право ещё раз, переименовать уже переименованное — пусто)
 fn Engine mut @run_irreversible() Objects -> () {
   for action in @irreversible_actions {
@@ -514,7 +520,7 @@ fn Engine mut @pass_accumulated_signals() Journal Link Time -> () {
     // «отмена» доставляется всегда (отмена уже вынула запрос из открытые_запросы); «стоп», «продолжить», «остановить» — только запросам, ещё лежащим в открытые_запросы
     if signal.signal == "cancel" || @engine_state.open_requests.contains(signal.request) {
       Link.signal(signal.request, signal.signal)
-      @write_journal("${signal.signal} передан ${signal.request}")   // «стоп передан <идентификатор_запроса>», «продолжить передано <идентификатор_запроса>»
+      @write_journal(journal_event("signal_passed", [param("signal", "${signal.signal}"), param("request", "${signal.request}")]))   // «стоп передан <идентификатор_запроса>», «продолжить передано <идентификатор_запроса>»
     }
   }
   @engine_state.nested_signals = []NestedSignal.new()
@@ -604,13 +610,19 @@ fn Engine @load_snapshot(id str) Store -> Option[Snapshot] => match Store.load(i
 
 ```nova
 // Функции, одинаковые у всех машин: записаны один раз здесь, а не копиями в каждой машине; машина зовёт их по имени.
-// Таблица «остановка → код» и тексты журнала остаются у машины: движок их не знает.
+// Таблица «остановка → код» и события журнала (коды и параметры) остаются у машины: движок их не знает; русские шаблоны событий — в [state-machine-journal.md](state-machine-journal.md).
 
 /// Значение обязательного поля входа или данных события: пустое — ошибка программы
 fn required[V](value Option[V], description str) -> V => match value {
   Some(found) => found
   None => unreachable(description)
 }
+
+/// Параметр события журнала: значение — всегда строка, вызывающий делает `"${x}"` сам
+fn param(name str, value str) -> JournalParam => JournalParam { name, value }
+
+/// Событие журнала: код (латинский snake_case, таблица шаблонов — state-machine-journal.md) и параметры
+fn journal_event(code str, params []JournalParam) -> JournalEvent => JournalEvent { code, params }
 
 /// Результат операции над объектом: ошибка — машина не идёт дальше (необратимые действия повторяются без вреда)
 fn object_ok(result Result[(), ObjectError], description str) -> () => match result {
@@ -675,7 +687,7 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
       // ОБЩ стоп_человека #1: в любом состоянии, кроме ОСТАНОВЛЕНО, ОШИБКА, КОНЕЦ и ПАУЗА
       if @at_end_or_pause(@engine_state.state) { @discard(event); return Some(Stay) }
       @record_human_word(event, human_word, author, source)
-      @write_journal("стоп человека: ${author}, ${source}, запись ${event.id}")
+      @write_journal(journal_event("human_stop", [param("author", "${author}"), param("source", "${source}"), param("event", "${event.id}")]))
       @engine_state.previous = @machine.state_name(@engine_state.state)
       // открытые_запросы без принятого ответа отменены (правило 18), кроме запросов к вложенным машинам
       @cancel_open_without_accepted(true)
@@ -688,7 +700,7 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
       // ОБЩ стоп_от_родителя #1: те же состояния, если идентификатор_запроса события = запрос_вызова, иначе сигнал отброшен (правило 17)
       if @at_end_or_pause(@engine_state.state) { @discard(event); return Some(Stay) }
       if id != @engine_state.call_request_id { @discard(event); return Some(Stay) }
-      @write_journal("пауза: причина — стоп от родителя, ${id}, запись ${event.id}")
+      @write_journal(journal_event("pause_by_parent_stop", [param("request", "${id}"), param("event", "${event.id}")]))
       // слова человека не записываются (""): слов_человека не пишется
       @engine_state.previous = @machine.state_name(@engine_state.state)
       @cancel_open_without_accepted(true)
@@ -700,17 +712,17 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
       // событие приходит в любом состоянии
       // ОБЩ отмена_запроса #1: идентификатор_запроса события не равен запрос_вызова
       if id != @engine_state.call_request_id {
-        @write_journal("отмена отброшена: чужой запрос ${id}, запись ${event.id}")
+        @write_journal(journal_event("cancel_discarded_foreign_request", [param("request", "${id}"), param("event", "${event.id}")]))
         return Some(Stay)
       }
       // ОБЩ отмена_запроса #2: = запрос_вызова, и ответ уже отдан (состояние — ОСТАНОВЛЕНО, ОШИБКА или КОНЕЦ)
       if id == @engine_state.call_request_id && @at_end(@engine_state.state) {
-        @write_journal("отмена отброшена: ответ уже отдан, ${id}, запись ${event.id}")
+        @write_journal(journal_event("cancel_discarded_already_replied", [param("request", "${id}"), param("event", "${event.id}")]))
         return Some(Stay)
       }
       // ОБЩ отмена_запроса #3: = запрос_вызова, и ответ не отдан
       if id == @engine_state.call_request_id && !@at_end(@engine_state.state) {
-        @write_journal("отмена запроса: ${id}, запись ${event.id}")
+        @write_journal(journal_event("request_cancelled", [param("request", "${id}"), param("event", "${event.id}")]))
         @machine.record_stop("cancel_request")
         // сигнал ставится ДО отмены: вложенные ещё лежат в открытые_запросы (правило 35, п. 10)
         @pass_to_nested("cancel")
@@ -718,7 +730,7 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
         return Some(Go(@machine.halted_state()))
       }
       // ОБЩ отмена_запроса #4: иначе
-      Some(@machine_error("ошибка машины: разбор отмены_запроса, ни одно условие не подошло"))
+      Some(@machine_error(journal_event("cancel_parse_no_match", []JournalParam.new())))
     }
 
     // события ПАУЗЫ — фрагмент «Пауза» (state-machine-pause-states.md, состояние ПАУЗА): строк состояния у машины нет, разбирает движок
@@ -727,7 +739,7 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
       if @engine_state.state != @machine.pause_state() { @discard(event); return Some(Stay) }
       // ПАУЗА #1: «продолжить»
       @record_human_word(event, human_word, author, source)
-      @write_journal("продолжение с ${@engine_state.previous}: ${author}, ${source}, запись ${event.id}")
+      @write_journal(journal_event("human_continue", [param("previous", "${@engine_state.previous}"), param("author", "${author}"), param("source", "${source}"), param("event", "${event.id}")]))
       @pass_to_nested("continue")                // после фиксации шага, журнал «продолжить передано <идентификатор_запроса>»
       Some(Go(@machine.state_by_name(@engine_state.previous)))   // «предыдущее» при этом не пишется (правила 13 и 24)
     }
@@ -743,7 +755,7 @@ fn Engine mut @common_events(event Incoming[Event]) Journal Link Time -> Option[
       if @engine_state.state != @machine.pause_state() { @discard(event); return Some(Stay) }
       // ПАУЗА #3: «продолжить от родителя» (если идентификатор_запроса события = запрос_вызова, иначе отброшено)
       if id != @engine_state.call_request_id { @discard(event); return Some(Stay) }
-      @write_journal("продолжение с ${@engine_state.previous}: от родителя ${id}, запись ${event.id}")
+      @write_journal(journal_event("parent_continue", [param("previous", "${@engine_state.previous}"), param("request", "${id}"), param("event", "${event.id}")]))
       // слова человека не записываются ("")
       @pass_to_nested("continue")
       Some(Go(@machine.state_by_name(@engine_state.previous)))

@@ -767,7 +767,7 @@ fn MachineData mut @on_resume(saved State, environment MachineEnvironment) Journ
       @preparation_return = @state_name(saved)
       Some(Go(Gate13Preparation))
     }
-    _ => Some(environment.machine_error("ошибка машины: развилка PreparationOutcome, ни одно условие не подошло"))
+    _ => Some(environment.machine_error(journal_event("fork_no_match", [param("fork", "PreparationOutcome")])))
   }
 }
 // возвращает документ в черновик и снимает его утверждение (`invalidate`): первая строка ← «Статус: черновик» (необратимое), запись об утверждении удаляется;
@@ -963,9 +963,9 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       // ПОДГОТОВКА_ИТОГ #5: итог_подготовки события = «группа процессов не остановлена»
       if outcome == "группа процессов не остановлена" { return Go(Gate13Preparation) }
       // ПОДГОТОВКА_ИТОГ #6: иначе
-      environment.machine_error("ошибка машины: развилка PreparationOutcome, ни одно условие не подошло")
+      environment.machine_error(journal_event("fork_no_match", [param("fork", "PreparationOutcome")]))
     }
-    _ => environment.machine_error("ошибка машины: развилка PreparationOutcome, ни одно условие не подошло")      // события операции ПОДГОТОВКА нет: итога подготовки нет
+    _ => environment.machine_error(journal_event("fork_no_match", [param("fork", "PreparationOutcome")]))      // события операции ПОДГОТОВКА нет: итога подготовки нет
   }
 
   // ===================== В13_ПОДГОТОВКА — обращение =====================
@@ -1009,14 +1009,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СВЕРКА_СПЕЦИФИКАЦИИ #7: спецификация есть, её статус «утверждено», и утверждение спецификации действует
     if status_equals(@specification(), ArtifactStatus.Approved) && @approval_valid("specification") { return Go(PlanReconciliation) }
     // СВЕРКА_СПЕЦИФИКАЦИИ #8: иначе
-    environment.machine_error("ошибка машины: развилка SpecificationReconciliation, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "SpecificationReconciliation")]))
   }
 
   // ===================== СНЯТИЕ_СПЕЦИФИКАЦИИ — операция =====================
   SpecificationSnapshot => match event_body {
     // СНЯТИЕ_СПЕЦИФИКАЦИИ #1: сразу
     Immediate => {
-      environment.write_journal("правка после утверждения, статус снят: спецификация")
+      environment.write_journal(journal_event("edit_after_approval_specification", []JournalParam.new()))
       Go(PlanReconciliation)
     }
     _ => NotAwaited
@@ -1029,7 +1029,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       @phase = "AnalysisPhase"
       @set_cycle(Stage.Implementation, reset_streaks(@cycle(Stage.Implementation)))
       @set_cycle(Stage.Delivery, reset_streaks(@cycle(Stage.Delivery)))
-      environment.write_journal("правка копии постановки после утверждения, статус снят: спецификация")
+      environment.write_journal(journal_event("brief_copy_edit_after_approval", []JournalParam.new()))
       Go(PlanReconciliation)
     }
     _ => NotAwaited
@@ -1048,14 +1048,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СВЕРКА_ПЛАНА #5: план есть, его статус «утверждено», и утверждение плана действует
     if status_equals(@task_plan(), ArtifactStatus.Approved) && @approval_valid("plan") { return Go(PhaseSwitch) }
     // СВЕРКА_ПЛАНА #6: иначе
-    environment.machine_error("ошибка машины: развилка PlanReconciliation, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "PlanReconciliation")]))
   }
 
   // ===================== СНЯТИЕ_ПЛАНА — операция =====================
   PlanSnapshot => match event_body {
     // СНЯТИЕ_ПЛАНА #1: сразу
     Immediate => {
-      environment.write_journal("правка после утверждения, статус снят: план")
+      environment.write_journal(journal_event("edit_after_approval_plan", []JournalParam.new()))
       Go(PhaseSwitch)
     }
     _ => NotAwaited
@@ -1088,7 +1088,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ФАЗА #6: фаза = «ЗАВЕРШЕНО»
     if @phase == "CompletedPhase" { return Go(End) }
     // ФАЗА #7: иначе
-    environment.machine_error("ошибка машины: развилка PhaseSwitch, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "PhaseSwitch")]))
   }
 
   // ===================== ЗАПУСК_СЕССИИ — обращение =====================
@@ -1101,7 +1101,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ЗАПУСК_СЕССИИ #2: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("запуск сессии ${@session} не дал итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("session_launch_failed", [param("session", "${@session}"), param("reason", "${fail_code_word(reason)}")]))
       Go(SessionFailure)
     }
     _ => NotAwaited
@@ -1120,7 +1120,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Halted)
     }
     // ОТКАЗ_СЕССИИ #3: иначе
-    environment.machine_error("ошибка машины: развилка SessionFailure, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "SessionFailure")]))
   }
 
   // ===================== ПОСЛЕ_СЕССИИ — развилка =====================
@@ -1183,7 +1183,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(FeedbackRoute)
     }
     // ПОСЛЕ_СЕССИИ #20: иначе
-    environment.machine_error("ошибка машины: развилка AfterSession, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "AfterSession")]))
   }
 
   // ===================== К_ТРЕБОВАНИЯМ — операция =====================
@@ -1221,7 +1221,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
         @route_proposal = "full"
         @route_basis = "признаки не записаны"
         @route_choice_source = "rule"
-        environment.write_journal("маршрут предложен: ${@route_proposal}, ${@route_choice_source}: ${@route_basis}")
+        environment.write_journal(journal_event("route_proposed", [param("proposal", "${@route_proposal}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
         Go(Gate14)
       }
       Some(features) => {
@@ -1230,7 +1230,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
           @route_proposal = "full"
           @route_basis = "признаки неполны: ${incomplete_features_list(features)}"
           @route_choice_source = "rule"
-          environment.write_journal("маршрут предложен: ${@route_proposal}, ${@route_choice_source}: ${@route_basis}")
+          environment.write_journal(journal_event("route_proposed", [param("proposal", "${@route_proposal}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
           return Go(Gate14)
         }
         // КЛАССИФИКАЦИЯ_МАРШРУТА #3: признаки есть, они полны, и предложение_помощника = «полный»
@@ -1238,7 +1238,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
           @route_proposal = "full"
           @route_basis = "помощник предложил полный маршрут"
           @route_choice_source = "helper"
-          environment.write_journal("маршрут предложен: ${@route_proposal}, ${@route_choice_source}: ${@route_basis}")
+          environment.write_journal(journal_event("route_proposed", [param("proposal", "${@route_proposal}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
           return Go(Gate14)
         }
         // КЛАССИФИКАЦИЯ_МАРШРУТА #4: признаки есть, они полны, предложение_помощника не равно «полный», и признак выходит за порог
@@ -1246,7 +1246,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
           @route_proposal = "full"
           @route_basis = "признак выходит за порог: ${over_threshold_features_list(features, thresholds)}"
           @route_choice_source = "rule"
-          environment.write_journal("маршрут предложен: ${@route_proposal}, ${@route_choice_source}: ${@route_basis}")
+          environment.write_journal(journal_event("route_proposed", [param("proposal", "${@route_proposal}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
           return Go(Gate14)
         }
         // КЛАССИФИКАЦИЯ_МАРШРУТА #5: признаки есть, они полны, предложение_помощника не равно «полный», и ни один признак не выходит за порог
@@ -1254,11 +1254,11 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
           @route_proposal = "fast"
           @route_basis = "все признаки в пределах порогов"
           @route_choice_source = "rule"
-          environment.write_journal("маршрут предложен: ${@route_proposal}, ${@route_choice_source}: ${@route_basis}")
+          environment.write_journal(journal_event("route_proposed", [param("proposal", "${@route_proposal}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
           return Go(Gate14)
         }
         // КЛАССИФИКАЦИЯ_МАРШРУТА #6: иначе
-        environment.machine_error("ошибка машины: развилка RouteClassification, ни одно условие не подошло")
+        environment.machine_error(journal_event("fork_no_match", [param("fork", "RouteClassification")]))
       }
     }
   }
@@ -1297,7 +1297,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     if @factory_word != "" && @factory_word_date != "" { return Go(RouteCheck) }
     // СЛОВО_ЗАВОДА #2: слово_завода = `""`
     if @factory_word == "" {
-      environment.write_journal("слово завода не названо: быстрый маршрут не принят, ворота Gate14 повторяются")
+      environment.write_journal(journal_event("factory_word_missing", []JournalParam.new()))
       @route = ""
       @route_basis = "слово завода не названо: быстрый маршрут не принят"
       @route_choice_source = "rule"
@@ -1305,14 +1305,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // СЛОВО_ЗАВОДА #3: слово_завода не равно `""`, и дата_слова_завода = `""`
     if @factory_word != "" && @factory_word_date == "" {
-      environment.write_journal("дата слова завода не названа: быстрый маршрут не принят, ворота Gate14 повторяются")
+      environment.write_journal(journal_event("factory_word_date_missing", []JournalParam.new()))
       @route = ""
       @route_basis = "дата слова завода не названа: быстрый маршрут не принят"
       @route_choice_source = "rule"
       return Go(Gate14)
     }
     // СЛОВО_ЗАВОДА #4: иначе
-    environment.machine_error("ошибка машины: развилка FactoryWord, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "FactoryWord")]))
   }
 
   // ===================== ПРОВЕРКА_МАРШРУТА — развилка =====================
@@ -1323,14 +1323,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПРОВЕРКА_МАРШРУТА #2: маршрут = «полный», и параметры полного маршрута недопустимы
     if @route == "full" && !settings_allowed(settings.full) {
       @stop_reason = "route_settings_violate_invariants"
-      environment.write_journal("настройки полного маршрута отклонены: ${settings_refusal_reason(settings.full)}")
+      environment.write_journal(journal_event("full_route_settings_rejected", [param("reason", "${settings_refusal_reason(settings.full)}")]))
       return Go(Halted)
     }
     // ПРОВЕРКА_МАРШРУТА #3: маршрут = «быстрый», и параметры быстрого маршрута допустимы
     if @route == "fast" && settings_allowed(settings.fast) { return Go(RouteRecording) }
     // ПРОВЕРКА_МАРШРУТА #4: маршрут = «быстрый», и параметры быстрого маршрута недопустимы
     if @route == "fast" && !settings_allowed(settings.fast) {
-      environment.write_journal("настройки быстрого маршрута отклонены: ${settings_refusal_reason(settings.fast)}, возврат на полный маршрут")
+      environment.write_journal(journal_event("fast_route_settings_rejected", [param("reason", "${settings_refusal_reason(settings.fast)}")]))
       @route = "full"
       @route_proposal = "full"
       @route_basis = "настройки быстрого маршрута отклонены: ${settings_refusal_reason(settings.fast)}"
@@ -1338,7 +1338,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Gate14Refusal)
     }
     // ПРОВЕРКА_МАРШРУТА #5: иначе
-    environment.machine_error("ошибка машины: развилка RouteCheck, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "RouteCheck")]))
   }
 
   // ===================== МАРШРУТ_ЗАПИСЬ — развилка =====================
@@ -1350,7 +1350,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       @ceiling = settings.ceiling
       @probes_min = settings.probes_min
       @delivery_short = settings.delivery_short
-      environment.write_journal("маршрут записан: ${@route}, ${@route_choice_source}: ${@route_basis}")
+      environment.write_journal(journal_event("route_recorded", [param("route", "${@route}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
       return Go(SpecificationReconciliation)
     }
     // МАРШРУТ_ЗАПИСЬ #2: маршрут = «быстрый»
@@ -1360,11 +1360,11 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       @ceiling = settings.ceiling
       @probes_min = settings.probes_min
       @delivery_short = settings.delivery_short
-      environment.write_journal("маршрут записан: ${@route}, ${@route_choice_source}: ${@route_basis}")
+      environment.write_journal(journal_event("route_recorded", [param("route", "${@route}"), param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
       return Go(BriefCheck)
     }
     // МАРШРУТ_ЗАПИСЬ #3: иначе
-    environment.machine_error("ошибка машины: развилка RouteRecording, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "RouteRecording")]))
   }
 
   // ===================== ПРОВЕРКА_ПОСТАНОВКИ — развилка =====================
@@ -1375,18 +1375,18 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     if !brief_complete(@brief()) {
       @route_choice_source = "rule"
       @route_basis = "постановка неполна: нужны критерии `AC-N` и строка `Ветка:`"
-      environment.write_journal("быстрый маршрут: постановка неполна, нужны критерии `AC-N` и строка `Ветка:`")
+      environment.write_journal(journal_event("fast_route_brief_incomplete", []JournalParam.new()))
       return Go(FullPathReturn)
     }
     // ПРОВЕРКА_ПОСТАНОВКИ #3: иначе
-    environment.machine_error("ошибка машины: развилка BriefCheck, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "BriefCheck")]))
   }
 
   // ===================== КОПИЯ_ПОСТАНОВКИ — операция =====================
   BriefCopy => match event_body {
     // КОПИЯ_ПОСТАНОВКИ #1: сразу
     Immediate => {
-      environment.write_journal("копия постановки создана как спецификация: ${@factory_word}")
+      environment.write_journal(journal_event("brief_copy_created", [param("factory_word", "${@factory_word}")]))
       Go(SpecificationReconciliation)
     }
     _ => NotAwaited
@@ -1404,7 +1404,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       @set_cycle(Stage.Implementation, reset_after_return(@cycle(Stage.Implementation)))
       @set_cycle(Stage.Delivery, reset_after_return(@cycle(Stage.Delivery)))
       @phase = "AnalysisPhase"
-      environment.write_journal("возврат на полный маршрут: ${@route_choice_source}: ${@route_basis}")
+      environment.write_journal(journal_event("full_route_return", [param("source", "${@route_choice_source}"), param("basis", "${@route_basis}")]))
       Go(RouteCheck)
     }
     _ => NotAwaited
@@ -1417,7 +1417,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // УТВЕРЖДЕНИЕ #2: у документа на утверждении утверждение не чужое
     if !@approval_foreign(@approval_document) { return Go(Gate5) }
     // УТВЕРЖДЕНИЕ #3: иначе
-    environment.machine_error("ошибка машины: развилка ApprovalCheck, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ApprovalCheck")]))
   }
 
   // ===================== ЧУЖОЕ_УТВЕРЖДЕНИЕ — обращение =====================
@@ -1433,7 +1433,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   ForeignSnapshot => match event_body {
     // СНЯТИЕ_ЧУЖОГО #1: сразу
     Immediate => {
-      environment.write_journal("чужое утверждение снято: ${@approval_document}")
+      environment.write_journal(journal_event("foreign_approval_cleared", [param("document", "${@approval_document}")]))
       Go(Gate5)
     }
     _ => NotAwaited
@@ -1472,7 +1472,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(SpecificationReconciliation)
     }
     // ПОСЛЕ_УТВЕРЖДЕНИЯ #3: иначе
-    environment.machine_error("ошибка машины: развилка AfterApproval, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "AfterApproval")]))
   }
 
   // ===================== РАЗБОР — развилка =====================
@@ -1482,27 +1482,27 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РАЗБОР #2: маршрут = «быстрый», отложенная_сессия[РАЗБОР] = `""`, спецификация есть, её статус «утверждено», и утверждение спецификации действует
     if @route == "fast" && @next_session("AnalysisPhase") == "" && status_equals(@specification(), ArtifactStatus.Approved) && @approval_valid("specification") {
       @approval_document = "specification"
-      environment.write_journal("быстрый маршрут: копия постановки утверждена словом завода, С1, С2, Gate4 и Gate5 пропущены")
+      environment.write_journal(journal_event("fast_route_copy_approved", []JournalParam.new()))
       return Go(AfterApproval)
     }
     // РАЗБОР #3: маршрут = «быстрый», отложенная_сессия[РАЗБОР] = `""`, спецификация есть, и её статус «черновик»
     if @route == "fast" && @next_session("AnalysisPhase") == "" && status_equals(@specification(), ArtifactStatus.Draft) {
       @approval_document = "specification"
-      environment.write_journal("быстрый маршрут: копию правили после утверждения, нужно новое слово человека")
+      environment.write_journal(journal_event("fast_route_copy_edited", []JournalParam.new()))
       return Go(ApprovalCheck)
     }
     // РАЗБОР #4: маршрут = «быстрый», отложенная_сессия[РАЗБОР] = `""`, и спецификации нет
     if @route == "fast" && @next_session("AnalysisPhase") == "" && @specification() == None {
       @route_choice_source = "rule"
       @route_basis = "постановки нет: утверждать нечего"
-      environment.write_journal("быстрый маршрут: постановки нет")
+      environment.write_journal(journal_event("fast_route_no_brief", []JournalParam.new()))
       return Go(FullPathReturn)
     }
     // РАЗБОР #5: маршрут = «быстрый», и отложенная_сессия[РАЗБОР] не равна `""`
     if @route == "fast" && @next_session("AnalysisPhase") != "" {
       @route_choice_source = "rule"
       @route_basis = "правка меняет требования: задача не мала"
-      environment.write_journal("быстрый маршрут: очередь правки требований")
+      environment.write_journal(journal_event("fast_route_requirements_fix_queue", []JournalParam.new()))
       return Go(FullPathReturn)
     }
     // РАЗБОР #6: маршрут = «полный», и отложенная_сессия[РАЗБОР] не равна `""`
@@ -1522,7 +1522,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РАЗБОР #8: маршрут = «полный», отложенная_сессия[РАЗБОР] = `""`, и спецификация есть
     if @route == "full" && @next_session("AnalysisPhase") == "" && @specification() != None { return Go(AnalysisReview) }
     // РАЗБОР #9: иначе
-    environment.machine_error("ошибка машины: развилка ReviewParsing, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ReviewParsing")]))
   }
 
   // ===================== РАЗБОР_ПРОВЕРКА — обращение =====================
@@ -1551,7 +1551,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РАЗБОР_ПРОВЕРКА #5: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("проверка разбора не дала итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("review_parsing_failed", [param("reason", "${fail_code_word(reason)}")]))
       Go(ReviewFailure)
     }
     _ => NotAwaited
@@ -1614,14 +1614,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПЛАН #1: маршрут = «быстрый», и отложенная_сессия[ПЛАН] = `""`
     if @route == "fast" && @next_session("PlanPhase") == "" {
       @phase = "ImplementationPhase"
-      environment.write_journal("быстрый маршрут: фаза PlanPhase пропущена, план реализации — в начале отчёта реализации")
+      environment.write_journal(journal_event("fast_route_plan_phase_skipped", []JournalParam.new()))
       return Go(SpecificationReconciliation)
     }
     // ПЛАН #2: маршрут = «быстрый», и отложенная_сессия[ПЛАН] не равна `""`
     if @route == "fast" && @next_session("PlanPhase") != "" {
       @route_choice_source = "rule"
       @route_basis = "правка меняет план: задача не мала"
-      environment.write_journal("быстрый маршрут: очередь правки плана")
+      environment.write_journal(journal_event("fast_route_plan_fix_queue", []JournalParam.new()))
       return Go(FullPathReturn)
     }
     // ПЛАН #3: маршрут = «полный», и отложенная_сессия[ПЛАН] не равна `""`
@@ -1641,7 +1641,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПЛАН #5: маршрут = «полный», отложенная_сессия[ПЛАН] = `""`, и план есть
     if @route == "full" && @next_session("PlanPhase") == "" && @task_plan() != None { return Go(PlanStopWord) }
     // ПЛАН #6: иначе
-    environment.machine_error("ошибка машины: развилка PlanPhase, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "PlanPhase")]))
   }
 
   // ===================== ПЛАН_СТОП_СЛОВО — развилка =====================
@@ -1654,7 +1654,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПЛАН_СТОП_СЛОВО #2: план есть, и его стоп_слово отличается от «требования»
     if @task_plan() != None && !stop_word_equals(@task_plan(), StopWord.Requirements) { return Go(PlanReview) }
     // ПЛАН_СТОП_СЛОВО #3: иначе
-    environment.machine_error("ошибка машины: развилка PlanStopWord, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "PlanStopWord")]))
   }
 
   // ===================== ПЛАН_ПРОВЕРКА — обращение =====================
@@ -1683,7 +1683,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПЛАН_ПРОВЕРКА #5: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("проверка плана не дала итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("plan_review_failed", [param("reason", "${fail_code_word(reason)}")]))
       Go(ReviewFailure)
     }
     _ => NotAwaited
@@ -1693,7 +1693,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate7PlanQueue => match event_body {
     // В7_ПЛАН_ОЧЕРЕДЬ #1: В7: «реализация»
     Gate7ToImplementation => {
-      environment.write_journal("умолчание подтверждено")
+      environment.write_journal(journal_event("default_confirmed", []JournalParam.new()))
       Go(PlanStopWord)
     }
     // В7_ПЛАН_ОЧЕРЕДЬ #2: В7: «план» (ответ_человека: Текст)
@@ -1713,7 +1713,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate7Plan => match event_body {
     // В7_ПЛАН #1: В7: «реализация»
     Gate7ToImplementation => {
-      environment.write_journal("умолчание подтверждено")
+      environment.write_journal(journal_event("default_confirmed", []JournalParam.new()))
       Go(Gate6)
     }
     // В7_ПЛАН #2: В7: «план» (ответ_человека: Текст)
@@ -1766,7 +1766,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(ApprovalCheck)
     }
     // РЕШЕНИЯ_ИТОГ #3: иначе
-    environment.machine_error("ошибка машины: развилка DecisionsOutcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DecisionsOutcome")]))
   }
 
   // ===================== РЕАЛИЗАЦИЯ — развилка =====================
@@ -1795,7 +1795,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РЕАЛИЗАЦИЯ #5: отложенная_сессия[РЕАЛИЗАЦИЯ] = `""`, отчёт реализации есть, и его статус не разобран
     if @next_session("ImplementationPhase") == "" && status_equals(@implementation_report(), ArtifactStatus.Unparsed) { return Go(Gate13Status) }
     // РЕАЛИЗАЦИЯ #6: иначе
-    environment.machine_error("ошибка машины: развилка ImplementationPhase, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ImplementationPhase")]))
   }
 
   // ===================== ИСХОД_РЕАЛИЗАЦИИ — развилка =====================
@@ -1820,14 +1820,14 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ИСХОД_РЕАЛИЗАЦИИ #5: итог_сессии = «вопрос»
     if outcome_equals(@result, SessionResult.Question) { return Go(Gate7ImplementationStep) }
     // ИСХОД_РЕАЛИЗАЦИИ #6: иначе
-    environment.machine_error("ошибка машины: развилка ImplementationOutcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ImplementationOutcome")]))
   }
 
   // ===================== В7_РЕАЛИЗАЦИЯ_ХОД — обращение =====================
   Gate7ImplementationStep => match event_body {
     // В7_РЕАЛИЗАЦИЯ_ХОД #1: В7: «реализация» (ответ_человека: Текст)
     Gate7ToImplementationWithAnswer { human_answer: response } => {
-      environment.write_journal("умолчание подтверждено")
+      environment.write_journal(journal_event("default_confirmed", []JournalParam.new()))
       @assign_launch("s5_continue", response, "implementation_continuation")
       Go(SessionLaunch)
     }
@@ -1879,12 +1879,12 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РЕАЛИЗАЦИЯ_ПРОВЕРКА #5: ответ: перезапуск (цикл: Цикл)
     ReviewRestart { cycle, .. } => {
       @set_cycle(Stage.Implementation, cycle)
-      environment.machine_error("ошибка машины: проверка реализации вернула «перезапуск», который бывает только у сдачи")
+      environment.machine_error(journal_event("review_restart_outside_delivery", []JournalParam.new()))
     }
     // РЕАЛИЗАЦИЯ_ПРОВЕРКА #6: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("проверка реализации не дала итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("implementation_review_failed", [param("reason", "${fail_code_word(reason)}")]))
       Go(ReviewFailure)
     }
     _ => NotAwaited
@@ -1972,7 +1972,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(SpecificationReconciliation)
     }
     // ИСХОД_В8 #4: иначе
-    environment.machine_error("ошибка машины: развилка Gate8Outcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Gate8Outcome")]))
   }
 
   // ===================== В8_ПОДТВЕРЖДЕНИЕ — обращение =====================
@@ -1992,7 +1992,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СДАЧА #2: в отчёте реализации нерешённых строк нет
     if !@has_unresolved_line() { return Go(DeliveryLetter) }
     // СДАЧА #3: иначе
-    environment.machine_error("ошибка машины: развилка DeliveryPhase, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DeliveryPhase")]))
   }
 
   // ===================== В8_СДАЧА — обращение =====================
@@ -2022,7 +2022,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СДАЧА_ПИСЬМО #4: номер_раунда больше `0`, письмо заказчику есть, и письма раунда нет
     if @feedback_round > 0 && @customer_letter() != None && @round_letters(@feedback_round) == None { return Go(LetterRenaming) }
     // СДАЧА_ПИСЬМО #5: иначе
-    environment.machine_error("ошибка машины: развилка DeliveryLetter, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DeliveryLetter")]))
   }
 
   // ===================== ПЕРЕИМЕНОВАНИЕ_ПИСЬМА — операция =====================
@@ -2071,7 +2071,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СДАЧА_ПРОВЕРКА #6: сбой (причина: КодСбоя)
     Failure { reason } => {
       @failure_reason = fail_code_word(reason)
-      environment.write_journal("проверка сдачи не дала итога: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("delivery_review_failed", [param("reason", "${fail_code_word(reason)}")]))
       Go(ReviewFailure)
     }
     _ => NotAwaited
@@ -2081,7 +2081,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate7Delivery => match event_body {
     // В7_СДАЧА #1: В7: «реализация»
     Gate7ToImplementation => {
-      environment.write_journal("умолчание подтверждено")
+      environment.write_journal(journal_event("default_confirmed", []JournalParam.new()))
       Go(SpecificationReconciliation)
     }
     // В7_СДАЧА #2: В7: «план» (ответ_человека: Текст)
@@ -2108,7 +2108,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СДАЧА_СЕКРЕТЫ #2: отчёт по секретам есть
     if @secrets_report() != None { return Go(DeliveryDiff) }
     // СДАЧА_СЕКРЕТЫ #3: иначе
-    environment.machine_error("ошибка машины: развилка DeliverySecrets, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DeliverySecrets")]))
   }
 
   // ===================== В12 — обращение =====================
@@ -2122,13 +2122,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   DeliveryDiff => {
     // СДАЧА_ДИФФ #1: различия_дерева = `""`
     if @tree_diff() == "" {
-      environment.write_journal("сдача без изменений кода")
+      environment.write_journal(journal_event("delivery_no_code_changes", []JournalParam.new()))
       return Go(Gate10d)
     }
     // СДАЧА_ДИФФ #2: различия_дерева не равно `""`
     if @tree_diff() != "" { return Go(Gate10a) }
     // СДАЧА_ДИФФ #3: иначе
-    environment.machine_error("ошибка машины: развилка DeliveryDiff, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DeliveryDiff")]))
   }
 
   // ===================== В10а — обращение =====================
@@ -2154,7 +2154,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СДАЧА_СООБЩЕНИЕ #2: сообщение_коммита равно тексту_коммита побайтно
     if @commit_message() == @commit_text() { return Go(Gate10c) }
     // СДАЧА_СООБЩЕНИЕ #3: иначе
-    environment.machine_error("ошибка машины: развилка DeliveryMessage, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "DeliveryMessage")]))
   }
 
   // ===================== В10б — обращение =====================
@@ -2239,7 +2239,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(SpecificationReconciliation)
     }
     // МАРШРУТ_ОБРАТНОЙ_СВЯЗИ #5: иначе
-    environment.machine_error("ошибка машины: развилка FeedbackRoute, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "FeedbackRoute")]))
   }
 
   // ===================== ОТКАЗ_ПРОВЕРКИ — развилка =====================
@@ -2255,7 +2255,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Halted)
     }
     // ОТКАЗ_ПРОВЕРКИ #3: иначе
-    environment.machine_error("ошибка машины: развилка ReviewFailure, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ReviewFailure")]))
   }
 
   // ===================== ПАУЗА — обращение =====================
@@ -2371,7 +2371,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   //   задача не завершена, фаза и все данные сохранены; блокировка остаётся (её держал процесс, который кончил работу).
   Halted => {
     environment.add_irreversible(Irreversible.StopAgentGroup)
-    environment.write_journal("раннер остановлен: ${@stop_reason}")
+    environment.write_journal(journal_event("runner_stopped", [param("reason", "${@stop_reason}")]))
   }
   // ОШИБКА: группа процессов агента останавливается; в журнал — запись из перехода и данные машины; задача не завершена; решает человек вне машины.
   Errored => {
@@ -2382,7 +2382,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   // КОНЕЦ: блокировка снимается; в журнал — «задача завершена, раундов обратной связи: <номер_раунда>»; человеку показывается «задача завершена».
   End => {
     environment.add_irreversible(Irreversible.ReleaseLock)
-    environment.write_journal("задача завершена, раундов обратной связи: ${@feedback_round}")
+    environment.write_journal(journal_event("task_completed", [param("feedback_rounds", "${@feedback_round}")]))
     environment.add_irreversible(Irreversible.ShowHuman("задача завершена"))
   }
   _ => ()

@@ -560,7 +560,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ЗАХОД #3: вопрос_автора отсутствует, и в находках любой линзы захода номер_захода - 1 вопросов проверяющих (находок с `вопрос` = да) нет
     if @author_question == None && !@has_reviewer_questions(@number - 1) { return Go(Lock) }
     // ЗАХОД #4: иначе
-    environment.machine_error("ошибка машины: развилка Pass, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Pass")]))
   }
 
   // ===================== СВИДЕТЕЛЬ — обращение =====================
@@ -572,7 +572,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // СВИДЕТЕЛЬ #2: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal("Witness не ответил: ${reason}")
+      environment.write_journal(journal_event("witness_no_answer", [param("reason", "${reason}")]))
       @failed_appeal = "Witness"
       Go(FailedRequest)
     }
@@ -597,7 +597,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     Replied => Go(AllClosed)
     // ЛИНЗЫ #2: сбой (сторона: идентификатор линзы; причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal("линза ${event.party} не ответила: ${reason}")
+      environment.write_journal(journal_event("lens_no_answer", [param("party", "${event.party}"), param("reason", "${reason}")]))
       Go(LensRefusal)
     }
     _ => NotAwaited
@@ -607,7 +607,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   LensRefusal => {
     // ОТКАЗ #1: потери_подряд линзы событие.сторона = 1
     if @lenses(event.party).lost == 1 {
-      environment.write_journal("линза ${event.party} отброшена в заходе ${@number}")
+      environment.write_journal(journal_event("lens_dropped", [param("party", "${event.party}"), param("pass", "${@number}")]))
       return Go(AllClosed)
     }
     // ОТКАЗ #2: потери_подряд линзы событие.сторона = 2
@@ -619,11 +619,11 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ОТКАЗ #3: потери_подряд линзы событие.сторона = 3
     if @lenses(event.party).lost == 3 {
       @set_lost(event.party, 1)
-      environment.write_journal("линза ${event.party} отброшена в заходе ${@number}")
+      environment.write_journal(journal_event("lens_dropped", [param("party", "${event.party}"), param("pass", "${@number}")]))
       return Go(AllClosed)
     }
     // ОТКАЗ #4: иначе
-    environment.machine_error("ошибка машины: развилка LensRefusal, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "LensRefusal")]))
   }
 
   // ===================== ВСЕ_ЗАКРЫТЫ — развилка =====================
@@ -640,7 +640,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Halted)
     }
     // ВСЕ_ЗАКРЫТЫ #5: иначе
-    environment.machine_error("ошибка машины: развилка AllClosed, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "AllClosed")]))
   }
 
   // ===================== СБОЙ — обращение =====================
@@ -666,7 +666,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПОВТОР_ОБРАЩЕНИЯ #4: сбойное_обращение = «ВОПРОС»
     if @failed_appeal == "AuthorQuestion" { return Rerun(AuthorQuestion) }
     // ПОВТОР_ОБРАЩЕНИЯ #5: иначе
-    environment.machine_error("ошибка машины: развилка RequestRetry, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "RequestRetry")]))
   }
 
   // ===================== РАЗБЛОК — операция =====================
@@ -685,7 +685,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // СВЕРКА #3: предложение не прочитано
     if !@proposal_read() { return Go(Changed) }
     // СВЕРКА #4: иначе
-    environment.machine_error("ошибка машины: развилка Comparison, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Comparison")]))
   }
 
   // ===================== ИЗМЕНЁН — обращение =====================
@@ -753,19 +753,19 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // РАЗБОР #3: итога свода нет
     None => {
-      environment.write_journal("итоговой строки нет")
+      environment.write_journal(journal_event("no_summary_line", []JournalParam.new()))
       @no_probes = 0
       Go(Gate3)
     }
     // РАЗБОР #4: итог свода есть, критических нет, и проб меньше ПРОБ_В_ЧИСТОМ
     Some(outcome) if outcome.critical == 0 && outcome.probes < PROBES_MIN => {
-      environment.write_journal("заход ${@number}: чистый без проб, не засчитан")
+      environment.write_journal(journal_event("pass_clean_without_probes", [param("pass", "${@number}")]))
       @number += 1
       @no_probes += 1
       Go(NoProbes)
     }
     // РАЗБОР #5: иначе
-    _ => environment.machine_error("ошибка машины: развилка ReviewParsing, ни одно условие не подошло")
+    _ => environment.machine_error(journal_event("fork_no_match", [param("fork", "ReviewParsing")]))
   }
 
   // ===================== БЕЗ_ПРОБ — развилка =====================
@@ -776,7 +776,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       // БЕЗ_ПРОБ #2: без_проб_подряд больше 1
       Some(AskHuman) => Go(Retry)
       // БЕЗ_ПРОБ #3: иначе
-      None => environment.machine_error("ошибка машины: развилка NoProbes, ни одно условие не подошло")
+      None => environment.machine_error(journal_event("fork_no_match", [param("fork", "NoProbes")]))
     }
   }
 
@@ -796,7 +796,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Gate3 => match event_body {
     // В3 #1: В3: «не засчитан»
     Gate3NotCounted => {
-      environment.write_journal("заход ${@number}: пробы — не пробы, не засчитан")
+      environment.write_journal(journal_event("pass_probes_not_probes", [param("pass", "${@number}")]))
       @number += 1
       Go(Pass)
     }
@@ -830,7 +830,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(Acceptance)
     }
     // ИТОГ #4: иначе
-    environment.machine_error("ошибка машины: развилка Totals, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Totals")]))
   }
 
   // ===================== ПОТОЛОК — развилка =====================
@@ -840,7 +840,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПОТОЛОК #2: (номер_захода - 1) - заход_отсчёта + 1 не меньше ПОТОЛОК_ЗАХОДОВ
     if ceiling_reached(@cycle(), CEILING) { return Go(Gate9) }
     // ПОТОЛОК #3: иначе
-    environment.machine_error("ошибка машины: развилка Ceiling, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Ceiling")]))
   }
 
   // ===================== В9 — обращение =====================
@@ -880,7 +880,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // ПРАВКА #3: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal("AuthorFix: автор не ответил: ${reason}")
+      environment.write_journal(journal_event("author_fix_no_answer", [param("reason", "${reason}")]))
       @failed_appeal = "AuthorFix"
       Go(FailedRequest)
     }
@@ -905,7 +905,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     RepliedAsked => Go(Gate7)
     // ВОПРОС #3: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal("AuthorQuestion: автор не ответил: ${reason}")
+      environment.write_journal(journal_event("author_question_no_answer", [param("reason", "${reason}")]))
       @failed_appeal = "AuthorQuestion"
       Go(FailedRequest)
     }
@@ -956,7 +956,7 @@ fn MachineData mut @run_operation(operation State, environment MachineEnvironmen
   CopyRestore => {
     match @copy {
       Some(text) => { @proposal = text }
-      None => environment.write_journal("CopyRestore: копии нет")    // псевдокод: недостижимо, копию пишет ЗАМОК
+      None => environment.write_journal(journal_event("copy_restore_no_copy", []JournalParam.new()))    // псевдокод: недостижимо, копию пишет ЗАМОК
     }
     Immediate
   }
@@ -1043,7 +1043,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   //   открытые и находки_В3, не вошедшие в открытые (находки считаются одной по доказательству); итог не принят, программа продолжает остальную работу.
   Halted => {
     @open_for_writing("proposal", environment)
-    environment.write_journal("совещание остановлено: ${@stop_reason}")
+    environment.write_journal(journal_event("meeting_stopped", [param("reason", "${@stop_reason}")]))
     @journal_findings(@open, environment)
     @journal_findings(not_included_in(@gate3_findings, @open), environment)
   }
@@ -1060,7 +1060,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   End => {
     @open_for_writing("proposal", environment)
     @journal_decision(@proposal, @confirmation, @number, @open, environment)
-    environment.write_journal("значимые находки прежних заходов, не вошедшие в «открыто», — в файлах заходов")
+    environment.write_journal(journal_event("older_findings_in_pass_files", []JournalParam.new()))
   }
   _ => ()
 }

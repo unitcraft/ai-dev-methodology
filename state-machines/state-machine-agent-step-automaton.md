@@ -391,37 +391,41 @@ fn retry_pause(retry_count int) -> int {
   }
   pause
 }
-// слово вида действия — для журнала
+// код вида действия — значение параметра события журнала; русское слово — по таблице слов значений в state-machine-journal.md
 fn action_kind_word(action ActionKind) -> str => match action {
-  ActionKind.Read => "чтение"
-  ActionKind.Write => "запись"
-  ActionKind.Delete => "удаление"
-  ActionKind.Move => "перенос"
-  ActionKind.Search => "поиск"
-  ActionKind.Execute => "исполнение"
-  ActionKind.Network => "сеть"
-  ActionKind.Think => "мышление"
-  ActionKind.SwitchMode => "смена режима"
-  ActionKind.Other => "другое"
+  ActionKind.Read => "read"
+  ActionKind.Write => "write"
+  ActionKind.Delete => "delete"
+  ActionKind.Move => "move"
+  ActionKind.Search => "search"
+  ActionKind.Execute => "execute"
+  ActionKind.Network => "network"
+  ActionKind.Think => "think"
+  ActionKind.SwitchMode => "switch_mode"
+  ActionKind.Other => "other"
 }
-// число или «нет» — для строки журнала расхода
+// число или `none` (значения нет) — значение параметра события журнала расхода
 fn number_word(value Option[int]) -> str => match value {
   Some(number_value) => "${number_value}"
-  None => "нет"
+  None => "none"
 }
-// дробное или «нет» — для строки журнала расхода
+// дробное или `none` (значения нет) — значение параметра события журнала расхода
 fn float_word(value Option[f64]) -> str => match value {
   Some(number_value) => "${number_value}"
-  None => "нет"
+  None => "none"
 }
 
 // Методы Машины: данные автомата
-// строка журнала расхода: «нет» — транспорт значения не дал (одна строка на шаг, правило 31 даёт конверт)
-fn usage_line(collected Usage) -> str => "расход агента: сессия ${collected.session}, результат ${collected.result}, модель ${collected.model.id}, токены вход ${number_word(collected.tokens.input)}, выход ${number_word(collected.tokens.output)}, рассуждение ${number_word(collected.tokens.reasoning)}, кэш чтение ${number_word(collected.tokens.cache_read)}, кэш запись ${number_word(collected.tokens.cache_write)}, стоимость ${float_word(collected.cost)}; «нет» — транспорт значения не дал"
+// событие журнала расхода: `none` — транспорт значения не дал (одно событие на шаг, правило 31 даёт конверт)
+fn usage_event(collected Usage) -> JournalEvent => journal_event("agent_usage", [
+  param("session", "${collected.session}"), param("result", "${collected.result}"), param("model", "${collected.model.id}"),
+  param("input", "${number_word(collected.tokens.input)}"), param("output", "${number_word(collected.tokens.output)}"),
+  param("reasoning", "${number_word(collected.tokens.reasoning)}"), param("cache_read", "${number_word(collected.tokens.cache_read)}"),
+  param("cache_write", "${number_word(collected.tokens.cache_write)}"), param("cost", "${float_word(collected.cost)}")])
 // расход на пути, минующем УЧЁТ (общие события, дефект): запись собирается и пишется при входе в конец; на пути через УЧЁТ строка уже написана
 fn MachineData @record_end_usage(environment MachineEnvironment) Journal Time -> () => match @usage {
   Some(_) => ()
-  None => environment.write_journal(usage_line(@collect_usage(Time.now())))
+  None => environment.write_journal(usage_event(@collect_usage(Time.now())))
 }
 // запись для диагностики: все переменные и хранилища (Вход ОШИБКИ)
 fn MachineData mut @journal_machine_data(environment MachineEnvironment) Journal Time -> ()
@@ -592,21 +596,21 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     RepliedTurnRequestLimit { usage: received } => {
       @transport_usage = Some(add_usage(@transport_usage, received))
       @stop_reason = "max_turn_requests"
-      environment.write_journal("агент исчерпал предел запросов хода")
+      environment.write_journal(journal_event("turn_requests_exhausted", []JournalParam.new()))
       Go(Accounting)
     }
     // ХОД_АГЕНТА #4: ответ: отказ_модели (расход: РасходТранспорта)
     RepliedModelRefusal { usage: received } => {
       @transport_usage = Some(add_usage(@transport_usage, received))
       @stop_reason = "model_refused"
-      environment.write_journal("модель отказалась отвечать")
+      environment.write_journal(journal_event("model_refused", []JournalParam.new()))
       Go(Accounting)
     }
     // ХОД_АГЕНТА #5: ответ: отменён (расход: РасходТранспорта)
     RepliedStopped { usage: received } => {
       @transport_usage = Some(add_usage(@transport_usage, received))
       @stop_reason = "stopped_by_agent"
-      environment.write_journal("ход агента отменён")
+      environment.write_journal(journal_event("turn_cancelled", []JournalParam.new()))
       Go(Accounting)
     }
     // ХОД_АГЕНТА #6: ответ: временная_ошибка
@@ -614,7 +618,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ХОД_АГЕНТА #7: ответ: постоянная_ошибка
     RepliedPermanentError => {
       @stop_reason = "no_result"
-      environment.write_journal("постоянная ошибка агента")
+      environment.write_journal(journal_event("agent_permanent_error", []JournalParam.new()))
       Go(Accounting)
     }
     // ХОД_АГЕНТА #8: ответ: нужно_разрешение (запрос_разрешения: ЗапросРазрешения)
@@ -625,7 +629,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ХОД_АГЕНТА #9: сбой (причина: КодСбоя — у этого обращения: соединение оборвалось, нет ответа в срок или нет результата)
     Failure { reason } => {
       @stop_reason = fail_code_word(reason)
-      environment.write_journal("ход агента не состоялся: ${fail_code_word(reason)}")
+      environment.write_journal(journal_event("turn_failed", [param("reason", "${fail_code_word(reason)}")]))
       Go(Accounting)
     }
     _ => NotAwaited
@@ -638,23 +642,23 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       @retry_count += 1
       @turn_before_retry = Some(@turn)
       @turn = "retry"
-      environment.write_journal("временная ошибка агента: повтор ${@retry_count}")
+      environment.write_journal(journal_event("agent_transient_error", [param("retry", "${@retry_count}")]))
       return Go(Budget)
     }
     // ПОВТОР #2: число_повторов меньше ЧИСЛО_ПОВТОРОВ, и ход = «повторить»
     if @retry_count < RETRIES && @turn == "retry" {
       @retry_count += 1
-      environment.write_journal("временная ошибка агента: повтор ${@retry_count}")
+      environment.write_journal(journal_event("agent_transient_error", [param("retry", "${@retry_count}")]))
       return Go(Budget)
     }
     // ПОВТОР #3: число_повторов не меньше ЧИСЛО_ПОВТОРОВ
     if @retry_count >= RETRIES {
       @stop_reason = "no_result"
-      environment.write_journal("временная ошибка агента не прошла после ${RETRIES} повторов")
+      environment.write_journal(journal_event("agent_transient_error_exhausted", [param("retries", "${RETRIES}")]))
       return Go(Accounting)
     }
     // ПОВТОР #4: иначе
-    environment.machine_error("ошибка машины: развилка Retry, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Retry")]))
   }
 
   // ===================== ПРОДОЛЖЕНИЕ — развилка =====================
@@ -663,17 +667,17 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     if @continuation_count < CONTINUATIONS {
       @continuation_count += 1
       @turn = "continue"
-      environment.write_journal("выход обрезан: ход «продолжи с места обрыва»")
+      environment.write_journal(journal_event("output_truncated_continue", []JournalParam.new()))
       return Go(Budget)
     }
     // ПРОДОЛЖЕНИЕ #2: число_продолжений не меньше ЧИСЛО_ПРОДОЛЖЕНИЙ
     if @continuation_count >= CONTINUATIONS {
       @stop_reason = "max_tokens"
-      environment.write_journal("выход обрезан повторно: предел токенов")
+      environment.write_journal(journal_event("output_truncated_again", []JournalParam.new()))
       return Go(Accounting)
     }
     // ПРОДОЛЖЕНИЕ #3: иначе
-    environment.machine_error("ошибка машины: развилка Continuation, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Continuation")]))
   }
 
   // ===================== ПРОВЕРКА_ОТВЕТА — развилка =====================
@@ -684,24 +688,24 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПРОВЕРКА_ОТВЕТА #2: проверка_ответа = «пуста»
     if validation == ReplyCheck.Empty {
       @stop_reason = "no_result"
-      environment.write_journal("агент не дал результата")
+      environment.write_journal(journal_event("agent_no_result", []JournalParam.new()))
       return Go(Accounting)
     }
     // ПРОВЕРКА_ОТВЕТА #3: проверка_ответа = «нарушена», и число_возвратов меньше ЧИСЛО_ВОЗВРАТОВ_ФОРМЫ
     if validation == ReplyCheck.Violated && @return_count < FORM_RETURNS {
       @return_count += 1
       @turn = "fix"
-      environment.write_journal("форма ответа нарушена: ход «исправь форму файла»")
+      environment.write_journal(journal_event("reply_form_violated", []JournalParam.new()))
       return Go(Budget)
     }
     // ПРОВЕРКА_ОТВЕТА #4: проверка_ответа = «нарушена», и число_возвратов не меньше ЧИСЛО_ВОЗВРАТОВ_ФОРМЫ
     if validation == ReplyCheck.Violated && @return_count >= FORM_RETURNS {
       @stop_reason = "form_not_fixed"
-      environment.write_journal("форма ответа не исправлена со второй попытки")
+      environment.write_journal(journal_event("reply_form_not_fixed", []JournalParam.new()))
       return Go(Accounting)
     }
     // ПРОВЕРКА_ОТВЕТА #5: иначе
-    environment.machine_error("ошибка машины: развилка ReplyValidation, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "ReplyValidation")]))
   }
 
   // ===================== ПОЛИТИКА — развилка =====================
@@ -712,20 +716,20 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     if decision == "allow" {
       @permission_decision = Some("allow")
       @turn = "permission"
-      environment.write_journal("разрешение: ${action_kind_word(request.action)} — разрешено политикой автоматически")
+      environment.write_journal(journal_event("permission_auto_allowed", [param("action", "${action_kind_word(request.action)}")]))
       return Go(Budget)
     }
     // ПОЛИТИКА #2: решение_по_политике(вид_действия, вид) = «отказать»
     if decision == "deny" {
       @permission_decision = Some("deny")
       @turn = "permission"
-      environment.write_journal("разрешение: ${action_kind_word(request.action)} — отказано политикой автоматически")
+      environment.write_journal(journal_event("permission_auto_denied", [param("action", "${action_kind_word(request.action)}")]))
       return Go(Budget)
     }
     // ПОЛИТИКА #3: решение_по_политике(вид_действия, вид) = «спросить»
     if decision == "ask" { return Go(Permission) }
     // ПОЛИТИКА #4: иначе
-    environment.machine_error("ошибка машины: развилка Policy, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Policy")]))
   }
 
   // ===================== РАЗРЕШЕНИЕ — обращение =====================
@@ -735,7 +739,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       ro request = required(@permission_request, "Permission: the permission request is recorded in AgentTurn")
       @permission_decision = Some("allow")
       @turn = "permission"
-      environment.write_journal("разрешение: ${action_kind_word(request.action)} — человек разрешил")
+      environment.write_journal(journal_event("permission_human_allowed", [param("action", "${action_kind_word(request.action)}")]))
       Go(Budget)
     }
     // РАЗРЕШЕНИЕ #2: РАЗРЕШЕНИЕ: «отказать»
@@ -743,7 +747,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       ro request = required(@permission_request, "Permission: the permission request is recorded in AgentTurn")
       @permission_decision = Some("deny")
       @turn = "permission"
-      environment.write_journal("разрешение: ${action_kind_word(request.action)} — человек отказал")
+      environment.write_journal(journal_event("permission_human_denied", [param("action", "${action_kind_word(request.action)}")]))
       Go(Budget)
     }
     _ => NotAwaited
@@ -757,19 +761,19 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // БЮДЖЕТ #1: предел токенов исчерпан
     if tokens_exhausted {
       @stop_reason = "max_tokens"
-      environment.write_journal("предел токенов исчерпан: израсходовано ${tokens_spent(@transport_usage)}")
+      environment.write_journal(journal_event("token_limit", [param("spent", "${tokens_spent(@transport_usage)}")]))
       return Go(Accounting)
     }
     // БЮДЖЕТ #2: предел токенов не исчерпан, и предел стоимости исчерпан
     if !tokens_exhausted && cost_exhausted {
       @stop_reason = "cost_limit"
-      environment.write_journal("предел стоимости исчерпан: израсходовано ${cost_spent(@transport_usage)}")
+      environment.write_journal(journal_event("cost_limit", [param("spent", "${cost_spent(@transport_usage)}")]))
       return Go(Accounting)
     }
     // БЮДЖЕТ #3: предел токенов не исчерпан, предел стоимости не исчерпан, и предел ходов исчерпан
     if !tokens_exhausted && !cost_exhausted && turns_exhausted {
       @stop_reason = "max_turn_requests"
-      environment.write_journal("предел ходов исчерпан: отправлено ${@turn_count}")
+      environment.write_journal(journal_event("turn_limit", [param("sent", "${@turn_count}")]))
       return Go(Accounting)
     }
     // БЮДЖЕТ #4: ни один предел не исчерпан
@@ -778,7 +782,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
       return Go(AgentTurn)
     }
     // БЮДЖЕТ #5: иначе
-    environment.machine_error("ошибка машины: развилка Budget, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "Budget")]))
   }
 
   // ===================== УЧЁТ — операция =====================
@@ -786,7 +790,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // УЧЁТ #1: сразу (использование: Использование)
     ImmediateAccounting { usage: collected } => {
       @usage = Some(collected)
-      environment.write_journal(usage_line(collected))
+      environment.write_journal(usage_event(collected))
       Go(StepOutcome)
     }
     _ => NotAwaited
@@ -799,7 +803,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ИТОГ_ШАГА #2: остановка не равна `""`
     if @stop_reason != "" { return Go(Halted) }
     // ИТОГ_ШАГА #3: иначе
-    environment.machine_error("ошибка машины: развилка StepOutcome, ни одно условие не подошло")
+    environment.machine_error(journal_event("fork_no_match", [param("fork", "StepOutcome")]))
   }
 
   // ===================== ПАУЗА — обращение =====================
@@ -851,7 +855,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   Halted => {
     environment.add_irreversible(Irreversible.CloseAgentTurn)
     @record_end_usage(environment)
-    environment.write_journal("шаг агента остановлен: ${@stop_reason}")
+    environment.write_journal(journal_event("agent_step_stopped", [param("reason", "${@stop_reason}")]))
   }
   // ОШИБКА: открытый ход агента закрывается; если `использование` — `нет`, пишется строка расхода; в журнал — запись из перехода и данные машины; вызывающая машина
   //   получает `Refusal` с текстом «дефект шага агента: <запись из перехода>»; решает человек вне машины.
@@ -881,7 +885,7 @@ fn MachineData @end_response(call_request Request[AgentRequest], end_state State
           None => None
         } } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
-    Errored => refuse_with(call_request, NoResult, "дефект шага агента: ${environment.transition_note()}")
+    Errored => refuse_with(call_request, NoResult, "дефект шага агента: ${environment.transition_note().code}")
     Halted => match @stop_reason {
       // ОСТАНОВЛЕНО: остановка = «нет результата» → Отказ, НетРезультата
       "no_result" => refuse_with(call_request, NoResult, @stop_reason)
