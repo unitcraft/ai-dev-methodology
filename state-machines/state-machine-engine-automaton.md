@@ -429,7 +429,7 @@ fn Engine mut @new_event(kind str) -> Incoming[Event] {
 // запрос вызова — конверт ответа: исполнитель получает его в `начать` или из снимка в `возобновить`
 fn Engine @recipient() -> Request[T] => match @call_request {
   Some(accepted_call) => accepted_call
-  None => unreachable("запрос вызова не принят: исполнитель получает его в начать или из снимка в возобновить")
+  None => unreachable("the call request is not accepted: the executor receives it in start or from the snapshot in resume")
 }
 // событие приёма ответа или отказа открытого запроса: «ответ-<номер по счётчику событий>» с данными из результата роли (`событие_ответа` машины) или «сбой-<номер>» с кодом отказа (`событие_сбоя`);
 // сторона и идентификатор запроса — из ответа
@@ -591,12 +591,12 @@ fn Engine @snapshot() -> Snapshot => Snapshot {
 // сохраняет снимок в хранилище: прямой вызов операции эффекта, `Хранилище` объявлен в сигнатуре; не удалось — машина не идёт дальше
 fn Engine mut @save_snapshot() Store -> () => match Store.save(@recipient().id, @snapshot()) {
   Ok(_) => ()
-  Err(failure_error) => unreachable("снимок не сохранён: шаг не зафиксирован, запросы не отправляются, исполнитель остановлен")
+  Err(failure_error) => unreachable("snapshot not saved: the step is not committed, no requests are sent, the executor is stopped")
 }
 // загружает снимок; не удалось — исполнитель аварийно прерывается
 fn Engine @load_snapshot(id str) Store -> Option[Snapshot] => match Store.load(id) {
   Ok(snapshot) => snapshot
-  Err(failure_error) => unreachable("снимок не загружен: исполнитель остановлен")
+  Err(failure_error) => unreachable("snapshot not loaded: the executor is stopped")
 }
 ```
 
@@ -637,7 +637,7 @@ fn fail_code_word(reason FailCode) -> str => match reason {
 fn common_stop_fail_code(text str) -> FailCode => match text {
   "cancel_request" => Cancelled
   "pause_halt" => StoppedByHuman
-  _ => unreachable("значение остановка вне общих: его код — в таблице «конец → ответ» машины")
+  _ => unreachable("stop reason outside the common ones: its code is in the machine table "end to reply"")
 }
 
 /// Отказ вызвавшей стороне: конверт ответа берётся из запроса вызова
@@ -800,7 +800,7 @@ fn Engine mut @call(request Request[T]) Store Journal Link Objects Time -> Respo
       Some(ready) if decode(snapshot.engine_data).response_sent => ready   // уже ушёл по `Связь.ответить`: второй раз не шлётся
       _ => match @resume(request.id) {
         Some(response) => response
-        None => unreachable("снимок только что загружен: возобновить его находит")
+        None => unreachable("snapshot just loaded: resume finds it")
       }
     }
   }

@@ -194,7 +194,7 @@ fn MachineData @state_by_name(name str) -> State => match name {
   "Gate1" => Gate1
   "Session" => Session
   "Gate13Session" => Gate13Session
-  _ => unreachable("«предыдущее» — имя состояния-обращения, не конца и не ПАУЗЫ (правило 24)")
+  _ => unreachable(""previous" holds the name of an appeal state, not of an end or Pause (rule 24)")
 }
 
 /// Сторона обращения: «шаг_агента» (СЕССИЯ, вложенная машина «Шаг агента»), «вратарь» (ворота В2, В1, В13_СЕССИЯ: человек по умолчанию, агент по настройке) или «усиленный» (ПАУЗА).
@@ -202,7 +202,7 @@ fn appeal_party(appeal State) -> str => match appeal {
   Session => "agent_step"
   Gate2 | Gate1 | Gate13Session => "gatekeeper"
   Pause => "enhanced"
-  _ => unreachable("сторону имеют только обращения")
+  _ => unreachable("only appeals have a party")
 }
 ```
 
@@ -331,7 +331,7 @@ fn MachineData mut @next_attempt(party str) -> int => match party {
     @enhanced_attempt += 1
     @enhanced_attempt
   }
-  _ => unreachable("сторона вне «шаг_агента», «вратарь», «человек»")
+  _ => unreachable("party outside "agent_step", "gatekeeper", "enhanced"")
 }
 // рабочей копии попытки нет: агент правит файлы задачи сразу, проверка «объект не менялся с начала попытки» не применяется
 fn MachineData @object_changed_since_attempt(current State) Objects -> bool => false
@@ -371,7 +371,7 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   Gate1 => Gate1Input { session: @session }
   Gate13Session => Gate13SessionInput { session: @session, refusal_text: @refusal_text }
   Pause => RolePauseInput(PauseInput { previous: environment.previous(), call_request_id: environment.call_request_id() })
-  _ => unreachable("вход запроса строят только обращения")
+  _ => unreachable("only appeals build a request input")
 }
 ```
 
@@ -458,13 +458,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Pause => NotAwaited
 
   // ===================== КОНЕЦ — конец =====================
-  End => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  End => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОСТАНОВЛЕНО — конец =====================
-  Halted => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Halted => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОШИБКА — конец =====================
-  Errored => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Errored => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   }
 }
@@ -477,18 +477,18 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 fn MachineData mut @run_operation(operation State, environment MachineEnvironment) Journal Objects Time -> Event => match operation {
   ResultParsing => {
     // слово остановки — итог; у сессий проверки итоговая строка и находки захода пишутся в хранилище (правило 29)
-    ro parsing = parse_session_artifact(@session, required(@agent_reply, "ResultParsing: ответ агента записан в СЕССИИ"))
+    ro parsing = parse_session_artifact(@session, required(@agent_reply, "ResultParsing: the agent reply is recorded in Session"))
     match parsing.summary {
-      Some(found_item) => { @summary.insert(required(@launch_pass, "ResultParsing: итоговая строка приходит только у сессий проверки, у них есть номер захода"), found_item) }
+      Some(found_item) => { @summary.insert(required(@launch_pass, "ResultParsing: the summary line arrives only for review sessions, which have a pass number"), found_item) }
       None => {}                                        // итога нет: записи в `свод` нет
     }
     match parsing.findings {
-      Some(found_items) => { @findings.insert(required(@launch_pass, "ResultParsing: находки приходят только у сессий проверки, у них есть номер захода"), found_items) }
+      Some(found_items) => { @findings.insert(required(@launch_pass, "ResultParsing: the findings arrive only for review sessions, which have a pass number"), found_items) }
       None => {}                                        // сессия правки или раннера: файла находок нет
     }
     ImmediateResultParsing { result: parsing.result }
   }
-  _ => unreachable("у остальных состояний нет работы операции")
+  _ => unreachable("the other states have no operation work")
 }
 ```
 
@@ -524,7 +524,7 @@ fn MachineData mut @on_end_entry(end_state State, environment MachineEnvironment
   }
   // КОНЕЦ: в журнал — код сессии и итог сессии; ответ `Answer` с итогом запуска уходит вызывающей машине.
   End => {
-    ro outcome = required(@result, "End: итог сессии записан в СЕССИИ")
+    ro outcome = required(@result, "End: the session outcome is recorded in Session")
     environment.write_journal("запуск сессии: сессия ${@session}, итог ${outcome_word(outcome)}")
   }
   _ => ()
@@ -538,7 +538,7 @@ fn MachineData @end_response(call_request Request[SessionLaunchInput], end_state
     End => Answer(Reply {
       request: call_request.id, party: call_request.party, trace: call_request.trace, step: call_request.step,
       result: SessionLaunchResult {
-        result: required(@result, "End: итог сессии записан в СЕССИИ"),
+        result: required(@result, "End: the session outcome is recorded in Session"),
         summary: @launch_summary(),
         findings: @launch_findings() } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
@@ -550,9 +550,9 @@ fn MachineData @end_response(call_request Request[SessionLaunchInput], end_state
       "pause_halt" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
       // ОСТАНОВЛЕНО: остановка = «отмена_запроса» → Отказ, ОтмененоРодителем
       "cancel_request" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
-      _ => unreachable("значение остановка вне таблицы «конец → ответ»: новое значение добавляет строку таблицы")
+      _ => unreachable("stop reason outside the table "end to reply": a new value adds a table row")
     }
-    _ => unreachable("ответ отдают только концы")
+    _ => unreachable("only end states give a reply")
   }
 }
 

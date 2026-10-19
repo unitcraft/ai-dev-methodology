@@ -273,7 +273,7 @@ fn MachineData @state_by_name(name str) -> State => match name {
   "Gate3" => Gate3
   "Gate9" => Gate9
   "Gate15" => Gate15
-  _ => unreachable("«предыдущее» — имя состояния-обращения, не конца и не ПАУЗЫ (правило 24)")
+  _ => unreachable(""previous" holds the name of an appeal state, not of an end or Pause (rule 24)")
 }
 
 /// Сторона обращения: «запуск сессии» (вложенная машина запуска сессии), «совещание» (вложенная машина совещания), «вратарь» (ворота ПОВТОР, В3, В9: человек по умолчанию, агент по настройке) или «усиленный» (ПАУЗА, В15).
@@ -282,7 +282,7 @@ fn appeal_party(appeal State) -> str => match appeal {
   MeetingCall => "meeting"
   Retry | Gate3 | Gate9 => "gatekeeper"
   Pause | Gate15 => "enhanced"
-  _ => unreachable("сторону имеют только обращения")
+  _ => unreachable("only appeals have a party")
 }
 ```
 
@@ -409,7 +409,7 @@ fn checker(stage Stage) -> str => match stage {
   Stage.Plan => "s4"
   Stage.Implementation => "s6"
   Stage.Delivery => "s8"
-  Stage.Meeting => unreachable("проверяющего у стадии «совещание» нет: Pass ведёт её в MeetingCall")
+  Stage.Meeting => unreachable("the meeting stage has no reviewer: Pass leads it to MeetingCall")
 }
 // правщик(стадия): С1п, С3п, С5п, С7п (термины)
 fn fixer(stage Stage) -> str => match stage {
@@ -417,13 +417,13 @@ fn fixer(stage Stage) -> str => match stage {
   Stage.Plan => "s3_fix"
   Stage.Implementation => "s5_fix"
   Stage.Delivery => "s7_fix"
-  Stage.Meeting => unreachable("правщика у стадии «совещание» нет: правку ведёт вложенная машина")
+  Stage.Meeting => unreachable("the meeting stage has no fixer: the nested machine does the fix")
 }
 // дата слова «остановиться» у В9 и В15: данные исходного события шага, которые читает СТАДИЯ_ОСТАНОВКИ
 fn stop_date(body Event) -> str => match body {
   Gate9Stop { date } => date
   Gate15Stop { date } => date
-  _ => unreachable("StopStage: цепочка начата словом «Gate9: остановиться» или «Gate15: остановиться»")
+  _ => unreachable("StopStage: the chain was started by the word "Gate9: stop" or "Gate15: stop"")
 }
 // вердикт из слова переменной «вердикт»
 fn verdict_from_text(word str) -> Verdict => match word {
@@ -433,7 +433,7 @@ fn verdict_from_text(word str) -> Verdict => match word {
   "question" => Verdict.Question
   "restart" => Verdict.Restart
   "stopped" => Verdict.Stopped
-  _ => unreachable("вердикт вне перечня: чисто, требования, план, вопрос, перезапуск, остановлено")
+  _ => unreachable("verdict outside the list: clean, requirements, plan, question, restart, halted")
 }
 
 // Методы Машины: данные автомата
@@ -521,7 +521,7 @@ fn MachineData mut @next_attempt(party str) -> int => match party {
     @enhanced_attempt += 1
     @enhanced_attempt
   }
-  _ => unreachable("сторона вне «запуск сессии», «совещание», «вратарь», «человек»")
+  _ => unreachable("party outside "session_launch", "meeting", "gatekeeper", "enhanced"")
 }
 // рабочей копии попытки у этой машины нет (агент — у вложенной машины запуска сессии): проверка «объект не менялся с начала попытки» не применяется
 fn MachineData @object_changed_since_attempt(current State) Objects -> bool => false
@@ -558,16 +558,16 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
     task_dir: @task_dir, repo_dir: @repo_dir, delivery_mode: @delivery_mode,
     route: @route, source_list: None, delivery_short: @delivery_short })      // перечня источников у сессий проверки цикла нет: проверяющий читает широко
   MeetingCall => RoleMeetingInput(MeetingInput {
-    proposal: required(@proposal, "MeetingCall: предложение приходит в запросе вызова при стадии «совещание»"),
+    proposal: required(@proposal, "MeetingCall: the proposal arrives in the call request at the meeting stage"),
     lens_order: @lens_order, author_question: @author_question })
   Retry => RetryInput
   Gate3 => Gate3Input {
     summary: @summary(@number),                                    // None — итога свода нет (СВОДКА #1 ведёт в В3)
-    findings: required(@findings(@number), "Gate3: находки захода записаны при приёме ответа проверяющего") }
+    findings: required(@findings(@number), "Gate3: the findings of the pass are recorded when the reviewer reply is accepted") }
   Gate9 => Gate9Input { findings: @cycle_findings(), number: @number, origin: @origin, stage: @stage }
   Gate15 => Gate15Input { gate3_findings: @gate3_findings, passes_by_evidence: @passes_by_evidence }
   Pause => RolePauseInput(PauseInput { previous: environment.previous(), call_request_id: environment.call_request_id() })
-  _ => unreachable("вход запроса строят только обращения")
+  _ => unreachable("only appeals build a request input")
 }
 ```
 
@@ -962,13 +962,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Pause => NotAwaited
 
   // ===================== КОНЕЦ — конец =====================
-  End => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  End => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОСТАНОВЛЕНО — конец =====================
-  Halted => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Halted => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОШИБКА — конец =====================
-  Errored => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Errored => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   }
 }
@@ -978,7 +978,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 
 ```nova
 /// Работа операций при входе: операций у этой машины нет («Состояния» первоисточника: всю внутреннюю работу делают развилки и переходы).
-fn MachineData mut @run_operation(operation State, environment MachineEnvironment) Journal Objects Time -> Event => unreachable("у этой машины нет операций")
+fn MachineData mut @run_operation(operation State, environment MachineEnvironment) Journal Objects Time -> Event => unreachable("this machine has no operations")
 ```
 
 ## Приём ответа и запись результата
@@ -1055,9 +1055,9 @@ fn MachineData @end_response(call_request Request[ReviewInput], end_state State,
       "pause_halt" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
       // ОСТАНОВЛЕНО: остановка = «отмена_запроса» → Отказ, ОтмененоРодителем
       "cancel_request" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
-      _ => unreachable("значение остановка вне таблицы «конец → ответ»: новое значение добавляет строку таблицы")
+      _ => unreachable("stop reason outside the table "end to reply": a new value adds a table row")
     }
-    _ => unreachable("ответ отдают только концы")
+    _ => unreachable("only end states give a reply")
   }
 }
 

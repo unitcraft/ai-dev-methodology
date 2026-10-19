@@ -239,7 +239,7 @@ fn MachineData @state_name(state State) -> str => match state {
 fn MachineData @state_by_name(name str) -> State => match name {
   "AgentTurn" => AgentTurn
   "Permission" => Permission
-  _ => unreachable("«предыдущее» — имя состояния-обращения, не конца и не ПАУЗЫ (правило 24)")
+  _ => unreachable(""previous" holds the name of an appeal state, not of an end or Pause (rule 24)")
 }
 
 /// Сторона обращения: «агент» (ХОД_АГЕНТА), «вратарь» (ворота РАЗРЕШЕНИЕ: человек по умолчанию, агент по настройке) или «усиленный» (ПАУЗА).
@@ -247,7 +247,7 @@ fn appeal_party(appeal State) -> str => match appeal {
   AgentTurn => "agent"
   Permission => "gatekeeper"
   Pause => "enhanced"
-  _ => unreachable("сторону имеют только обращения")
+  _ => unreachable("only appeals have a party")
 }
 ```
 
@@ -506,7 +506,7 @@ fn MachineData mut @next_attempt(party str) -> int => match party {
     @enhanced_attempt += 1
     @enhanced_attempt
   }
-  _ => unreachable("сторона вне «агент», «вратарь», «человек»")
+  _ => unreachable("party outside "agent", "gatekeeper", "enhanced"")
 }
 // рабочей копии попытки у роли «агент» нет: агент правит файлы задачи сразу, проверка «объект не менялся с начала попытки» не применяется
 fn MachineData @object_changed_since_attempt(current State) Objects -> bool => false
@@ -548,9 +548,9 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
     agent_request: @agent_request, turn: @turn, retry_count: @retry_count, turn_before_retry: @turn_before_retry, permission_decision: @permission_decision }
   Permission => PermissionInput {
     agent_request: @agent_request,
-    permission_request: required(@permission_request, "Permission: запрос разрешения записан в ХОД_АГЕНТЕ") }
+    permission_request: required(@permission_request, "Permission: the permission request is recorded in AgentTurn") }
   Pause => RolePauseInput(PauseInput { previous: environment.previous(), call_request_id: environment.call_request_id() })
-  _ => unreachable("вход запроса строят только обращения")
+  _ => unreachable("only appeals build a request input")
 }
 ```
 
@@ -706,7 +706,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 
   // ===================== ПОЛИТИКА — развилка =====================
   Policy => {
-    ro request = required(@permission_request, "Policy: запрос разрешения записан в ХОД_АГЕНТЕ")
+    ro request = required(@permission_request, "Policy: the permission request is recorded in AgentTurn")
     ro decision = decision_by_policy(request.action, @agent_request.kind)
     // ПОЛИТИКА #1: решение_по_политике(вид_действия, вид) = «разрешить»
     if decision == "allow" {
@@ -732,7 +732,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Permission => match event_body {
     // РАЗРЕШЕНИЕ #1: РАЗРЕШЕНИЕ: «разрешить»
     PermissionAllow => {
-      ro request = required(@permission_request, "Permission: запрос разрешения записан в ХОД_АГЕНТЕ")
+      ro request = required(@permission_request, "Permission: the permission request is recorded in AgentTurn")
       @permission_decision = Some("allow")
       @turn = "permission"
       environment.write_journal("разрешение: ${action_kind_word(request.action)} — человек разрешил")
@@ -740,7 +740,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // РАЗРЕШЕНИЕ #2: РАЗРЕШЕНИЕ: «отказать»
     PermissionDeny => {
-      ro request = required(@permission_request, "Permission: запрос разрешения записан в ХОД_АГЕНТЕ")
+      ro request = required(@permission_request, "Permission: the permission request is recorded in AgentTurn")
       @permission_decision = Some("deny")
       @turn = "permission"
       environment.write_journal("разрешение: ${action_kind_word(request.action)} — человек отказал")
@@ -806,13 +806,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Pause => NotAwaited
 
   // ===================== КОНЕЦ — конец =====================
-  End => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  End => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОСТАНОВЛЕНО — конец =====================
-  Halted => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Halted => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОШИБКА — конец =====================
-  Errored => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Errored => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   }
 }
@@ -825,7 +825,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 fn MachineData mut @run_operation(operation State, environment MachineEnvironment) Journal Objects Time -> Event => match operation {
   Start => ImmediateStart { started: Time.now() }
   Accounting => ImmediateAccounting { usage: @collect_usage(Time.now()) }
-  _ => unreachable("у остальных состояний нет работы операции")
+  _ => unreachable("the other states have no operation work")
 }
 ```
 
@@ -875,7 +875,7 @@ fn MachineData @end_response(call_request Request[AgentRequest], end_state State
       request: call_request.id, party: call_request.party, trace: call_request.trace, step: call_request.step,
       result: AgentReply {
         text: @reply_text, artifact: @reply_artifact,
-        usage: required(@usage, "End: использование записано в УЧЁТЕ"),
+        usage: required(@usage, "End: the usage is recorded in Accounting"),
         request_started: match @transport_usage {
           Some(received) => Some(received.request_started)
           None => None
@@ -905,9 +905,9 @@ fn MachineData @end_response(call_request Request[AgentRequest], end_state State
       "pause_halt" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
       // ОСТАНОВЛЕНО: остановка = «отмена_запроса» → Отказ, ОтмененоРодителем
       "cancel_request" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
-      _ => unreachable("значение остановка вне таблицы «конец → ответ»: новое значение добавляет строку таблицы")
+      _ => unreachable("stop reason outside the table "end to reply": a new value adds a table row")
     }
-    _ => unreachable("ответ отдают только концы")
+    _ => unreachable("only end states give a reply")
   }
 }
 

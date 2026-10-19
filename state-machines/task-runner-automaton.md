@@ -458,7 +458,7 @@ fn MachineData @state_by_name(name str) -> State => match name {
   "Gate11" => Gate11
   "Gate14" => Gate14
   "Gate14Refusal" => Gate14Refusal
-  _ => unreachable("«предыдущее» и «возврат_подготовки» — имя состояния-обращения, не конца (правило 24)")
+  _ => unreachable(""previous" and "preparation_return" hold the name of an appeal state, not of an end (rule 24)")
 }
 
 /// Сторона обращения: «запуск сессии» (вложенная машина запуска сессии), «проверка» (вложенная машина проверки цикла), «вратарь» (ворота, на которые вправе ответить вратарь: человек по умолчанию, агент по настройке) или «усиленный» (дорогие ворота: В14, В14_ОТКАЗ, ЧУЖОЕ_УТВЕРЖДЕНИЕ, В5, В8, В8_ПОДТВЕРЖДЕНИЕ, В8_СДАЧА, В12, В10а–г, и ПАУЗА).
@@ -468,7 +468,7 @@ fn appeal_party(appeal State) -> str => match appeal {
   Gate13Preparation | TreeBusy | Gate13Status | Gate4 | Gate4Question | Gate7PlanQueue | Gate7Plan | Gate6 | Gate7ImplementationStep
     | Gate7Implementation | Gate7Delivery | Gate11 => "gatekeeper"
   ForeignApproval | Gate5 | Gate8 | Gate8Confirmation | Gate8Delivery | Gate12 | Gate10a | Gate10b | Gate10c | Gate10d | Gate14 | Gate14Refusal | Pause => "enhanced"
-  _ => unreachable("сторону имеют только обращения")
+  _ => unreachable("only appeals have a party")
 }
 ```
 
@@ -641,7 +641,7 @@ fn write_draft_status(document Object) Objects -> Result[(), ObjectError]
 // цикл[стадия]; запись заведена для четырёх стадий в `Машина.из_входа`
 fn MachineData @cycle(stage Stage) -> Cycle => match @cycle.get(stage) {
   Some(found_item) => found_item
-  None => unreachable("цикл стадии не заведён: `Машина.из_входа` заводит четыре стадии")
+  None => unreachable("stage cycle not created: MachineData.from_input creates the four stages")
 }
 fn MachineData mut @set_cycle(stage Stage, value Cycle) {
   @cycle.insert(stage, value)
@@ -681,7 +681,7 @@ fn MachineData @implementation_report() Objects -> Option[Artifact]
 fn MachineData @task_document(title str) Objects -> Option[Artifact] => match title {
   "specification" => @specification()
   "plan" => @task_plan()
-  _ => unreachable("документ вне «спецификация», «план»")
+  _ => unreachable("document outside "specification", "plan"")
 }
 // хеш текста документа сейчас
 fn MachineData @document_hash(document str) Objects -> str
@@ -752,7 +752,7 @@ fn MachineData mut @on_resume(saved State, environment MachineEnvironment) Journ
     _ => { @preparation_return = "" }           // устаревшее значение не доживает до новой подготовки
   }
   ro outcome = @run_preparation()
-  for stage in cycle_stages() { @set_cycle(stage, required(outcome.cycles.get(stage), "Preparation: цикл каждой стадии приходит в итоге подготовки")) }
+  for stage in cycle_stages() { @set_cycle(stage, required(outcome.cycles.get(stage), "Preparation: the cycle of each stage arrives in the preparation outcome")) }
   match outcome.preparation_outcome {
     "ready" => None
     "busy_by_live_process" => {
@@ -835,7 +835,7 @@ fn MachineData mut @next_attempt(party str) -> int => match party {
     @enhanced_attempt += 1
     @enhanced_attempt
   }
-  _ => unreachable("сторона вне «запуск сессии», «проверка», «вратарь», «усиленный»")
+  _ => unreachable("party outside "session_launch", "review", "gatekeeper", "enhanced"")
 }
 // рабочей копии попытки у раннера нет (у вложенных машин и ворот тем более): проверка «объект не менялся с начала попытки» не применяется («Реализация на файлах» первоисточника)
 fn MachineData @object_changed_since_attempt(current State) Objects -> bool => false
@@ -869,7 +869,7 @@ fn MachineData @reply_event(current State, role_result RoleResult) -> Event => m
     Verdict.Plan => ReviewPlan { cycle: outcome.cycle, out_of_scope: outcome.out_of_scope, source: outcome.source }
     Verdict.Question => ReviewQuestion { cycle: outcome.cycle, out_of_scope: outcome.out_of_scope }
     Verdict.Restart => ReviewRestart { cycle: outcome.cycle, out_of_scope: outcome.out_of_scope }
-    Verdict.Stopped => unreachable("вердикт «остановлено» — только у стадии «совещание», раннер её не вызывает")
+    Verdict.Stopped => unreachable("the verdict "halted" exists only at the meeting stage, which the runner does not call")
   }
 }
 
@@ -897,16 +897,16 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   Gate13Status => Gate13StatusInput { specification: @specification(), task_plan: @task_plan(), implementation_report: @implementation_report() }
   ForeignApproval => ForeignApprovalInput { approval_document: @approval_document, specification: @specification(), task_plan: @task_plan() }
   Gate5 => Gate5Input { approval_document: @approval_document, route: @route }
-  Gate4 => Gate4Input { specification: required(@specification(), "Gate4: спецификация есть: ворота идут после проверки разбора") }
-  Gate4Question => Gate4QuestionInput { specification: required(@specification(), "Gate4Question: спецификация есть: ворота идут после остановки сессии или проверки разбора") }
+  Gate4 => Gate4Input { specification: required(@specification(), "Gate4: the specification exists: the gate comes after the analysis review") }
+  Gate4Question => Gate4QuestionInput { specification: required(@specification(), "Gate4Question: the specification exists: the gate comes after a session stop or the analysis review") }
   Gate7PlanQueue => Gate7PlanQueueInput
   Gate7Plan => Gate7PlanInput
-  Gate6 => Gate6Input { task_plan: required(@task_plan(), "Gate6: план есть: ворота идут после проверки плана") }
+  Gate6 => Gate6Input { task_plan: required(@task_plan(), "Gate6: the plan exists: the gate comes after the plan review") }
   Gate7ImplementationStep => Gate7ImplementationStepInput
   Gate7Implementation => Gate7ImplementationInput { last_implementation_review: @last_implementation_review() }
-  Gate8 => Gate8Input { implementation_report: required(@implementation_report(), "Gate8: отчёт реализации есть: ворота идут после проверки реализации"), out_of_scope: @out_of_scope, route: @route }
+  Gate8 => Gate8Input { implementation_report: required(@implementation_report(), "Gate8: the implementation report exists: the gate comes after the implementation review"), out_of_scope: @out_of_scope, route: @route }
   Gate8Confirmation => Gate8ConfirmationInput
-  Gate8Delivery => Gate8DeliveryInput { implementation_report: required(@implementation_report(), "Gate8Delivery: отчёт реализации есть: DeliveryPhase идёт после реализации") }
+  Gate8Delivery => Gate8DeliveryInput { implementation_report: required(@implementation_report(), "Gate8Delivery: the implementation report exists: DeliveryPhase comes after the implementation") }
   Gate7Delivery => Gate7DeliveryInput
   Gate12 => Gate12Input
   Gate10a => Gate10aInput { route: @route }
@@ -917,7 +917,7 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   Gate14Refusal => Gate14RefusalInput { route_basis: @route_basis }
   Gate14 => Gate14Input { route_proposal: @route_proposal, route_basis: @route_basis, route_choice_source: @route_choice_source, route_features: @route_features(), project_settings: @project_settings() }
   Pause => RolePauseInput(PauseInput { previous: environment.previous(), call_request_id: environment.call_request_id() })
-  _ => unreachable("вход запроса строят только обращения")
+  _ => unreachable("only appeals build a request input")
 }
 ```
 
@@ -934,7 +934,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Preparation => match event_body {
     // ПОДГОТОВКА #1: сразу (итог_подготовки: Текст; цикл[стадия]: Цикл — по каждой стадии)
     ImmediatePreparation { cycles, .. } => {
-      for stage in cycle_stages() { @set_cycle(stage, required(cycles.get(stage), "Preparation: цикл каждой стадии приходит в событии")) }
+      for stage in cycle_stages() { @set_cycle(stage, required(cycles.get(stage), "Preparation: the cycle of each stage arrives in the event")) }
       Go(PreparationOutcome)
     }
     _ => NotAwaited
@@ -2262,13 +2262,13 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Pause => NotAwaited
 
   // ===================== КОНЕЦ — конец =====================
-  End => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  End => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОСТАНОВЛЕНО — конец =====================
-  Halted => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Halted => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ===================== ОШИБКА — конец =====================
-  Errored => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Errored => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   }
 }
@@ -2345,7 +2345,7 @@ fn MachineData mut @run_operation(operation State, environment MachineEnvironmen
     else { @approvals.remove("specification") }               // спецификации нет: удаляется только запись об утверждении (запись без файла недопустима)
     Immediate
   }
-  _ => unreachable("у остальных состояний нет работы операции")
+  _ => unreachable("the other states have no operation work")
 }
 ```
 
@@ -2414,9 +2414,9 @@ fn MachineData @end_response(call_request Request[RunnerInput], end_state State,
       "pause_halt" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
       // ОСТАНОВЛЕНО: остановка = «отмена_запроса» → Отказ, ОтмененоРодителем
       "cancel_request" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
-      _ => unreachable("значение остановка вне таблицы «конец → ответ»: новое значение добавляет строку таблицы")
+      _ => unreachable("stop reason outside the table "end to reply": a new value adds a table row")
     }
-    _ => unreachable("ответ отдают только концы")
+    _ => unreachable("only end states give a reply")
   }
 }
 

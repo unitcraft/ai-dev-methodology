@@ -363,7 +363,7 @@ fn MachineData @all_lens_findings(pass_number int) -> []Finding
 fn MachineData @reviewer_questions(pass_number int) -> Option[[]Finding]
 fn MachineData @lenses(lens_id str) -> Lens => match @lenses.get(lens_id) {
   Some(lens) => lens
-  None => unreachable("линза не заведена: записи линз создаёт `начать` при старте")
+  None => unreachable("lens not created: start creates the lens records")
 }
 fn MachineData mut @set_lost(lens_id str, value int) {
   ro lens = @lenses(lens_id)
@@ -392,7 +392,7 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   Lenses => @agent_request(party, LensContext { proposal: @proposal, witness_answers: @witness_answers.get(@number) }, environment)
   FailedRequest => FailureInput { failed_appeal: @failed_appeal }
   Changed => ChangedInput {
-    copy: required(@copy, "Changed: копию пишет Lock"),
+    copy: required(@copy, "Changed: the copy is written by Lock"),
     proposal: if @proposal_read() { Some(@proposal) } else { None } }
   Retry => RetryInput
   Gate3 => Gate3Input {
@@ -402,13 +402,13 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   AuthorFix => @agent_request(party, FixContext {
     proposal: @proposal, gate3_findings: @gate3_findings,
     author_guidance: if @author_guidance == "" { None } else { Some(@author_guidance) } }, environment)
-  Gate7 => Gate7Input { author_question: required(@author_question, "Gate7: вопрос автора записан ответом ПРАВКИ или ВОПРОСА") }
+  Gate7 => Gate7Input { author_question: required(@author_question, "Gate7: the author question is recorded by the reply of the fix or question state") }
   AuthorQuestion => @agent_request(party, QuestionContext {
-    author_question: required(@author_question, "AuthorQuestion: вопрос автора записан ответом ПРАВКИ или ВОПРОСА"),
+    author_question: required(@author_question, "AuthorQuestion: the author question is recorded by the reply of the fix or question state"),
     proposal: @proposal, gate3_findings: @gate3_findings, human_answer: @human_answer }, environment)
   Acceptance => AcceptanceInput { proposal: @proposal, number: @number, open: @open }
   Pause => RolePauseInput(PauseInput { previous: environment.previous(), call_request_id: environment.call_request_id() })
-  _ => unreachable("вход запроса строят только обращения")
+  _ => unreachable("only appeals build a request input")
 }
 
 /// Счётчик попыток одноадресного обращения (правило 15).
@@ -417,7 +417,7 @@ fn MachineData @attempt_counter(party str) -> int => match party {
   "author" => @author_attempt
   "gatekeeper" => @gatekeeper_attempt
   "enhanced" => @enhanced_attempt
-  _ => unreachable("сторона вне «свидетель», «автор», «вратарь», «человек»")
+  _ => unreachable("party outside "witness", "author", "gatekeeper", "enhanced"")
 }
 
 fn MachineData mut @increment_attempt_counter(party str) => match party {
@@ -425,7 +425,7 @@ fn MachineData mut @increment_attempt_counter(party str) => match party {
   "author" => { @author_attempt += 1 }
   "gatekeeper" => { @gatekeeper_attempt += 1 }
   "enhanced" => { @enhanced_attempt += 1 }
-  _ => unreachable("сторона вне «свидетель», «автор», «вратарь», «человек»")
+  _ => unreachable("party outside "witness", "author", "gatekeeper", "enhanced"")
 }
 
 // Операции и журнал машины: действия ставятся в необратимые шага через `среда`, строки идут в журнал движка
@@ -456,7 +456,7 @@ fn MachineData @lenses_without_critical() -> []str
 fn MachineData @build_summary(pass_number int) Objects -> Option[Summary]
 fn MachineData @proposal_with_fingerprint() Objects -> str => match Objects.read(Object { name: "proposal" }) {
   Ok(bytes) => fingerprint(bytes)
-  Err(_) => unreachable("предложение не прочитано: Lock читает его при входе")
+  Err(_) => unreachable("proposal not read: Lock reads it on entry")
 }
 
 // Методы Машины для движка (протокол `Автомат`): состояния и события машины
@@ -926,15 +926,15 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   Pause => NotAwaited
 
   // ===================== концы: переходов нет =====================
-  Halted => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Halted => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // ОШИБКА — конец. Заканчивает совещание, если сама машина попала в непредусмотренное положение; это дефект машины или реализации, его разбирает человек.
   // Вход: предложение; все данные машины (Все переменные и хранилища — в журнал)
-  Errored => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  Errored => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
 
   // КОНЕЦ — конец. Записывает принятое решение с источником, числом заходов и открытыми находками: совещание закончено успешно.
   // Вход: предложение; подтверждение; номер_захода; открытые
-  End => unreachable("конец: переходов нет; работа при входе — в «Концы и ответ»")
+  End => unreachable("end state: no transitions; the work on entry is in "Ends and reply"")
   }
 }
 ```
@@ -977,7 +977,7 @@ fn MachineData mut @run_operation(operation State, environment MachineEnvironmen
     }
     Immediate
   }
-  _ => unreachable("у остальных состояний нет работы операции")
+  _ => unreachable("the other states have no operation work")
 }
 ```
 
@@ -994,7 +994,7 @@ fn MachineData mut @on_accept(current State, response Response[RoleResult]) => m
         @set_probes(outcome.party, outcomes.probes)
         @responded += 1
       }
-      _ => unreachable("результат роли Lenses — ИтогЛинзы")
+      _ => unreachable("the result of the role Lenses is LensOutcome")
     }
     // сбой: потери_подряд + 1, пробы ← 0
     Refusal(refusal) => {
@@ -1012,11 +1012,11 @@ fn MachineData mut @record_result(current State, response Response[RoleResult]) 
   Answer(outcome) => match current {
     Witness => match outcome.result {
       WitnessOutcome(answers) => { @witness_answers.insert(@number, answers) }
-      _ => unreachable("результат роли Witness — []ОтветСвидетеля")
+      _ => unreachable("the result of the role Witness is []WitnessReply")
     }
     Lenses => match outcome.result {
       LensOutcome(outcomes) => { @lens_findings.insert((outcome.party, @number), outcomes.findings) }
-      _ => unreachable("результат роли Lenses — ИтогЛинзы")
+      _ => unreachable("the result of the role Lenses is LensOutcome")
     }
     AuthorFix | AuthorQuestion => match outcome.result {
       EditOutcome(fix) => match fix {            // ИтогПравки: Закончена ведёт в ЗАХОД, Вопрос — в В7
@@ -1026,7 +1026,7 @@ fn MachineData mut @record_result(current State, response Response[RoleResult]) 
           @author_question = Some(question.question)
         }
       }
-      _ => unreachable("результат роли AuthorFix и AuthorQuestion — ИтогПравки")
+      _ => unreachable("the result of the roles AuthorFix and AuthorQuestion is FixOutcome")
     }
     _ => ()                                        // у остальных обращений результат — исход ворот, он идёт событием
   }
@@ -1085,9 +1085,9 @@ fn MachineData @end_response(call_request Request[MeetingInput], end_state State
       stop_text if stop_text == "${@failed_appeal}_halt_meeting" => refuse_with(call_request, StoppedByHuman, @stop_reason)
       // ОСТАНОВЛЕНО: остановка = «отмена_запроса» → Отказ, ОтмененоРодителем
       "cancel_request" => refuse_with(call_request, common_stop_fail_code(@stop_reason), @stop_reason)
-      _ => unreachable("значение остановка вне таблицы «конец → ответ»: новое значение добавляет строку таблицы")
+      _ => unreachable("stop reason outside the table "end to reply": a new value adds a table row")
     }
-    _ => unreachable("ответ отдают только концы")
+    _ => unreachable("only end states give a reply")
   }
 }
 
