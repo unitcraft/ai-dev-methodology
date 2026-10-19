@@ -13,6 +13,7 @@
 | [state-machine-glossary.md](state-machine-glossary.md) | словарь английских имён: русское имя → английское для идентификаторов кода автоматов и провода, строковые значения-перечисления, расхождения с таблицами соответствия (фаза 1 перевода кода) |
 | [state-machine-pause-states.md](state-machine-pause-states.md) | подключаемый фрагмент «Пауза» и общих остановок |
 | [state-machine-agent-step-states.md](state-machine-agent-step-states.md)<br>[state-machine-agent-step-automaton.md](state-machine-agent-step-automaton.md) | машина «Шаг агента»: один вызов агента с типизированным запросом и ответом |
+| [state-machine-agent-step-table.md](state-machine-agent-step-table.md) | машина «Шаг агента» целиком в формате «Таблицы машин», версия 2.6: опытная иллюстрация; эквивалентность по журналу с автоматом не проверялась, источник правды — `states` и `automaton` |
 | [task-runner-session-states.md](task-runner-session-states.md)<br>[task-runner-session-automaton.md](task-runner-session-automaton.md) | машина «Запуск сессии» |
 | [task-runner-review-states.md](task-runner-review-states.md)<br>[task-runner-review-automaton.md](task-runner-review-automaton.md) | машина «Проверка цикла» |
 | [task-runner-states.md](task-runner-states.md)<br>[task-runner-automaton.md](task-runner-automaton.md) | машина «Раннер», фазы цикла и маршрут задачи |
