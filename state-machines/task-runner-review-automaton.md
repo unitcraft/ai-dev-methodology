@@ -142,10 +142,10 @@ fn MachineData.new() -> MachineData => {
   origin: 1,
   streak: 0,
   no_probes: 0,
-  out_of_scope: []Finding.new(),
-  gate3_findings: []Finding.new(),
-  passes_by_evidence: []Counter.new(),
-  narrowed: []str.new(),
+  out_of_scope: [],
+  gate3_findings: [],
+  passes_by_evidence: [],
+  narrowed: [],
   verdict: "",
   verdict_source: "",
   session: "",
@@ -170,7 +170,7 @@ fn MachineData.new() -> MachineData => {
   probes_min: 0,
   delivery_short: false,
   proposal: None,
-  lens_order: []str.new(),
+  lens_order: [],
   author_question: None,
 }
 

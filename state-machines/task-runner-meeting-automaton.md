@@ -203,8 +203,8 @@ fn MachineData.new() -> MachineData => {
   author_guidance: "",
   stop_reason: "",
   confirmation: "",
-  gate3_findings: []Finding.new(),
-  open: []Finding.new(),
+  gate3_findings: [],
+  open: [],
   proposal: "",
   copy: None,
   copy_fingerprint: None,
@@ -213,7 +213,7 @@ fn MachineData.new() -> MachineData => {
   summary: HashMap[int, Summary].new(),
   archive: "",
   author_question: None,
-  lens_order: []str.new(),
+  lens_order: [],
 }
 
 /// Машина по входу совещания: предложение, вопрос автора, порядок линз и записи линз.

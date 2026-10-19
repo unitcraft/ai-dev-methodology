@@ -169,16 +169,16 @@ fn EngineState.new(initial State) -> EngineState[State] => {
   call_request_id: "",
   state: initial,
   previous: "",
-  open_requests: []str.new(),
-  accepted_requests: []str.new(),
-  to_send: []str.new(),
-  nested_signals: []NestedSignal.new(),
+  open_requests: [],
+  accepted_requests: [],
+  to_send: [],
+  nested_signals: [],
   waiting: HashMap[str, Waiting].new(),
   model_tally: "",
   transition_note: JournalEvent { code: "", params: []JournalParam.new() },
   human_words: "",
   failure_texts: "",
-  nested_ids: []str.new(),
+  nested_ids: [],
 }
 ```
 
@@ -410,7 +410,7 @@ fn Engine mut @run_irreversible() Objects -> () {
   for action in @irreversible_actions {
     @machine.execute(action)
   }
-  @irreversible_actions = []Action.new()
+  @irreversible_actions = []
 }
 // запрос — отдельная фиксация со своим номером шага; причина_шага остаётся прежней (правила 22, 31)
 fn Engine mut @begin_request_commit() {
@@ -512,7 +512,7 @@ fn Engine mut @cancel_all_open_requests() Link -> () {
   for id in @engine_state.open_requests {
     @cancel_request(id)
   }
-  @engine_state.open_requests = []str.new()
+  @engine_state.open_requests = []
 }
 // для каждого `СигналВложенному` отправляет сигнал вложенной машине по её запросу, пишет в журнал «стоп передан <идентификатор_запроса>» и очищает `сигналы_вложенным`; «отмена» доставляется всегда по идентификатору в сигнале (отмена уже вынула запрос из открытые_запросы), а «стоп», «продолжить», «остановить» — только запросам, ещё лежащим в открытые_запросы (отменённым они не нужны)
 fn Engine mut @pass_accumulated_signals() Journal Link Time -> () {
@@ -523,7 +523,7 @@ fn Engine mut @pass_accumulated_signals() Journal Link Time -> () {
       @write_journal(journal_event("signal_passed", [param("signal", "${signal.signal}"), param("request", "${signal.request}")]))   // «стоп передан <идентификатор_запроса>», «продолжить передано <идентификатор_запроса>»
     }
   }
-  @engine_state.nested_signals = []NestedSignal.new()
+  @engine_state.nested_signals = []
 }
 fn Engine mut @give_response(response Response[U]) Store Link -> () {
   @ready_response = Some(response)
@@ -800,10 +800,10 @@ fn Engine.new(machine M) -> Engine => {
   machine,
   engine_state: EngineState.new(machine.initial()),
   call_request: None,
-  queue: []Incoming.new(),
+  queue: [],
   ready_response: None,
   response_sent: false,
-  irreversible_actions: []Action.new(),
+  irreversible_actions: [],
   running: false,
 }
 
@@ -828,10 +828,10 @@ fn Engine mut @start(request Request[T]) Store Journal Link Objects Time -> Resp
   @running = true
   @call_request = Some(request)
   @engine_state = EngineState.new(@machine.initial())
-  @queue = []Incoming.new()
+  @queue = []
   @ready_response = None
   @response_sent = false
-  @irreversible_actions = []Action.new()
+  @irreversible_actions = []
   @engine_state.call_request_id = request.id
   @engine_state.trace = @new_trace()                  // дочерняя от внешней (запрос.трасса)
   @run_step(@new_event("start"), Go(@machine.initial()))

@@ -248,7 +248,7 @@ fn MachineData.new() -> MachineData => {
   next_session: HashMap[str, str].new(),
   next_source: HashMap[str, str].new(),
   cycle: HashMap[Stage, Cycle].new(),
-  out_of_scope: []Finding.new(),
+  out_of_scope: [],
   feedback_round: 0,
   session: "",
   source: "",
@@ -1948,7 +1948,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
   OwnerDecisionsRecording => match event_body {
     // ЗАПИСЬ_РЕШЕНИЙ_ВЛАДЕЛЬЦА #1: сразу
     Immediate => {
-      @out_of_scope = []Finding.new()
+      @out_of_scope = []
       @owner_fix(Stage.Implementation)
       Go(Gate8Outcome)
     }
