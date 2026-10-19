@@ -751,26 +751,29 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 
   // ===================== БЮДЖЕТ — развилка =====================
   Budget => {
+    ro tokens_exhausted = token_limit_reached(@agent_request, @transport_usage)
+    ro cost_exhausted = cost_limit_reached(@agent_request, @transport_usage)
+    ro turns_exhausted = turn_limit_reached(@agent_request, @turn_count)
     // БЮДЖЕТ #1: предел токенов исчерпан
-    if token_limit_reached(@agent_request, @transport_usage) {
+    if tokens_exhausted {
       @stop_reason = "max_tokens"
       environment.write_journal("предел токенов исчерпан: израсходовано ${tokens_spent(@transport_usage)}")
       return Go(Accounting)
     }
     // БЮДЖЕТ #2: предел токенов не исчерпан, и предел стоимости исчерпан
-    if !token_limit_reached(@agent_request, @transport_usage) && cost_limit_reached(@agent_request, @transport_usage) {
+    if !tokens_exhausted && cost_exhausted {
       @stop_reason = "cost_limit"
       environment.write_journal("предел стоимости исчерпан: израсходовано ${cost_spent(@transport_usage)}")
       return Go(Accounting)
     }
     // БЮДЖЕТ #3: предел токенов не исчерпан, предел стоимости не исчерпан, и предел ходов исчерпан
-    if !token_limit_reached(@agent_request, @transport_usage) && !cost_limit_reached(@agent_request, @transport_usage) && turn_limit_reached(@agent_request, @turn_count) {
+    if !tokens_exhausted && !cost_exhausted && turns_exhausted {
       @stop_reason = "max_turn_requests"
       environment.write_journal("предел ходов исчерпан: отправлено ${@turn_count}")
       return Go(Accounting)
     }
     // БЮДЖЕТ #4: ни один предел не исчерпан
-    if !token_limit_reached(@agent_request, @transport_usage) && !cost_limit_reached(@agent_request, @transport_usage) && !turn_limit_reached(@agent_request, @turn_count) {
+    if !tokens_exhausted && !cost_exhausted && !turns_exhausted {
       @turn_count += 1
       return Go(AgentTurn)
     }
