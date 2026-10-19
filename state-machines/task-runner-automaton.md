@@ -553,14 +553,7 @@ fn outcome_equals(outcome Option[SessionResult], value SessionResult) -> bool =>
   None => false
 }
 // четыре стадии цикла проверки раннера: разбор, план, реализация, сдача («совещание» раннер не вызывает)
-fn cycle_stages() -> []Stage {
-  mut stages = []Stage.new()
-  stages.push(Stage.Analysis)
-  stages.push(Stage.Plan)
-  stages.push(Stage.Implementation)
-  stages.push(Stage.Delivery)
-  stages
-}
+fn cycle_stages() -> []Stage => [Stage.Analysis, Stage.Plan, Stage.Implementation, Stage.Delivery]
 // ранг риска для сравнения: низкий < средний < высокий; «не оценён» вне порядка (признаки с ним неполны, до сравнения не доходят)
 fn risk_rank(risk Risk) -> int => match risk {
   Risk.Low => 0

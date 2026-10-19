@@ -479,11 +479,7 @@ fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
 fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason }
 // метка инварианта 2: номер_захода не уменьшается (проверяет движок после каждого перехода шага, покомпонентно; у проверки компонент один)
-fn MachineData @invariant_mark() -> []int {
-  mut label = []int.new()
-  label.push(@number)
-  label
-}
+fn MachineData @invariant_mark() -> []int => [@number]
 // «остановка» — причина остановки проверки; пишут общие события движка и строки состояний
 fn MachineData mut @record_stop(reason str) {
   @stop_reason = reason

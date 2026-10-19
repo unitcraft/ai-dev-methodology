@@ -478,11 +478,7 @@ fn MachineData @reply_event(current State, role_result RoleResult) -> Event => m
   }
 }
 // метка инварианта 2: номер_захода не уменьшается (проверяет движок после каждого перехода шага, покомпонентно; у совещания компонент один)
-fn MachineData @invariant_mark() -> []int {
-  mut label = []int.new()
-  label.push(@number)
-  label
-}
+fn MachineData @invariant_mark() -> []int => [@number]
 // «остановка» — причина остановки совещания; пишут общие события движка и строки состояний
 fn MachineData mut @record_stop(reason str) {
   @stop_reason = reason
