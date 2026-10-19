@@ -182,7 +182,7 @@ type MachineData {
   summary HashMap[int, Summary],                      // [номер_захода]; начально нет; итоговая строка и находки с меткой линзы
   archive str,                                   // ответы и находки недействительных заходов, вне контекста ролей
   author_question Option[str],                   // вопрос автора человеку, с которым он остановил правку; сбрасывается в None после ответа свидетеля
-  lens_order []str,                          // задание совещания, не хранилище: идентификаторы по порядку запуска; непустой, различны и отличны от «свидетель», «автор», «вратарь», «человек»; пишется при старте один раз
+  lens_order []str,                          // задание совещания, не хранилище: идентификаторы по порядку запуска; непустой, различны и отличны от слов-сторон «свидетель», «автор», «вратарь», «усиленный», «человек» (в коде — `witness`, `author`, `gatekeeper`, `enhanced`, `human`: по ним различаются счётчики попыток и идентификаторы запросов); пишется при старте один раз
 }
 
 /// Начальные значения данных машины — раздел «Данные» первоисточника.
@@ -237,6 +237,7 @@ fn MachineData.from_input(input MeetingInput) -> MachineData {
 //    В коде: события ворот приходят от стороны «вратарь» (ворота, на которые вправе ответить вратарь) или «усиленный» (дорогие ворота и ПАУЗА: отвечает усиленный вратарь по разрешению, иначе человек) — имя роли ворот, кто исполняет её на деле, пишет `решил` (у вызванной машины в ПАУЗЕ — «от родителя»); перейти их не порождает.
 
 // 2. номер_захода не уменьшается: движок после каждого перехода шага сверяет `метка_инварианта` (у совещания — номер_захода) с её значением до шага
+// 3. идентификаторы линз отличны от слов-сторон `witness`, `author`, `gatekeeper`, `enhanced`, `human` («свидетель», «автор», «вратарь», «усиленный», «человек»): по ним различаются стороны запросов, счётчики попыток и идентификаторы запросов; задание совещания проверяется при старте (`lens_order`)
 ```
 
 ## Состояния
@@ -575,7 +576,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // СВИДЕТЕЛЬ #2: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal(journal_event("witness_no_answer", [param("reason", "${reason}")]))
+      environment.write_journal(journal_event("witness_no_answer", [param("reason", "${fail_code_word(reason)}")]))
       @failed_appeal = "Witness"
       Go(FailedRequest)
     }
@@ -600,7 +601,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     Replied => Go(AllClosed)
     // ЛИНЗЫ #2: сбой (сторона: идентификатор линзы; причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal(journal_event("lens_no_answer", [param("party", "${event.party}"), param("reason", "${reason}")]))
+      environment.write_journal(journal_event("lens_no_answer", [param("party", "${event.party}"), param("reason", "${fail_code_word(reason)}")]))
       Go(LensRefusal)
     }
     _ => NotAwaited
@@ -616,7 +617,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ОТКАЗ #2: потери_подряд линзы событие.сторона = 2
     if @lenses(event.party).lost == 2 {
       @failed_appeal = "Lenses"
-      environment.return_first_to_send(event.party)
+      environment.return_first_to_send(event.party)                  // к_отправке ← сторона события первой, затем прежний к_отправке
       return Go(FailedRequest)
     }
     // ОТКАЗ #3: потери_подряд линзы событие.сторона = 3
@@ -883,7 +884,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     }
     // ПРАВКА #3: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal(journal_event("author_fix_no_answer", [param("reason", "${reason}")]))
+      environment.write_journal(journal_event("author_fix_no_answer", [param("reason", "${fail_code_word(reason)}")]))
       @failed_appeal = "AuthorFix"
       Go(FailedRequest)
     }
@@ -908,7 +909,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     RepliedAsked => Go(Gate7)
     // ВОПРОС #3: сбой (причина: КодСбоя)
     Failure { reason } => {
-      environment.write_journal(journal_event("author_question_no_answer", [param("reason", "${reason}")]))
+      environment.write_journal(journal_event("author_question_no_answer", [param("reason", "${fail_code_word(reason)}")]))
       @failed_appeal = "AuthorQuestion"
       Go(FailedRequest)
     }
@@ -966,6 +967,10 @@ fn MachineData mut @run_operation(operation State, environment MachineEnvironmen
   }
   Void => {
     @move_to_archive(@number, @voided(@number), environment)
+    // данные недействительного захода очищаются: заход с тем же номером начинается без находок, ответов свидетеля и свода
+    for lens_id in @lens_order { @lens_findings.remove((lens_id, @number)) }
+    @witness_answers.remove(@number)
+    @summary.remove(@number)
     Immediate
   }
   Filter => {
@@ -1077,7 +1082,7 @@ fn MachineData @end_response(call_request Request[MeetingInput], end_state State
       request: call_request.id, party: call_request.party, trace: call_request.trace, step: call_request.step,
       result: MeetingResult { decision: @proposal, source: @confirmation, passes: @number, open: @open } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
-    Errored => refuse_with(call_request, NoResult, environment.transition_note())
+    Errored => refuse_with(call_request, NoResult, journal_event_text(environment.transition_note()))
     Halted => match @stop_reason {
       // ОСТАНОВЛЕНО: остановка = «ни одна линза не ответила» → Отказ, НетРезультата
       "no_lens_answered" => refuse_with(call_request, NoResult, @stop_reason)

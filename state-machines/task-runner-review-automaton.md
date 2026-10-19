@@ -1045,7 +1045,7 @@ fn MachineData @end_response(call_request Request[ReviewInput], end_state State,
         cycle: @cycle(),
         out_of_scope: @out_of_scope } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
-    Errored => refuse_with(call_request, NoResult, environment.transition_note())
+    Errored => refuse_with(call_request, NoResult, journal_event_text(environment.transition_note()))
     Halted => match @stop_reason {
       // ОСТАНОВЛЕНО: остановка = «запуск сессии: нет результата» → Отказ, НетРезультата
       "session_launch_no_result" => refuse_with(call_request, NoResult, @stop_reason)

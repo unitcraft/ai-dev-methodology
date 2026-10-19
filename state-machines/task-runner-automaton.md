@@ -2398,7 +2398,7 @@ fn MachineData @end_response(call_request Request[RunnerInput], end_state State,
       request: call_request.id, party: call_request.party, trace: call_request.trace, step: call_request.step,
       result: RunnerResult { feedback_rounds: @feedback_round } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
-    Errored => refuse_with(call_request, NoResult, environment.transition_note())
+    Errored => refuse_with(call_request, NoResult, journal_event_text(environment.transition_note()))
     Halted => match @stop_reason {
       // ОСТАНОВЛЕНО: остановка = «задача занята живым процессом» → Отказ, НетРезультата
       "task_busy_by_live_process" => refuse_with(call_request, NoResult, @stop_reason)

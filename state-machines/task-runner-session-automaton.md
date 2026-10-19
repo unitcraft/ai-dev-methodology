@@ -542,7 +542,7 @@ fn MachineData @end_response(call_request Request[SessionLaunchInput], end_state
         summary: @launch_summary(),
         findings: @launch_findings() } })
     // ОШИБКА, условие входа: всегда (дефект машины) → Отказ, НетРезультата; текст — запись из перехода
-    Errored => refuse_with(call_request, NoResult, environment.transition_note())
+    Errored => refuse_with(call_request, NoResult, journal_event_text(environment.transition_note()))
     Halted => match @stop_reason {
       // ОСТАНОВЛЕНО: остановка = «В13: остановить» или «В1: остановить» → Отказ, ОстановленоЧеловеком
       "gate13_halt" | "gate1_halt" => refuse_with(call_request, StoppedByHuman, @stop_reason)

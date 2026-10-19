@@ -624,6 +624,11 @@ fn param(name str, value str) -> JournalParam => JournalParam { name, value }
 /// Событие журнала: код (латинский snake_case, таблица шаблонов — state-machine-journal.md) и параметры
 fn journal_event(code str, params []JournalParam) -> JournalEvent => JournalEvent { code, params }
 
+/// Текст события журнала для текстовых полей, где нужна строка (текст отказа `refuse_with` у ОШИБКИ): правило раздела 3 state-machine-journal.md,
+/// известный код — русский текст по шаблону, неизвестный — «событие <код>: <параметры>», параметры — пары `имя=значение` через запятую в порядке записи
+// псевдокод: тело пишет реализация (сборка строки по таблице шаблонов обработчика журнала); здесь только сигнатура
+fn journal_event_text(event JournalEvent) -> str
+
 /// Результат операции над объектом: ошибка — машина не идёт дальше (необратимые действия повторяются без вреда)
 fn object_ok(result Result[(), ObjectError], description str) -> () => match result {
   Ok(_) => ()
