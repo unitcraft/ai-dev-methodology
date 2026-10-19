@@ -1,16 +1,37 @@
-# Portolan: specification of the language for writing state machines as tables, version 2.8
+# Portolan: specification of the language for writing state machines as tables, version 2.9
 
 Translation of [state-machine-portolan-spec.md](state-machine-portolan-spec.md); the Russian text is normative: on any difference the Russian text is correct.
 
 The name of the notation is **“Portolan”** (`Portolan`; the owner's word, 2026-10-19: «Portolan - ОК»): a portolan is a medieval pilot chart on which ports and the routes laid between them are drawn; in the notation the states are the ports, the transitions are the routes between them, and the chart itself is compiled by people in ordinary words. A machine file is a “machine table” in Portolan. The name's availability was checked by a search on 2026-10-19: no programming language, format or state-machine tool with this name was found; there are small unrelated uses (a geospatial command-line tool and plugins for a geographic information system, a tool for a web-framework API, an inactive dynamic mapping platform, a German accounting-software firm), and there is no conflict with system software. The history, reasons and goals of the language are in [doc/portolan-history.md](../doc/portolan-history.md). **What the word means.** A portolan (Italian *portolano*, from *porto*, “port”) is a medieval pilot chart, originally a book of sailing directions (13th–17th centuries, the Mediterranean and Black Seas): a coastline, the names of ports along the coast, and a net of straight rhumb lines from a wind rose along which a navigator laid a course from port to port. The chart describes not the terrain but the routes between ports, and it was compiled by the sailors themselves in plain language; hence the ports are the states of the machine, the courses between them are the transitions, and the chart is written by people in ordinary words.
 
-Format version: 2.8, 2026-10-19. Status: **experimental format; version 2.2 was implemented by an interpreter in another language; equality with the automaton by journal is confirmed on 39 scenarios of one small machine (the chat machine); the expressibility of “Agent step” and “Meeting” was checked by pilots; not implemented: nested machines, `Edits`, the party profile, `Request limit`, `Form returns`, `pass`.** The rules for writing machines are in [state-machine-spec.md](state-machine-spec.md); this file sets the formal notation of the same tables: types, expressions, actions, parties, fragments. The journal is [state-machine-journal.md](state-machine-journal.md); the names and the words of values are [state-machine-glossary.md](state-machine-glossary.md). On a difference with the rules of the specification the specification is correct, and this file is corrected after it.
+Format version: 2.9, 2026-10-19. Status: **experimental format; version 2.2 was implemented by an interpreter in another language; equality with the automaton by journal is confirmed on 39 scenarios of one small machine (the chat machine); the expressibility of “Agent step” and “Meeting” was checked by pilots; not implemented: nested machines, `Edits`, the party profile, `Request limit`, `Form returns`, `pass`.** The rules for writing machines are in [state-machine-spec.md](state-machine-spec.md); this file sets the formal notation of the same tables: types, expressions, actions, parties, fragments. The journal is [state-machine-journal.md](state-machine-journal.md); the names and the words of values are [state-machine-glossary.md](state-machine-glossary.md). On a difference with the rules of the specification the specification is correct, and this file is corrected after it.
 
 Goal: a machine is described by one file without code in Nova; from the description an executor gives the same behavior as the automaton in Nova: the same transitions, the same structured journal, the same data and queue. Checked by the expressibility of the automata rows (which rows are written without workarounds) and by running one small machine through an interpreter (comparison with the automaton by journal, the header).
 
-The examples are taken from the pilots (excerpts of “Agent step” and “Meeting”); under each one it is said what was changed against the pilot's record. A construct used in an example is defined in sections 2–5, 7–9 or in the catalog (section 12). The labels in parentheses in the text are the numbers of corrections: of earlier versions (А, АМ, E, T, С, ША, ШМ, ШВ, СГ, ИС), of version 2.3 (Н-…), of version 2.4 (И-…), of version 2.5 (Т-…), of version 2.6 (С-1), of version 2.7 (П-1…П-9) and of version 2.8 (Я-1…Я-4, section 0). The examples of this English version are written in the English form of the language (section 1a): the keywords come from the `en` column of the word table [portolan-keywords.tsv](portolan-keywords.tsv), and the names invented by an author are English.
+The examples are taken from the pilots (excerpts of “Agent step” and “Meeting”); under each one it is said what was changed against the pilot's record. A construct used in an example is defined in sections 2–5, 7–9 or in the catalog (section 12). The labels in parentheses in the text are the numbers of corrections: of earlier versions (А, АМ, E, T, С, ША, ШМ, ШВ, СГ, ИС), of version 2.3 (Н-…), of version 2.4 (И-…), of version 2.5 (Т-…), of version 2.6 (С-1), of version 2.7 (П-1…П-9), of version 2.8 (Я-1…Я-4) and of version 2.9 (Я-5…Я-18, section 0). The examples of this English version are written in the English form of the language (section 1a): the keywords come from the `en` column of the word table [portolan-keywords.tsv](portolan-keywords.tsv), and the names invented by an author are English.
 
 ## 0. What changed
+
+**Against version 2.8.** The labels of version 2.9 are **Я-5…Я-18**.
+
+| № | Correction | Where |
+|---|---|---|
+| Я-5 | state heading: the name in parentheses is the state name in JSON; required if it differs from the name in the heading (Russian `ПОВТОР` → `(Retry)`), and not written if it coincides (`### Retry — fork`); an author who wants another name in JSON writes it in parentheses (`### Pass — appeal (Gate3)`); parsing accepts both spellings | 4.1, 10 |
+| Я-6 | a parameter in a primitive registry row is written in the Nova notation through a space: `role text` instead of `role: text` | 7 |
+| Я-7 | the Gate3 example: an excerpt of the “Parties” table with the gate words `not counted`, `counted(findings []Finding)` is added to the example; the words of the example rows are declared in the “gate_words” of the appeal's party | 1, 4.3 |
+| Я-8 | a field binding with a colon: a field declaration is `findings []Finding`, a binding in a transition row is `field: name` (read “field → name”), a single name if it coincides with the field | 1, 3.1, 4.3 |
+| Я-9 | operators: both spellings are accepted in parsing (`≥`/`>=`, `≤`/`<=`, `≠`/`!=`, `→`/`->`, `…`/`...`, `∈`/`in`); the kind `operator` of the word table; `для каждого`/`for each` and `нет`/`none` (the value of `Input: none`) in the word table | 1a, 4.1, 10 |
+| Я-10 | string values in JSON: the `machine/2` tree is the same for any file language except string values, which an author writes in his own language | 1a |
+| Я-11 | project keys `project.<key>` are named by the product and are not part of the language; a default value that depends on an external key applies only when the key is present | 1 |
+| Я-12 | a comment paragraph needs an empty line before and after; a text line pressed against a table, a heading or a list is not a paragraph | 4.1, 10 |
+| Я-13 | declarations (`type`, `enum`, `variant`, `define`) are written only inside a code block; outside it a declaration is a comment and a warning | 2, 10 |
+| Я-14 | the list of keys of the prose warning: “To” is a column, not a key line, and is removed from the list | 4.1 |
+| Я-15 | enumeration value words: partial words are allowed, a word is `[a-z][a-z0-9_]*`; an enumeration without words is the Latin tree name in the tree and in `machine_data`/`all_data` | 2, 5, 6 |
+| Я-16 | the history of the language versions: 2.7 (2026-10-19) — the language received the name “Portolan”; 2.8 — bilingualism (Я-1…Я-4) | 0 |
+| Я-17 | `## Fragment expansion “Name”`: a reference section anywhere in the file after `## Includes`, parsing skips it entirely; the name coincides with the name of an included fragment (otherwise a warning), there may be several such sections | 1, 9, 10 |
+| Я-18 | extension `*.portolan.md`: parsing does not check the extension, only the formatting check script does | 1 |
+
+`format: 2.9` stands in the headers of the machine, the fragment and the definitions file; the hash of the definitions file sample is recomputed (section 8).
 
 **Against version 2.7.** The labels of version 2.8 are **Я-1…Я-4**.
 
@@ -21,7 +42,7 @@ The examples are taken from the pilots (excerpts of “Agent step” and “Meet
 | Я-3 | script [check-portolan-keywords.py](check-portolan-keywords.py): checks the word table and compares the sample machine with it, self-check by mutation | 1a, 10 |
 | Я-4 | the party kind “human or agent by setting” is called `gatekeeper` in JSON: in the specification the record `human or agent by setting <name>` (Russian — `human или agent по настройке <имя>`) corresponds to the JSON kind `gatekeeper` | 1 |
 
-`format: 2.8` stands in the headers of the machine, the fragment and the definitions file; the hash of the definitions file sample is recomputed (section 8).
+In version 2.8 `format: 2.8` stood in the headers of the machine, the fragment and the definitions file; the hash of the definitions file sample was recomputed (section 8).
 
 **Against version 2.6.** The labels of version 2.7 are **П-1…П-9**.
 
@@ -47,13 +68,13 @@ Removed from v1 and not replaced by a namesake: `add(field, expr)` — in its pl
 
 The keywords of this section (section headings, column names, key lines, party kinds) are quoted here in their English form; in the Russian form of a file they are the Russian words, and in the English form they are written by the [word table](portolan-keywords.tsv); the rules are in section 1a.
 
-**Extension.** A machine file in Portolan is called `*.portolan.md` (the machine name is Latin, as in `- machine:`; for example `agent_step.portolan.md`); the former `*.table.md` is accepted in parsing for a transition period and is not used in new files (decision of the methodology owner, 2026-10-19, “as recommended”). A definitions file and a fragment file are also `*.portolan.md` with a header of their own kind. The machine version (`- machine_version:`) is set by the author of the file; a string of the form `portolan-<format version>` is recommended (for example `portolan-2.8`) — it answers the question “in which language and which version is the machine written”; the caller compares it only for equality with the registry entry (call protocol, section B, item 6).
+**Extension.** A machine file in Portolan is called `*.portolan.md` (the machine name is Latin, as in `- machine:`; for example `agent_step.portolan.md`); the former `*.table.md` is accepted in parsing for a transition period and is not used in new files (decision of the methodology owner, 2026-10-19, “as recommended”). Parsing does not check the extension (it accepts `*.table.md` and any other as well): the extension is checked only by the formatting check script (Я-18). A definitions file and a fragment file are also `*.portolan.md` with a header of their own kind. The machine version (`- machine_version:`) is set by the author of the file; a string of the form `portolan-<format version>` is recommended (for example `portolan-2.9`) — it answers the question “in which language and which version is the machine written”; the caller compares it only for equality with the registry entry (call protocol, section B, item 6).
 
 Markdown, sections in order:
 
 | Section | Contents |
 |---|---|
-| header | `# Machine: <Name>`; list items `- machine: <latin_name>`, `- machine_version: <string>`, `- format: 2.8`, optionally `- language: ru` or `- language: en` (1a; the marker `- ` is optional in parsing; in writing it is required: markdown glues consecutive lines together) |
+| header | `# Machine: <Name>`; list items `- machine: <latin_name>`, `- machine_version: <string>`, `- format: 2.9`, optionally `- language: ru` or `- language: en` (1a; the marker `- ` is optional in parsing; in writing it is required: markdown glues consecutive lines together) |
 | `## Types` | records, variants, enumerations (section 2) |
 | `## Constants` | `name`, `type`, `value` |
 | `## Parameters` | `name`, `type`, `default`, `project_override` (`project.<key>`); the default value is required: if the source gives a stub, it is written with the note “source stub”; a project key that the source does not name is `—` (АМ10); passing values from outside — below (П-9) |
@@ -65,11 +86,11 @@ Markdown, sections in order:
 | `## States` | the first line `Initial state: NAME`, then the states (section 4) (А8) |
 | `## Ends` | the table “end → response” (4.7) |
 | `## Primitives` | host primitives that the machine calls (section 7) |
-| `## Fragment expansion “Name”` | an optional reference section at the end of the file: what the included fragment brings (parameters, obligations, data, events, states); **parsing skips the section entirely**, headings and tables in it are allowed (П-2) |
+| `## Fragment expansion “Name”` | an optional reference section anywhere in the file after `## Includes`: what the included fragment brings (parameters, obligations, data, events, states); **parsing skips the section entirely**, headings and tables in it are allowed (П-2); the name in the heading coincides with the name of an included fragment (otherwise a warning of the formatting check); there may be several such sections in a file (Я-17) |
 
 **Tables** (П-6). The separator row under a table heading (`|---|---|`, `|:---|---:|`) is a row of the signs `-`, `:`, spaces and `|`; parsing skips it. The sign `|` inside a cell is written `\|` (a literal set `"a" \| "b"`, a lambda with `|`); parsing removes the escaping. In the examples of the format the separator is omitted.
 
-**`## Parameters`: passing values from outside** (П-9). The executor accepts parameter overrides as a “key → value” table: the key is `project.<key>` from the column “project override”; the value is checked against the parameter type (a full map — by the rules of section 2), a key that is not in the column is a load refusal. This is the passing mechanism; where the executor takes the table from (project settings, the scenario `params`, section 11) the format does not define.
+**`## Parameters`: passing values from outside** (П-9). The executor accepts parameter overrides as a “key → value” table: the key is `project.<key>` from the column “project override”; the value is checked against the parameter type (a full map — by the rules of section 2), a key that is not in the column is a load refusal. This is the passing mechanism; where the executor takes the table from (project settings, the scenario `params`, section 11) the format does not define. The keys `project.<key>` are named by the product, they are not part of the language; the column “project override” of the sample stays `—` because the source names no keys. A default value that depends on an external key applies only when the key is present in the override table; otherwise the default value works (Я-11).
 
 **`## Input`.** The input type is a record made of the fields of this section (rule 35, item 1); `initial: input.<field>` takes the value from the input. The invariant is checked by the executor when it accepts a request; a violation is a call refusal (И-1): the executor writes the journal event `input_rejected` and finishes the call with the refusal `NoResult` with the text `input rejected: <reason>`; the machine state does not change. The same refusal — when parsing the input. The event parameters (journal, subsection “Events of the table format”): `reason` — a closed list `json` (the input is not JSON), `missing` (a required input field is absent), `type` (a field of another type, outside the type bound, outside a literal set, or not an `id` of UUID format, for example `int>=0` at −1), `invariant` (an input invariant is violated); `field` — the input field name (for `missing` and `type`); `index` — the invariant number from zero (for `invariant`). `field` and `index` are optional: with `json` they are absent, and the template skips them. Examples: `input_rejected(reason=json)`, `input_rejected(reason=missing; field=label)`, `input_rejected(reason=type; field=start)`, `input_rejected(reason=invariant; index=0)`. The call request identifier (`call_request_id`) does not lie in the input: the executor gives it (section 9).
 
@@ -87,7 +108,7 @@ Markdown, sections in order:
 - **`result`** (ША2) is the party's result type: for `agent` and `machine` — a type from `## Types`; for `human`, `enhanced` and the gatekeeper — the built-in `GateOutcome`, whose variants are the words of the column “gate_words” (a word without data is a variant without fields, `word(field type)` is a variant with fields; rule 19), the event `word(…)` is a variant of `GateOutcome`. `response: Variant` is resolved by the party's `result` (for `machine` with `parse` — by the parse result); the qualified form `response: TurnResult.Finished(…)` is allowed, the type in it being the party's result type; an unqualified variant name is searched only in this type.
 - `profile` is an expression or `—`; **the only source of the profile**: the request field `profile` is taken by the executor from here, a `profile` line in the “Input” is a check error (T3). The column reads the machine data, constants, parameters, `input` and (for a set) `party`; `call` reading is allowed (section 7), its hidden reads are machine data; the column does not read the names of a state's `Input`: the table of “Parties” is one per machine, rule 11 does not apply to it (ША4). If the profile lies inside the request (for the party `agent` — `agent_request.profile`), the party has no separate field and `—` is written.
 - `counter` (СГ1, rule 15) is **required for every party**: the datum where the party's attempt counter lies — a datum name (`agent_attempt`) or, for a party with a set, the path of a field of the element record (`lenses[*].attempt`). The datum is `int>=0`, initial `0`, `non_decreasing: yes`, `writes: mechanics`; for a field path the initial `0` is set by the datum row with the element record (`attempt: 0` in `lenses`, section 2), and for a path in the “Data” table the `initial` is `—` (Н-5); the attempt number of a request equals the counter value after the increase (mechanics, before sending), the request identifier is `<id>-<number>` (for a set — `<set element>-<number>`). The check of section 10 verifies the datum.
-- `gate_words` — for the kinds `human`, `enhanced`, the gatekeeper: a word or `word(field type, …)` — a word with data; the words are written as in the machine tables (including those of several words: `halt meeting`). These are **all words of the party**; the words of a state are the words of its rows (4.3). For the other kinds — `—`.
+- `gate_words` — for the kinds `human`, `enhanced`, the gatekeeper: a word or `word(field type, …)` — a word with data; the words are written as in the machine tables (including those of several words: `halt meeting`); a word field is declared through a space, `counted(findings []Finding)`, and in a transition row it is bound as `counted(findings: new_findings)` (3.1, Я-8). These are **all words of the party**; the words of a state are the words of its rows (4.3). For the other kinds — `—`.
 - **`parse`** (E1, СГ13) — only for the kind `machine`: a reading primitive (section 7) with a parameter of the type `result`, an optional second parameter — a text literal of the role (`parse_agent_reply("author")`: one host primitive serves several roles) and a result of the given type; for a primitive with the result `by role {…}` (section 7) the given type must coincide with the registry type for that literal (Н-12). The executor calls it when it accepts the response (rule 14), after the “Edits” check (4.2) and before “On accept”, and the **response value** for `response(name)`, `response: Variant(…)` and “On accept” becomes the parse result; without `parse` it is the `result` itself. The event `response: Variant` requires that the response value be a variant. The primitive's hidden reads (`reads`) enter the `Input` of the state (rule 11); the parse is called once per response, the result is stored with the accepted event. A parse by role is the same registry primitive with another role literal.
 - Under the table — a list item `- Request limit: <int>=1 expression>` (one per machine, rule 21; if not written — 1).
 
@@ -104,7 +125,7 @@ Example (pilots; `human or agent by setting` and the words — “Agent step”,
 | witness | witness | machine agent_step(input AgentRequest, result AgentReply); parse: parse_agent_reply("witness") -> []WitnessAnswer | call(party_profile, "witness") | — | witness_attempt |
 | author | author | machine agent_step(input AgentRequest, result AgentReply); parse: parse_agent_reply("author") -> EditResult | call(party_profile, "author") | — | author_attempt |
 | lens | — | machine agent_step(input AgentRequest, result AgentReply); parse: parse_agent_reply("lens") -> LensResult | call(party_profile, party) | — | lenses[*].attempt |
-| gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | repeat, counted(findings []Finding), another pass(decision text), answered(answer text) | gatekeeper_attempt |
+| gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | repeat, not counted, counted(findings []Finding), another pass(decision text), answered(answer text) | gatekeeper_attempt |
 | enhanced | enhanced | enhanced(result GateOutcome) | — | continue(human_word text, author text, source text), halt meeting | enhanced_attempt |
 
 - Request limit: REQUEST_LIMIT
@@ -124,7 +145,7 @@ The Portolan language is bilingual (Я-1): a file `*.portolan.md` is written eit
 
 **Free, in any language and mixed** (these are not keywords): the names that an author invents — data, states, definitions, types, fields, gate words, fragment parameters and their word values; prose comments outside tables (4.1); string values inside data and journal event codes (in Latin by convention, rule 34(б)); the names of host primitives from the registry (as written there); party identifiers (`agent`, `human`, etc.). The header keys (`machine`, `machine_version`, `format`, `definitions_version`, `fragment`, `language`) and the primitive classes (`pure`, `reading`, `writing`, `irreversible`) are Latin in both languages.
 
-**JSON.** The `machine/2` tree (section 6) is the same for any file language: equivalent files give one tree.
+**JSON.** The `machine/2` tree (section 6) is the same for any file language except string values (refusal texts, messages, text literals), which an author writes in his own language: equivalent files give one tree if these strings coincide (Я-10). The sample comparison ([check-portolan-samples.py](check-portolan-samples.py)) does not compare string values.
 
 **The word table is the single normative source:** [portolan-keywords.tsv](portolan-keywords.tsv). Rows `kind`, `ru`, `en` (tab), the first row is the heading; the word kind (`kind`) is from a closed list:
 
@@ -141,14 +162,27 @@ The Portolan language is bilingual (Я-1): a file `*.portolan.md` is written eit
 | `decl` | declaration words: `type`, `enum`, `variant`, `define` |
 | `type` | type words, built-in types, fragment parameter kinds |
 | `expr` | expression words, literals, the constructors `Response`, `Refusal` |
-| `action` | action words and their arguments |
+| `operator` | operators and signs: “Unicode — ASCII” pairs (`ru` is the Unicode alias, `en` is the ASCII alias), `??` and `_` with a single spelling (Я-9) |
+| `action` | action words and their arguments (including `for each`) |
 | `readable` | executor readable names and contract data |
-| `enum_value` | the values of `writes` and `reads`, `yes` of the column “non_decreasing”, the values of `behavior` parameters, the values of `Signal`, primitive classes |
+| `enum_value` | the values of `writes` and `reads`, `yes` of the column “non_decreasing”, the values of `behavior` parameters, the values of `Signal`, primitive classes, the value `none` of the `Input` line (Russian `нет`) |
 | `catalog` | catalog functions (section 12) |
 
 A word that fits two kinds is written as two rows (`else` — in `event`, `expr`, `action`; `end` — in `kind_state` and `catalog`). Within a kind the `ru` words do not repeat and the `en` words do not repeat: a word that is the same in the English form for two Russian words belongs to different kinds. Parsing reads a word by the `kind` of the position and the file language. The check of the table and of the sample is [check-portolan-keywords.py](check-portolan-keywords.py) (section 10).
 
-**English record of types and signs.** `число`→`int`, `число≥n`→`int>=n`, `дробное`→`float`, `текст`→`text`, `да/нет`→`bool`, `словарь[K, V]`→`map[K, V]` (in JSON a map is `{K: V}`; `HashMap[K, V]` is accepted as a synonym in parsing, the canon is `map`), `полный словарь[K, V]`→`full map[K, V]`, `ид`→`id`; `?T`, `[]T`, the tuple `(T1, T2)`, `??`, `...`, the lambda `x → expr`, `—` and `№` are the same in both languages; the value “nothing” is `none` (the literal `пусто`), the type “nothing” in JSON is `nothing`. For example, `выбор … { альт | альт если выр → выр; иначе → выр }` is `match … { alt | alt if expr → expr; else → expr }`, `для каждого x в xs: …` is `for each x in xs: …`, `ответ: Вариант(…)` is `response: Variant(…)`, `сбой(причина ∈ {…})` is `failure(reason in {…})`.
+**Operators and signs: both spellings** (Я-9). Both spellings are accepted in parsing; the canon of the examples of the Russian specification is `→`, `>=`, `...`, the canon of the English examples is ASCII. The pairs are entered into the word table as the kind `operator` (`ru` is Unicode, `en` is ASCII):
+
+| Unicode | ASCII | Where |
+|---|---|---|
+| `≥` | `>=` | comparison (the type bound `int>=n` follows the `type` row of the word table) |
+| `≤` | `<=` | comparison; `yes, <= expr` of the column “non_decreasing” |
+| `≠` | `!=` | comparison |
+| `→` | `->` | a `match` branch, a lambda; the result type `-> Type` is written the same way |
+| `…` | `...` | the spread `{ ...expr, field: expr }` in an expression and the ellipsis meta-sign in a grammar description; told apart by the text |
+| `∈` | `in` | `failure(reason in {…})`, `stop_reason in {…}` (the word is entered also into the kind `event`) |
+| `??`, `_` | `??`, `_` | a single spelling |
+
+**English record of types and signs.** `число`→`int`, `число≥n`→`int>=n`, `дробное`→`float`, `текст`→`text`, `да/нет`→`bool`, `словарь[K, V]`→`map[K, V]` (in JSON a map is `{K: V}`; `HashMap[K, V]` is accepted as a synonym in parsing, the canon is `map`), `полный словарь[K, V]`→`full map[K, V]`, `ид`→`id`; `?T`, `[]T`, the tuple `(T1, T2)`, `—` and `№` are the same in both languages (operators — above); the value “nothing” is `none` (the literal `пусто`), the type “nothing” in JSON is `nothing`. For example, `выбор … { альт | альт если выр → выр; иначе → выр }` is `match … { alt | alt if expr → expr; else → expr }`, `для каждого x в xs: …` is `for each x in xs: …`, `ответ: Вариант(…)` is `response: Variant(…)`, `сбой(причина ∈ {…})` is `failure(reason in {…})`.
 
 ## 2. Types and data
 
@@ -166,7 +200,7 @@ A word that fits two kinds is written as two rows (`else` — in `event`, `expr`
 | tuple | `(T1, T2, …)` — from two fields | an anonymous record with positional fields; the value `(a, b)`, the field `t.0`, `t.1` (from zero, as in Nova) |
 | record | `type Name { field T, … }` | |
 | variant | `variant Name { Var { field T, … } Var }` | a variant without fields is `Var` without braces |
-| enumeration | `enum Name = Val "word" \| Val "word" …` | the word is by the glossary table of value words; `text(Name.Val)` gives the word; `text` of an enumeration without words is forbidden; an enumeration without words enters a data record (section 5) by the value name as in the file (ША1) |
+| enumeration | `enum Name = Val "word" \| Val "word" …` | the word is by the glossary table of value words; `text(Name.Val)` gives the word; `text` of an enumeration without words is forbidden; words may be given not for all values (Я-15); an enumeration without words enters a data record (section 5) by the Latin value name in the tree (Я-15, ША1) |
 | state | `State` | a built-in enumeration of the machine's state names (a literal is a state name); the word is the Latin name from the heading |
 | signal | `Signal` | a built-in enumeration `stop`, `continue`, `halt`, `cancel` |
 | journal event | `JournalEvent` | a record `{ code text, params []Param }`, where `Param` is a tuple `(text, text)`: name, value |
@@ -176,7 +210,9 @@ A word that fits two kinds is written as two rows (`else` — in `event`, `expr`
 
 **The type `id`** (Т-2). Text of UUID format: 8-4-4-4-12 hexadecimal signs through hyphens, lowercase (`0192f3a0-7c1e-7b2a-9d4e-5a6b7c8d9e0f`). The check is at data load and at input parsing: a violation of the input is the refusal `input_rejected`, `reason=type`, `field` is the field name (section 1); a violation of data is a load error by the format rules. The format does not fix the UUID version; for the identifiers of sessions, host requests and runs version 7 is preferable (by time, sortable). `id` is assigned to a datum and a parameter of type `text` (the type is forgotten, as with a literal set); the reverse — only a literal of UUID format. `==` is structural, `text(x)` gives the text itself. The value is issued by the host primitive `new_id` (section 7). **Not changed:** the request identifier `<party>-<attempt>` (rule 15, [call protocol](state-machine-call-protocol.md)) and the trace envelope (`trace`, `step`, rule 31) remain as in the specification — `id` serves the data of machines (identifiers of sessions, runs, etc.), not the envelope.
 
-**The declaration notation is as in Nova** (decision of the owner, 2026-10-19): a declaration is `name type` through a space (a field of a record and of a variant, a parameter of a definition and of a catalog function, a parameter of a party signature and of gate words, a registry parameter); the result is after `->`. A colon stands only in a record literal `Type { field: expr }`, in a named argument `name: expr`, in a map literal pair `{k: v}` and in a pattern field binding `field: name` (4.3). Tables with a separate column “type” (`## Input`, `## Parameters`, `## Data`) do not change.
+**Enumeration value words** (Я-15). Words may be given not for all values: partial words are allowed; a word is `[a-z][a-z0-9_]*`. A value without a word is shown in the tree, in `text(x)` and in `all_data` by the value name in the tree — Latin. An enumeration without words: in the file the value name is Russian or English by the file language, and in the tree, in `machine_data` and `all_data` it is the Latin tree name (by the glossary, for the enumerations whose names are named there); the `machine_data` comparison goes by the tree name (for `FailCode` — by the engine word).
+
+**The declaration notation is as in Nova** (decision of the owner, 2026-10-19): a declaration is `name type` through a space (a field of a record and of a variant, a parameter of a definition and of a catalog function, a parameter of a party signature and of gate words, a registry parameter); the result is after `->`. A colon stands only in a record literal `Type { field: expr }`, in a named argument `name: expr`, in a map literal pair `{k: v}` and in a pattern field binding `field: name` (4.3). Tables with a separate column “type” (`## Input`, `## Parameters`, `## Data`) do not change. **Declarations only in a code block** (Я-13): `type`, `enum`, `variant`, `define` are written inside a code block (``` fences) under `## Types` and `## Definitions`; a declaration line outside a code block is a comment (a paragraph) and a check warning: markdown would distort `|`, `{}`, `->`.
 
 **Type records and Nova** (checked against the language specification and the automata code): as in Nova — `[]T`, the tuple `(T1, T2)` (in a type position), `map[K, V]` (the Russian form `HashMap[K, V]`; the literal `{k: v}` as in Nova), the record `type Name { field T }`; the translation of names — `int`, `text`, `float`, `bool` (in Nova `int`, `str`, `f64`, `bool`). **Extensions of the format** that Nova does not have: `?T` (in Nova `Option[T]`), `int>=n`, the literal set `"a" | "b"`, `id`, `full map[K, V]`; the other differences are in the list of section 14.
 
@@ -215,13 +251,13 @@ Example (pilots; the bounds and `writes` are as in the pilots, except `lenses`: 
 | name | type | initial | non_decreasing | writes |
 | agent_request | AgentRequest | input.agent_request | — | rows |
 | turn | "first" \| "retry" \| "continue" \| "fix" \| "permission" | "first" | — | rows |
-| retry_count | int>=0 | 0 | yes, ≤ RETRIES | rows |
+| retry_count | int>=0 | 0 | yes, <= RETRIES | rows |
 | turn_count | int>=0 | 0 | yes | rows |
 | turn_before_retry | ?("first" \| "retry" \| "continue" \| "fix" \| "permission") | none | — | rows |
 | stop_reason | "" \| "no_result" \| "max_tokens" \| "pause_halt" \| "cancel_request" | "" | — | rows_and_fragment |
 | agent_attempt | int>=0 | 0 | yes | mechanics |
 | number | int>=1 | 1 | yes | rows |
-| lenses | map[text, Lens] | dict(input.lens_order, l → l, l → Lens { id: l, lost: 0, probes: 0, attempt: 0 }) | — | rows |
+| lenses | map[text, Lens] | dict(input.lens_order, l -> l, l -> Lens { id: l, lost: 0, probes: 0, attempt: 0 }) | — | rows |
 | lenses[*].attempt | int>=0 | — | yes | mechanics |
 | witness_answers | map[int>=0, []WitnessAnswer] | {} | — | rows |
 ```
@@ -235,23 +271,24 @@ The words of expressions (`if`, `then`, `else`, `and`, `or`, `not`, `let`, `in`,
 
 ```
 expr := literal | true | false | none | unreachable | name | ( expr ) | expr.field | expr.N | expr[expr]
-     | Type { field: expr, … } | Type.Variant { field: expr, … } | Type.Variant     record, variant with fields, variant without fields
-     | { ...expr, field: expr, … }                        copy of a record with fields replaced
-     | (expr, expr, …)                                  tuple (from two fields)
-     | [expr, …] | {expr: expr, …}                       list; map (the key is an expression); [] and {} are empty
+     | Type { field: expr, ... } | Type.Variant { field: expr, ... } | Type.Variant     record, variant with fields, variant without fields
+     | { ...expr, field: expr, ... }                        copy of a record with fields replaced
+     | (expr, expr, ...)                                  tuple (from two fields)
+     | [expr, ...] | {expr: expr, ...}                       list; map (the key is an expression); [] and {} are empty
      | not expr | -expr | expr (+|-|*|/|%) expr | expr (==|!=|<|<=|>|>=) expr
      | expr (and|or) expr | expr ?? expr
      | if expr then expr else expr | let name = expr in expr
-     | match expr { alt [| alt]… [if expr] → expr; … ; else → expr }       exhaustive
-     | name(expr, …[, name: expr, …])                     catalog function or definition (pure); named arguments come after positional ones
-     | macro(expr, name → expr) | fold(expr, expr, (name, name) → expr)
-     | call(primitive, expr, …)                      reading: only in “Input”, “profile” and in “let” of “On entry”/“On accept”; in any position of these expressions (section 7)
-alt := Type.Value | Variant | Variant(field, field: name, …) | literal
+     | match expr { alt [| alt]... [if expr] -> expr; ... ; else -> expr }       exhaustive
+     | name(expr, ...[, name: expr, ...])                     catalog function or definition (pure); named arguments come after positional ones
+     | macro(expr, name -> expr) | fold(expr, expr, (name, name) -> expr)
+     | call(primitive, expr, ...)                      reading: only in “Input”, “profile” and in “let” of “On entry”/“On accept”; in any position of these expressions (section 7)
+alt := Type.Value | Variant | Variant(field, field: name, ...) | literal
 ```
 
 - **Precedence** (highest first): parentheses `( )`, `.`, `[]`, call; unary `-`; `* / %`; `+ -`; comparisons; `not`; `and`; `or`; `??`. `if`, `let`, `match` capture everything to the right.
-- **Literals:** integer `12`, float `0.0`, text `"…"`; `true`, `false`; `none` — the absence of a value of `?T`. The word “no” (Russian `нет`) is not a literal (rule 30: the “no” of the specification is `none` of `?T`). `unreachable` is an expression of any type: a program defect, the evaluation is stopped by the executor, like `require(none)` (3.3, И-3); it stands in the `match` branch for a variant that by the contract does not arrive (E1).
+- **Literals:** integer `12`, float `0.0`, text `"…"`; `true`, `false`; `none` — the absence of a value of `?T`. The word “no” (Russian `нет`) is not a literal (rule 30: the “no” of the specification is `none` of `?T`); the value `none` of the `Input` line (4.1) is a key word, not a literal. `unreachable` is an expression of any type: a program defect, the evaluation is stopped by the executor, like `require(none)` (3.3, И-3); it stands in the `match` branch for a variant that by the contract does not arrive (E1).
 - **Names.** A name is a datum, a constant, a parameter, a definition, a binding. A state reads any name from its `Input`, whatever its `reads` is (T9). An event field binding, `let` and a lambda parameter are visible only in their scope. A function and a name lie in different spaces: a bound field `text` and a call `text(x)` do not interfere. **Reserved words** (СГ12) are never the name of a binding, a datum or a field: `in`, `then`, `else`, `and`, `or`, `not`, `let`, `match`, `if`, `for`, `each`, `true`, `false`, `none`, `unreachable`.
+- **Field binding with a colon** (Я-8). A field of a word or a variant is declared in the Nova notation through a space (`findings []Finding`, section 2); a binding in a pattern of a transition row is `field: name`, the colon is read “field → name” (`word(counted(findings: new_findings))`, `response: Finished(text, artifact, usage: received)`); if the name coincides with the field, the single name is written.
 - **A lambda** is unary (binary only in `fold`); a parameter that is not needed is written `_`; lambdas stand only in a macro argument.
 - **Readable names of the executor** (not computations, rule 11): `input`; `event.id` (of any event); `event.<field>` (a field of the event data of a row or a chain, rule 13); `party` (for a set — the identifier of the event's party; in the “profile” and “Input” of a set — the current party); `state` (section 9; type `State`); `transition_note` (type `JournalEvent`; in “On entry” and in the “response” of ends; defined when the machine has entered ERROR, and ERROR is entered in two ways: by `machine_error` — the record of this action (А4) and by an executor machine error (3.3) — the record `machine_error`; both ways give a record, ША8, СГ6); `all_data` (a record of the machine data; the composition is in section 2; in the action `journal(all_data)` the same name is an abbreviation of the event `machine_data`, section 5, И-2). `previous` and `call_request_id` are not executor names but data of the “Pause” fragment (section 9, T6). The names `trace` and `step` (the envelope, rule 31) are available **only** in the “Input” expressions of a party of kind `machine` — this is the envelope of a nested machine call (rule 35, item 1); in conditions and actions the envelope is not read.
 - **Not introduced from the methodology's count:** `contains`, slices, postfix `?`, sorting, loops and recursion outside `for each`.
@@ -260,11 +297,11 @@ Example of expressions (the “Agent step” pilot, definitions).
 
 ```
 define needs_elevated_attention(action_kind ActionKind) -> bool =
-  match action_kind { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode → true;
-                      else → false }
+  match action_kind { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode -> true;
+                      else -> false }
 
 define retry_pause(n int>=0) -> int =
-  fold(range(1, n), RETRY_PAUSE, (m, _) → m * 2)
+  fold(range(1, n), RETRY_PAUSE, (m, _) -> m * 2)
 ```
 
 ### 3.2 Expression types
@@ -306,7 +343,7 @@ stop_reason = non_empty(failed_appeal) + "_halt_meeting"      // the set: four v
 
 ### 4.1 General
 
-The heading `### NAME — kind (Latin_name)`: kind is `appeal`, `operation`, `fork`, `end`; the Latin name is for the journal and the envelope (the field `state`, the parameter `fork`, `text(State)`), and coincides with the glossary ([state-machine-glossary.md](state-machine-glossary.md)). The `№` of a row = the label `// NAME #n` in the primary source. The **first** suitable row is selected. The initial state is the first line of the section `## States`: `Initial state: NAME` (А8); the check 34(г) requires that it name a state of the section. Every state has a key line `Input:` (rule 11): for an appeal a table (4.2), for the others the names of data that are read by the “On entry”, the conditions and the actions of the state, through commas, or `none`; the reads of a reading primitive (section 7) enter the `Input` by its `reads` list; the `Input` of ERROR is `all_data` (all data of the machine without executor data; the names are read as data). In the examples of this English version the state names are the Latin names of the glossary, so the Latin name in parentheses repeats the name.
+The heading `### NAME — kind (Latin_name)`: kind is `appeal`, `operation`, `fork`, `end`; **the name in parentheses is the state name in JSON** (Я-5): Latin, for the journal and the envelope (the field `state`, the parameter `fork`, `text(State)`), and coincides with the glossary ([state-machine-glossary.md](state-machine-glossary.md)). The parentheses are **required** if the JSON name differs from the name in the heading (Russian `ПОВТОР` → `(Retry)`) and are **not written** if it coincides: a heading with a Latin name equal to the JSON name is `### Retry — fork`; an author who needs another JSON name writes it in parentheses (`### Pass — appeal (Gate3)`). Parsing accepts both spellings: the parentheses are optional if the name coincides (`### Retry — fork (Retry)` means the same). The template headings below keep the form with a distinct name in parentheses. The `№` of a row = the label `// NAME #n` in the primary source. The **first** suitable row is selected. The initial state is the first line of the section `## States`: `Initial state: NAME` (А8); the check 34(г) requires that it name a state of the section. Every state has a key line `Input:` (rule 11): for an appeal a table (4.2), for the others the names of data that are read by the “On entry”, the conditions and the actions of the state, through commas, or `none` (Russian form — `нет`; a value word of the `Input` key, kind `enum_value`, 1a); the reads of a reading primitive (section 7) enter the `Input` by its `reads` list; the `Input` of ERROR is `all_data` (all data of the machine without executor data; the names are read as data). In the examples of this English version the state names are the Latin names of the glossary, so the parentheses are omitted (Я-5).
 
 **State key lines** (С-1) — `Party`, `Idle term`, `Edits`, `Form returns`, `Input`, `On entry`, `On accept`, `Except`, and in the sections `## Parties` and `## Ends` — `Request limit` and `Result` — are **items of a bulleted list**: `- Party: agent`, `- Idle term: IDLE_TERM`, `- Input: none`. The marker `- ` is optional in parsing (compatibility with version 2.5), required in writing; the reason: markdown glues consecutive lines into one paragraph, and the preview shows “Party: agent Idle term: IDLE_TERM Input:” as one line. The other rules of writing:
 
@@ -314,7 +351,7 @@ The heading `### NAME — kind (Latin_name)`: kind is `appeal`, `operation`, `fo
 - a value in one line is in the item itself (`- On entry: let moment = call(time_now)`); the body of “On entry” of several actions is a nested list, one action per item (`  - let current_time = call(time_now);`), the sign `;` at the end of the item is kept, parsing glues the items into the same action list through `;`;
 - the state heading `### NAME — kind (Latin_name)` and the line `Initial state: NAME` (one per section) are not written as a list.
 
-**Prose** (П-1). A paragraph — one or several lines of text after an empty line outside tables, outside code blocks and outside key lines — is a comment for the reader: translators and checks skip it, the signs “`” and “« »” inside it are allowed. Headings `#`, `##`, `###`, tables and the list items of key lines (`- Key: …`) are not prose. So that a typo in a key does not become a silent comment, the formatting check (section 10) warns about a paragraph line that begins with a word from the list of keys (`Party`, `Idle term`, `Input`, `Edits`, `Form returns`, `On entry`, `On accept`, `Result`, `Except`, `Request limit`, `To`) without the marker `- ` or with a typo in it. A section whose heading begins with the words `Fragment expansion` is a reference one: parsing skips it entirely (section 1).
+**Prose** (П-1, Я-12). A paragraph — one or several lines of text between empty lines (an empty line is needed both before and after) outside tables, outside code blocks and outside key lines — is a comment for the reader: translators and checks skip it, the signs “`” and “« »” inside it are allowed. A text line pressed against a table, a heading or a list item without an empty line is not a paragraph (markdown glues it to the neighboring block): the formatting check warns, parsing reads it as an extra line of the neighboring block. Headings `#`, `##`, `###`, tables and the list items of key lines (`- Key: …`) are not prose. So that a typo in a key does not become a silent comment, the formatting check (section 10) warns about a paragraph line that begins with a word from the list of keys (`Party`, `Idle term`, `Input`, `Edits`, `Form returns`, `On entry`, `On accept`, `Result`, `Except`, `Request limit`) without the marker `- ` or with a typo in it. A section whose heading begins with the words `Fragment expansion` is a reference one: parsing skips it entirely (section 1).
 
 **“To”:** a state name; `previous`; `preparation_return` (rule 24); `same` (stay in the state; for common events); the suffix `, rerun` (rule 18); `—` for a row with `machine_error`.
 
@@ -350,7 +387,7 @@ The heading `### NAME — kind (Latin_name)`: kind is `appeal`, `operation`, `fo
 Example (the “Meeting” pilot, Lenses). Changed: the key of findings is a tuple instead of the pilot's record; the names `trace`, `step` instead of the reading primitives `call_trace`, `call_step`; there is no `profile` row (T3); not all rows of the “Input” are shown.
 
 ```
-### Lenses — appeal (Lenses)
+### Lenses — appeal
 - Party: lens; set: lens_order
 - Idle term: 0
 - Input:
@@ -382,13 +419,13 @@ A table of rows `| № | Event | Condition | Actions | To |`. The kinds of event
 
 - **Bindings.** Any event field is available also as `event.<field>`; a binding is needed for brevity. A binding name that coincides with a machine datum name without renaming is a check error (there is no shadowing). A part of the fields may be bound.
 - **Set.** The events of a set carry `party`; the chain of forks behind an event row reads it as `event.party` (rule 13).
-- **Gate words.** The words of a state are the words of its rows; a word of a party outside the state rows is rejected as foreign (rule 17). Every word of a party is used in at least one row of the machine (or of a fragment); an event word enters the list of the party.
+- **Gate words.** The words of a state are the words of its rows; a word of a party outside the state rows is rejected as foreign (rule 17). Every word of a party is used in at least one row of the machine (or of a fragment); an event word enters the list of the party. A word field is declared in the “gate_words” through a space, and in a row it is bound as `field: name` (3.1, Я-8).
 - “On accept” — actions BEFORE the transition (rule 14), section 4.4.
 
-Example (pilots). Changed: words with data — the record `word(counted(findings: new_findings))` instead of the pilot's undefined binding; fields that coincided with data are renamed.
+Example (pilots). Changed: words with data — the record `word(counted(findings: new_findings))` instead of the pilot's undefined binding; fields that coincided with data are renamed; an excerpt of the “Parties” table is added to Gate3: the words `not counted` and `counted(findings []Finding)` are declared in the “gate_words” of the gatekeeper, the party of the appeal (Я-7).
 
 ```
-### AgentTurn — appeal (AgentTurn)       // rows 1, 3, 6, 8, 9 of the “Agent step” pilot
+### AgentTurn — appeal       // rows 1, 3, 6, 8, 9 of the “Agent step” pilot
 | № | Event | Condition | Actions | To |
 | 1 | response: Finished(text, artifact, usage: received) | — | transport_usage = add_usage(transport_usage, received); reply_text = text; reply_artifact = artifact | ReplyValidation |
 | 3 | response: TurnRequestLimit(usage: received) | — | transport_usage = add_usage(transport_usage, received); stop_reason = "max_turn_requests"; journal(turn_requests_exhausted) | Accounting |
@@ -396,7 +433,12 @@ Example (pilots). Changed: words with data — the record `word(counted(findings
 | 8 | response: NeedsPermission(permission_request: request) | — | permission_request = request | Policy |
 | 9 | failure(reason in {FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult}) | — | stop_reason = text(reason); journal(turn_failed, reason: text(reason)) | Accounting |
 
-### Gate3 — appeal (Gate3)                      // rows 1, 2 of the “Meeting” pilot
+| name | id | kind | profile | gate_words | counter |
+| gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | not counted, counted(findings []Finding) | gatekeeper_attempt |
+
+### Gate3 — appeal                      // rows 1, 2 of the “Meeting” pilot
+- Party: gatekeeper
+
 | 1 | word(not counted) | — | journal(pass_probes_not_probes, pass: text(number)); number += 1 | Pass |
 | 2 | word(counted(findings: new_findings)) | — | number += 1; gate3_findings = new_findings | Totals |
 ```
@@ -425,7 +467,7 @@ variant EditResult {
   Question { proposal text, question text }
 }
 
-### AuthorFix — appeal (AuthorFix)
+### AuthorFix — appeal
 - Party: author
 - Idle term: 0
 - Edits: proposal; check: proposal_changed_since_attempt
@@ -463,13 +505,13 @@ variant EditResult {
 Example (the “Agent step” pilot, Start and Accounting; “Meeting”, Lock, CopyRestore, Filter, SummaryBuilding). Changed: the write of data is moved from “On entry” into the row; `immediate(data)` is replaced by a binding; in CopyRestore the conditional action is in the row; in Lock `copy` is the text of the proposal, `copy_fingerprint` is the fingerprint (T1; fixed in the source, ИС1); in Filter the write into a lens is a copy through `require(…)`, as on acceptance in Lenses (4.4, Н-11), and `lenses_without_critical` is a primitive without a body in the source (section 7), the `Input` includes its reads; in SummaryBuilding the `Input` includes the reads of `build_summary` from the registry (Н-7: the v2.2 example named only `number`).
 
 ```
-### Start — operation (Start)
+### Start — operation
 - Input: none
 - On entry: let moment = call(time_now)
 
 | 1 | immediate | — | started = moment; turn_count = 1 | AgentTurn |
 
-### Accounting — operation (Accounting)
+### Accounting — operation
 - Input: agent_request, stop_reason, transport_usage, started
 - On entry:
   - let current_time = call(time_now);
@@ -477,19 +519,19 @@ Example (the “Agent step” pilot, Start and Accounting; “Meeting”, Lock, 
 
 | 1 | immediate | — | usage = collected; journal(usage_event(collected)) | StepOutcome |
 
-### Lock — operation (Lock)
+### Lock — operation
 - Input: proposal, lens_order
 - On entry: let fingerprint = call(proposal_fingerprint); call(close_for_writing, "proposal")
 
 | 1 | immediate | — | copy = proposal; copy_fingerprint = fingerprint; to_send = lens_order; responded = 0 | Lenses |
 
-### CopyRestore — operation (CopyRestore)
+### CopyRestore — operation
 - Input: copy
 - On entry: —
 
 | 1 | immediate | — | if has(copy) then (proposal = require(copy)) else (journal(copy_restore_no_copy)) | Void |
 
-### Filter — operation (Filter)
+### Filter — operation
 - Input: number, lens_order, lens_findings, witness_answers, lenses
 - On entry:
   - call(remove_unsound, number);
@@ -497,7 +539,7 @@ Example (the “Agent step” pilot, Start and Accounting; “Meeting”, Lock, 
 
 | 1 | immediate | — | for each l in without_critical: lenses[l] = { ...require(lenses[l]), probes: 0 } | SummaryBuilding |
 
-### SummaryBuilding — operation (SummaryBuilding)
+### SummaryBuilding — operation
 - Input: number, lens_order, lens_findings, lenses
 - On entry: let outcome = call(build_summary, number)
 
@@ -521,14 +563,14 @@ A fork does nothing and waits for nothing (rule 9): “On entry” is only `let`
 Example (the “Agent step” pilot). Changed: the default without an `else` row; the Latin name of ReplyValidation is `ReplyValidation`, as in the glossary (П-4); the ReplyValidation example does not pass a non-existent argument: the reads of `reply_validation` are named in the registry (section 7) and enter the `Input`.
 
 ```
-### Retry — fork (Retry)
+### Retry — fork
 - Input: retry_count, turn
 
 | 1 | retry_count < RETRIES and turn != "retry" | retry_count += 1; turn_before_retry = turn; turn = "retry"; journal(agent_transient_error, retry: text(retry_count)) | Budget |
 | 2 | retry_count < RETRIES and turn == "retry" | retry_count += 1; journal(agent_transient_error, retry: text(retry_count)) | Budget |
 | 3 | retry_count >= RETRIES | stop_reason = "no_result"; journal(agent_transient_error_exhausted, retries: text(RETRIES)) | Accounting |
 
-### ReplyValidation — fork (ReplyValidation)
+### ReplyValidation — fork
 - Input: return_count, reply_text, reply_artifact, agent_request
 - On entry: let validation = call(reply_validation)
 
@@ -541,7 +583,7 @@ Example (the “Agent step” pilot). Changed: the default without an `else` row
 Example of a nested reading call (the “Meeting” pilot, Comparison; E4): the fingerprint is read only if the proposal is read; `proposal_fingerprint` for an unreadable proposal is `unreachable`, therefore the call stands in a branch of `if`, and the `Input` of Comparison includes the reads of both primitives.
 
 ```
-### Comparison — fork (Comparison)
+### Comparison — fork
 - Input: copy_fingerprint
 - On entry:
   - let was_read = call(proposal_read);
@@ -556,7 +598,7 @@ Example of a nested reading call (the “Meeting” pilot, Comparison; E4): the 
 Example of a fork of a set chain (the “Meeting” pilot, LensRefusal): `event.party` is from the event Lenses #2.
 
 ```
-### LensRefusal — fork (LensRefusal)
+### LensRefusal — fork
 - Input: lenses, to_send, number
 
 | 1 | require(lenses[event.party]).lost == 1 | journal(lens_dropped, party: event.party, pass: text(number)) | AllClosed |
@@ -569,7 +611,7 @@ Example of a fork of a set chain (the “Meeting” pilot, LensRefusal): `event.
 ### NAME — end (Latin_name)
 - Input: <names> | all_data
 - On entry: <actions>
-- Except: <value in {…}>        optional
+- Except: <value in {...}>        optional
 ```
 
 The “On entry” of an end is work with the outside world and the journal: `let` bindings, `call` (reading, writing, irreversible), `journal`, conditional `if`, `for each` with a body of `journal(…)` and `if` (E2); an end does not change data (rule 29). `Except:` — the values of the set with which this end is not entered: the exhaustion of the “Ends” is checked by the set without them; an entry with such a value is `unreachable`.
@@ -587,7 +629,7 @@ The “On entry” of an end is work with the outside world and the journal: `le
 Example (the “Agent step” pilot). Changed: the conditional action and the event value close what the pilot could not write (in the code `Time.now()` is read inside a branch, here — before it; a time read leaves no trace). The `Input` of ERROR is `all_data`: `usage`, `agent_request` and the other names in its “On entry” are read from `all_data` as data (ШМ3).
 
 ```
-### Halted — end (Halted)
+### Halted — end
 - Input: usage, agent_request, stop_reason, transport_usage, started
 - On entry:
   - let current_time = call(time_now);
@@ -596,7 +638,7 @@ Example (the “Agent step” pilot). Changed: the conditional action and the ev
   - journal(agent_step_stopped, reason: stop_reason)
 - Except: stop_reason in {""}
 
-### Errored — end (Errored)
+### Errored — end
 - Input: all_data
 - On entry:
   - let current_time = call(time_now);
@@ -622,7 +664,7 @@ Example (the “Agent step” pilot). Changed: the conditional action and the ev
 Example (the “Meeting” pilot; E2, E8). Changed: `journal_findings`, `journal_decision` and `journal_machine_data` of the code are ordinary journal rows (the codes `unclosed_finding`, `meeting_decision`, `open_finding`, `machine_data`, [state-machine-journal.md](state-machine-journal.md), section 2, subsection “Events of the table format”); severity is a word of the enumeration `Severity` (`"critical"`, `"significant"`, `"desirable"`), yes/no is `yes_no_word` (a definition: `if b then "yes" else "no"`).
 
 ```
-### Halted — end (Halted)
+### Halted — end
 - Input: stop_reason, open, gate3_findings
 - On entry:
   - call(open_for_writing, "proposal");
@@ -631,7 +673,7 @@ Example (the “Meeting” pilot; E2, E8). Changed: `journal_findings`, `journal
   - for each f in not_included_in(gate3_findings, open): journal(unclosed_finding, severity: text(f.severity), evidence: f.evidence, repeat: yes_no_word(f.repeat), question: yes_no_word(f.question))
 - Except: stop_reason in {""}
 
-### End — end (End)
+### End — end
 - Input: proposal, confirmation, number, open
 - On entry:
   - call(open_for_writing, "proposal");
@@ -639,7 +681,7 @@ Example (the “Meeting” pilot; E2, E8). Changed: `journal_findings`, `journal
   - for each f in open: journal(open_finding, severity: text(f.severity), evidence: f.evidence, repeat: yes_no_word(f.repeat), question: yes_no_word(f.question));
   - journal(older_findings_in_pass_files)
 
-### Errored — end (Errored)
+### Errored — end
 - Input: all_data
 - On entry:
   - call(open_for_writing, "proposal");
@@ -690,7 +732,7 @@ A list through `;` in the order of writing (rule 29); **every action sees the re
 | text, literal set, `id` | as is, without quotes; empty text is empty after `=` (`stop=`) |
 | `bool` | `yes`, `no` |
 | optional `none` | `none` |
-| enumeration | the value word (the Latin word of the code); for an enumeration without words — the value name |
+| enumeration | the value word (the Latin word of the code); for a value without a word and for an enumeration without words — the Latin value name in the tree (Я-15) |
 | `State` | the Latin name from the heading |
 | list | a JSON array `[…]`; empty is `[]` |
 | map | a JSON object `{…}`; empty is `{}`; for a map with non-text keys — an array of pairs `[[key,value],…]` in the order of the first write of the key |
@@ -704,7 +746,7 @@ Examples (`data=` is the name of the event parameter): `data=count=0; label=abc;
 
 ## 6. JSON tree
 
-The JSON tree and its schema are outside this file: the schema version is kept by the product, the keys in it are English. The tree is the same for a Russian and an English file: the words of both languages correspond to one key and one value (the word table, 1a); the party kind “human or agent by setting” is called `gatekeeper` in the tree (section 1). Listed here are the constructs of versions 2, 2.1, 2.2 and 2.5 (version 2.8 has no new nodes: the tree does not depend on the file language, 1a; version 2.7 has one new key — `words`, below; versions 2.3, 2.4 and 2.6 have no new machine nodes: the result by role is a record of the host registry; version 2.5's new nodes are the literal set and the type `id`) that need nodes (some of them had no nodes in version 1): `in` of `failure`, “when” and “Except” of ends, “On entry” of a fork, an operation and an end, the alternatives `|` in `match`, the literal sets `"a" | "b"` (in the schema — a list of strings, `enum`), the type `id` (a string of UUID format: `^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$`), `int>=n`, `?`, a tuple, a full map, `non_decreasing, ≤ expr`, `writes` (five values), the field path `name[*].field` in the “Data” and the short record `name[key].field = expr`, `unreachable`, grouping parentheses, a call with named arguments, a party identifier, `parse` of a party `machine`, `Edits` with `check`, `Initial state`, `for each` with `journal` at the end, an include with parameters, `word(…)` with fields, `signal(…)`, a field binding with renaming, “On accept”, `let` in “On entry”, a conditional action, `journal_event`, `journal(value)`, a set of parties, a party `machine`, the `Input` of a machine with invariants, the value words of enumerations; from version 2.2 — `result` of a party and `GateOutcome`, the column `counter`, the role literal of `parse`, the qualified `response: Type.Variant`, `cancel_open` without an argument, `non_empty`, the header of a definitions file. **Value words** (П-7). For an enumeration with words (section 2) the enumeration node carries the key `words` — a list of pairs “value name → word” in the order of declaration (`[["NoResult", "no_result"], …]`); an enumeration without words has no such key. The encoding of `all_data` (section 5) and `text(x)` take the value word from `words`; a value without a word gives the value name. The include of a definitions file is `includes: [{ "name", "version", "hash" }]` and a copy of its types, constants and definitions in the machine tree: the interpreter needs only one tree (С30).
+The JSON tree and its schema are outside this file: the schema version is kept by the product, the keys in it are English. The tree is the same for a Russian and an English file: the words of both languages correspond to one key and one value (the word table, 1a); the party kind “human or agent by setting” is called `gatekeeper` in the tree (section 1). Listed here are the constructs of versions 2, 2.1, 2.2 and 2.5 (versions 2.8 and 2.9 have no new nodes: the tree does not depend on the file language, 1a; version 2.7 has one new key — `words`, below; versions 2.3, 2.4 and 2.6 have no new machine nodes: the result by role is a record of the host registry; version 2.5's new nodes are the literal set and the type `id`) that need nodes (some of them had no nodes in version 1): `in` of `failure`, “when” and “Except” of ends, “On entry” of a fork, an operation and an end, the alternatives `|` in `match`, the literal sets `"a" | "b"` (in the schema — a list of strings, `enum`), the type `id` (a string of UUID format: `^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$`), `int>=n`, `?`, a tuple, a full map, `non_decreasing, ≤ expr`, `writes` (five values), the field path `name[*].field` in the “Data” and the short record `name[key].field = expr`, `unreachable`, grouping parentheses, a call with named arguments, a party identifier, `parse` of a party `machine`, `Edits` with `check`, `Initial state`, `for each` with `journal` at the end, an include with parameters, `word(…)` with fields, `signal(…)`, a field binding with renaming, “On accept”, `let` in “On entry”, a conditional action, `journal_event`, `journal(value)`, a set of parties, a party `machine`, the `Input` of a machine with invariants, the value words of enumerations; from version 2.2 — `result` of a party and `GateOutcome`, the column `counter`, the role literal of `parse`, the qualified `response: Type.Variant`, `cancel_open` without an argument, `non_empty`, the header of a definitions file. **Value words** (П-7). For an enumeration with words (section 2) the enumeration node carries the key `words` — a list of pairs “value name → word” in the order of declaration (`[["NoResult", "no_result"], …]`); an enumeration without words has no such key. The encoding of `all_data` (section 5) and `text(x)` take the value word from `words`; a value without a word gives the Latin value name in the tree (Я-15). The include of a definitions file is `includes: [{ "name", "version", "hash" }]` and a copy of its types, constants and definitions in the machine tree: the interpreter needs only one tree (С30).
 
 ## 7. Primitive registry and admissibility of classes
 
@@ -731,7 +773,7 @@ Example of a registry (pilots). Changed: for `reply_validation` the hidden reads
 | remove_unsound | number int>=1 | — | writing | lens_order, lens_findings, witness_answers | lens_findings |
 | proposal_fingerprint | — | text | reading | objects: proposal (not read — `unreachable`) | — |
 | proposal_changed_since_attempt | — | bool | reading | objects: proposal; service record: fingerprints of the attempt (written by the executor when the request is sent) | — |
-| parse_agent_reply | result AgentReply; role: text | by role { "witness": []WitnessAnswer, "author": EditResult, "lens": LensResult } | reading | objects: reply artifact; for the role "witness" also the proposal | service record: remarks of the excerpt comparison (only the role "witness"; read by the party return) |
+| parse_agent_reply | result AgentReply; role text | by role { "witness": []WitnessAnswer, "author": EditResult, "lens": LensResult } | reading | objects: reply artifact; for the role "witness" also the proposal | service record: remarks of the excerpt comparison (only the role "witness"; read by the party return) |
 | lenses_without_critical | — | []text | reading | lens_order, lens_findings, number | — |
 | not_included_in | findings []Finding; among []Finding | []Finding | pure | — | — |
 | merge_unique | first_list []Finding; second_list []Finding | []Finding | pure | — | — |
@@ -744,7 +786,7 @@ Example of a registry (pilots). Changed: for `reply_validation` the hidden reads
 Example (an illustration; the datum `session_id` is `?id`, initial `none`; a state not from a pilot).
 
 ```
-### Opening — operation (Opening)
+### Opening — operation
 - Input: none
 - On entry: let fresh_id = call(new_id)
 
@@ -783,18 +825,18 @@ definitions: <name> version <N> hash <hex12>
 ```
 
 - **Registry** (СГ4, СЖ4). `<name>` is the name of the definitions file by the registry of included files (not a path). The registry is part of the host registry, the same one where the primitives (section 7) and the machines (rule 35, [call protocol](state-machine-call-protocol.md), section J, item 6) are written: an entry `name → file` (a path relative to the registry). The format of the registry file is set by the host; the table format requires one thing: exactly one file is found by name, otherwise it is a table check error.
-- **The header of a definitions file:** `# Definitions: <name>`, list items `- definitions_version: <N>` (an integer), `- format: 2.8` and optionally `- language: ru`/`en` (1a). The `version` of the include line must match `definitions_version` exactly.
+- **The header of a definitions file:** `# Definitions: <name>`, list items `- definitions_version: <N>` (an integer), `- format: 2.9` and optionally `- language: ru`/`en` (1a). The `version` of the include line must match `definitions_version` exactly.
 - **Sections** — `## Types`, `## Constants`, `## Definitions` in order, **all three are required**; an empty section is the line `—`. Only pure definitions, types and constants; without `## States`, without `call` of the classes reading, writing, irreversible, without `## Includes`: a definitions file does not include other files (there are no cycles by construction).
 - **Hash** — the first 12 signs of the SHA-256 of the file content in UTF-8 after normalization (Н-8): a leading BOM is dropped (a file with and without a BOM give one hash); line breaks are LF (CRLF and a lone CR are replaced by LF); trailing spaces and tabs are removed from every line; at the end of the file there is exactly one LF (empty lines at the end are removed, a missing LF is added); the 12 signs of the hash are hexadecimal, in lowercase. The normalization is unambiguous: a file without a final LF and a file with it give one hash.
 - Names from an included file are visible without a prefix; a coincidence with a local name or with a name of another included file is a table check error; a mismatch of the version or the hash is a table check error, not a warning.
 
-Example (“Meeting”: the arithmetic of a cycle is common to the meeting and the cycle check). Changed: the pilot's `ceiling_reached` was a copy in the machine file, here it is from an included file; the header is supplemented with the line `format`, therefore the hash is not equal to the hash of the pilot's file (that has no `format`). The hash below is the SHA-256 of the given file (12 signs); it differs from the hash of the Russian sample (`e1295612ad15`) because this file is in the English form and contains the line `- language: en`. The method was verified: for the Russian sample it reproduces `e1295612ad15`, and for a file with `format: 2.7` it gave the earlier `446ddf8041c0`.
+Example (“Meeting”: the arithmetic of a cycle is common to the meeting and the cycle check). Changed: the pilot's `ceiling_reached` was a copy in the machine file, here it is from an included file; the header is supplemented with the line `format`, therefore the hash is not equal to the hash of the pilot's file (that has no `format`). The hash below is the SHA-256 of the given file (12 signs); it differs from the hash of the Russian sample (`d2db7f5322a9`) because this file is in the English form and contains the line `- language: en`. The method was verified: for the Russian file with `format: 2.8` it gives the earlier `e1295612ad15`, and for the English one with `format: 2.8` the earlier `a12c61f47305`; at the move 2.8 → 2.9 the hash was recomputed.
 
 ```
 # Definitions: cycle_arithmetic
 
 - definitions_version: 1
-- format: 2.8
+- format: 2.9
 - language: en
 
 ## Types
@@ -811,12 +853,12 @@ define ceiling_reached(pass_number int>=1, origin int>=1, limit int>=0) -> bool 
 
 ```
 ## Includes
-definitions: cycle_arithmetic version 1 hash a12c61f47305
+definitions: cycle_arithmetic version 1 hash f99d947d3040
 ```
 
 ## 9. Included fragments
 
-A fragment (rule 36) is a file of the format `fragment`: the header `# Fragment: <Name>`, list items `- fragment: <latin_name>`, `- format: 2.8` (optionally `- language: ru`/`en`, 1a) and sections in order: `## Parameters`, `## Requires`, `## Data`, `## Common events`, `## States`. In the text a parameter stands as `<parameter>` and is substituted before the check (rule 34).
+A fragment (rule 36) is a file of the format `fragment`: the header `# Fragment: <Name>`, list items `- fragment: <latin_name>`, `- format: 2.9` (optionally `- language: ru`/`en`, 1a) and sections in order: `## Parameters`, `## Requires`, `## Data`, `## Common events`, `## States`. In the text a parameter stands as `<parameter>` and is substituted before the check (rule 34).
 
 **Parameters** — `name`, `kind`, allowed values. The kinds: `word` (a gate word), `text`, `[]machine` (names of nested machines), `behavior` (a closed list of fragment words; the meaning is the executor's description in the fragment text), `note` (text for the reader). An include names all parameters; an omitted one is an error.
 
@@ -834,7 +876,7 @@ A fragment (rule 36) is a file of the format `fragment`: the header `# Fragment:
 | `reentry` | `nothing` | re-entry into the saved state — only by rule 12 (a new request if there is no accepted one for it) | `To: previous` (Pause 1, 3) |
 | `reentry` | `requests_from_to_send` | after re-entry into the appeal of a set, the requests go to the parties listed in `to_send` | the same |
 
-An include in a machine (the section `## Includes`): `Pause(halt_word: halt, halt_code: "pause_halt", nested: [], request_cancel: stop_transport_turn, reentry: nothing, write_right: "files that the agent edits; the pause does not touch their rights")` — “Agent step”; “Meeting” — `halt_word: halt meeting`, `halt_code: "pause_halt_meeting"`, `nested: [agent_step]`, `request_cancel: without_return_to_send`, `reentry: requests_from_to_send`. The states, events and data of the fragment enter the machine and are not repeated in its sections (П-2): in `## Includes` there is **only** the include line; in `## States` writing the heading of a fragment state (`### Pause — appeal (Pause)`) is forbidden — a repeat of a state that the include brought is a check error (“declared twice”); a reference for the reader (the parameters, obligations, data, events and states of the fragment with the parameters substituted) is moved to the reference section `## Fragment expansion “Pause”` at the end of the file: parsing skips it entirely, tables and headings in it are allowed, and in the section `## States` a paragraph-reference (prose, 4.1) remains if needed.
+An include in a machine (the section `## Includes`): `Pause(halt_word: halt, halt_code: "pause_halt", nested: [], request_cancel: stop_transport_turn, reentry: nothing, write_right: "files that the agent edits; the pause does not touch their rights")` — “Agent step”; “Meeting” — `halt_word: halt meeting`, `halt_code: "pause_halt_meeting"`, `nested: [agent_step]`, `request_cancel: without_return_to_send`, `reentry: requests_from_to_send`. The states, events and data of the fragment enter the machine and are not repeated in its sections (П-2): in `## Includes` there is **only** the include line; in `## States` writing the heading of a fragment state (`### Pause — appeal (Pause)`) is forbidden — a repeat of a state that the include brought is a check error (“declared twice”); a reference for the reader (the parameters, obligations, data, events and states of the fragment with the parameters substituted) is moved to the reference section `## Fragment expansion “Pause”` after `## Includes` (Я-17; the name in the heading is the name of an included fragment, there may be several sections): parsing skips it entirely, tables and headings in it are allowed, and in the section `## States` a paragraph-reference (prose, 4.1) remains if needed.
 
 The definition of the “Pause” fragment in the format. Composed from the fragment expansion in the “Meeting” pilot and the text of [state-machine-pause-states.md](state-machine-pause-states.md); the fragment file itself in the format was not checked by a pilot, its comparison with the text of rules 23, 24, 35 is by rows. Changed against the pilot: `halt_word` and `halt_code` are parameters; the events from a parent are `signal(…)`; the values of `stop_reason` are `<halt_code>`; `pass(nested, …)`; COMMON 6 is `machine_error`; in the “Input” of Pause `require(previous)` (the field is visible only to the party, the rows of Pause read the datum `previous`, 4.2); COMMON 5 is `cancel_open` without an exception, as the code and the fragment text (ША6); returning the parties of a set to `to_send` in COMMON 5 is rule 18, for any value of `request_cancel` (Н-2); `open_requests` is data of the fragment, `human_words` is not entered into the table (section 2).
 
@@ -867,7 +909,7 @@ stop_reason contains <halt_code> and "cancel_request"; in “Ends” — rows fo
 | 6 | signal(request_cancelled(id)) | else | machine_error("cancel_parse_no_match") | — |
 
 ## States
-### Pause — appeal (Pause)
+### Pause — appeal
 - Party: enhanced
 - Idle term: —
 - Input:
@@ -889,11 +931,11 @@ stop_reason contains <halt_code> and "cancel_request"; in “Ends” — rows fo
 
 ## 10. Table checks
 
-The word table and the language (Я-1…Я-3): the `ru` and `en` words of the table [portolan-keywords.tsv](portolan-keywords.tsv) are unique within a kind; the `language` line ∈ {`ru`, `en`}; the header language matches the declared one; a keyword not of the file language is an error with the line number of the first foreign word (1a); the script [check-portolan-keywords.py](check-portolan-keywords.py) checks the table and compares the sample machine with it.
+The word table and the language (Я-1…Я-3): the `ru` and `en` words of the table [portolan-keywords.tsv](portolan-keywords.tsv) are unique within a kind; the `language` line ∈ {`ru`, `en`}; the header language matches the declared one; a keyword not of the file language is an error with the line number of the first foreign word (1a); the script [check-portolan-keywords.py](check-portolan-keywords.py) checks the table (the kinds of words, including `operator`) and compares the sample machine with it.
 
-The extension of [check-tables.py](check-tables.py): names of fields, types and states; expression reads ⊆ `Input` by rule 11 (by both values of `reads`, by the `reads` lists of primitives, for ERROR — `all_data`), writes ⊆ data (including the `writes` of writing primitives); the bounds `int>=n`, `non_decreasing` and `≤`; reachability of states; completeness of forks (a default, an `else` row is allowed); exhaustion of the “Ends” taking `Except` into account; the values of `To`; appeal events ⊆ machine events; gate words: an event word ∈ the party's list, every word of the party is used; `failure(reason in …)` ⊆ `FailCode`; the primitive class is allowed in the call position; literal sets (the inclusion of the computed set, a value outside the set is an error, `match` over a set is exhausted, 3.2); a literal of the type `id` is of UUID format; `call(new_id)` only in `let` of the “On entry” of an operation, and the binding is written by the row `immediate` (section 7); an event field binding does not coincide with data; a full map; the types `T`/`?T`; the journal: code ↔ template table, parameter names ↔ template (`fork`), the values are `text`; enumeration words ↔ glossary; the parameters of an included fragment are named and fit by kind; the `stop_reason` values of a fragment ∈ the machine's set and in the “Ends”; no executor and envelope data in the reads of conditions (rule 31); `Initial state` is named; party identifiers are Latin and distinct; `Idle term` reads only the names of `Input`; `parse` is a reading primitive with a parameter of the type `result` and a result of the named type (for a result `by role {…}` — of the registry type for the role literal, section 7, Н-12), `response: Variant` — only for a variant; `Edits`: the primitive is reading without parameters, the result `bool`, the datum is written in the “On accept” of the state; a write by the path `name[*].field` is compared with the marks `writes` and `non_decreasing` by the template `[*]`, a write into a field with `writes: mechanics` from a row is an error; the value of a `behavior` parameter ∈ the list; the line `definitions:`: the name is found in the registry in exactly one file, the version and the hash (by the normalization of section 8) match the file, the names do not repeat, there is no `call`, `## States`, `## Includes` in the file, the three sections are in place; “Parties”: the column `counter` is named for every party, the datum is `int>=0`, `non_decreasing: yes`, `writes: mechanics`; `result` is named for every party, the variant of the event `response` belongs to the `result` type of the party (the result of `parse`), the word of the event `word` belongs to the column “gate_words”; `open_requests` is declared once; a `failure` outside the state's list is brought to `NoResult` (4.3); `non_empty`: the argument is a set with `""`; the codes of the journal of the table format are in the template table (the subsection “Events of the table format” of the journal file).
+The extension of [check-tables.py](check-tables.py): names of fields, types and states; expression reads ⊆ `Input` by rule 11 (by both values of `reads`, by the `reads` lists of primitives, for ERROR — `all_data`), writes ⊆ data (including the `writes` of writing primitives); the bounds `int>=n`, `non_decreasing` and `≤`; reachability of states; completeness of forks (a default, an `else` row is allowed); exhaustion of the “Ends” taking `Except` into account; the values of `To`; appeal events ⊆ machine events; gate words: an event word ∈ the party's list, every word of the party is used; `failure(reason in …)` ⊆ `FailCode`; the primitive class is allowed in the call position; literal sets (the inclusion of the computed set, a value outside the set is an error, `match` over a set is exhausted, 3.2); a literal of the type `id` is of UUID format; `call(new_id)` only in `let` of the “On entry” of an operation, and the binding is written by the row `immediate` (section 7); an event field binding does not coincide with data; a full map; the types `T`/`?T`; the journal: code ↔ template table, parameter names ↔ template (`fork`), the values are `text`; enumeration words ↔ glossary; the parameters of an included fragment are named and fit by kind; the `stop_reason` values of a fragment ∈ the machine's set and in the “Ends”; no executor and envelope data in the reads of conditions (rule 31); `Initial state` is named; party identifiers are Latin and distinct; the state names in JSON (the parentheses of a heading or the heading itself, Я-5) are Latin and distinct; `Idle term` reads only the names of `Input`; `parse` is a reading primitive with a parameter of the type `result` and a result of the named type (for a result `by role {…}` — of the registry type for the role literal, section 7, Н-12), `response: Variant` — only for a variant; `Edits`: the primitive is reading without parameters, the result `bool`, the datum is written in the “On accept” of the state; a write by the path `name[*].field` is compared with the marks `writes` and `non_decreasing` by the template `[*]`, a write into a field with `writes: mechanics` from a row is an error; the value of a `behavior` parameter ∈ the list; the line `definitions:`: the name is found in the registry in exactly one file, the version and the hash (by the normalization of section 8) match the file, the names do not repeat, there is no `call`, `## States`, `## Includes` in the file, the three sections are in place; “Parties”: the column `counter` is named for every party, the datum is `int>=0`, `non_decreasing: yes`, `writes: mechanics`; `result` is named for every party, the variant of the event `response` belongs to the `result` type of the party (the result of `parse`), the word of the event `word` belongs to the column “gate_words”; `open_requests` is declared once; a `failure` outside the state's list is brought to `NoResult` (4.3); `non_empty`: the argument is a set with `""`; the codes of the journal of the table format are in the template table (the subsection “Events of the table format” of the journal file).
 
-- **Formatting** (С-1): a state key line (4.1) without the marker `- ` is allowed in parsing (the record of version 2.5), but the formatting check warns — this is a warning, not a table error; a table standing right next to a list item or to another table (without an empty line) also warns. Prose (П-1): a paragraph line that begins with a word from the list of keys (4.1) without the marker `- ` or with a typo in it (`-Party:`, `– Input:`) is a warning, otherwise the typo would remain a silent comment. The other prose causes no checks; the reference section `## Fragment expansion …` is not checked (section 1).
+- **Formatting** (С-1): a state key line (4.1) without the marker `- ` is allowed in parsing (the record of version 2.5), but the formatting check warns — this is a warning, not a table error; a table standing right next to a list item or to another table (without an empty line) also warns. Prose (П-1): a paragraph line that begins with a word from the list of keys (4.1) without the marker `- ` or with a typo in it (`-Party:`, `– Input:`) is a warning, otherwise the typo would remain a silent comment. The other prose causes no checks; the reference section `## Fragment expansion …` is not checked (section 1), but the name in its heading must coincide with the name of an included fragment, otherwise a warning (Я-17). A paragraph (Я-12): a text line pressed against a table, a heading or a list without an empty line is a warning. A declaration (`type`, `enum`, `variant`, `define`) outside a code block is a warning (Я-13). The file extension is checked only by this script (Я-18).
 - **Includes and fragments** (П-2): in `## Includes` — only include lines (prose, a list, an expansion are a check error); a fragment state declared by a heading in the section `## States` of a machine is a “declared twice” error.
 
 **Release for the interpreter** (И-3). `unreachable` and `require(none)` are a program defect: the process is stopped by the executor (not the table); the machine state is not rolled back; the call response is an end with `NoResult`; the journal of the defect is at the executor's discretion. This is not a machine error (3.3): a defect does not lead to ERROR. A call refusal on a wrong input is a separate case: the event `input_rejected` (section 1, И-1).

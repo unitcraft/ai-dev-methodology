@@ -140,11 +140,20 @@ action	отменить_открытые	cancel_open
 action	кроме	except
 action	для	for
 action	каждого	each
+action	для каждого	for each
 action	в	in
 action	если	if
 action	то	then
 action	иначе	else
 action	пусть	let
+operator	≥	>=
+operator	≤	<=
+operator	≠	!=
+operator	→	->
+operator	…	...
+operator	∈	in
+operator	??	??
+operator	_	_
 readable	вход	input
 readable	сторона	party
 readable	событие.сторона	event.party
@@ -178,6 +187,7 @@ enum_value	стоп	stop
 enum_value	продолжить	continue
 enum_value	остановить	halt
 enum_value	отмена	cancel
+enum_value	нет	none
 enum_value	pure	pure
 enum_value	reading	reading
 enum_value	writing	writing

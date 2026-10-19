@@ -7,9 +7,10 @@
 Что проверяет:
   1. таблица: первая строка — заголовок `kind<TAB>ru<TAB>en`; в каждой строке три колонки без пустых ячеек;
      `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, event, destination, decl, type, expr,
-     action, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en` не повторяются;
+     action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en` не повторяются;
   2. русский образец: структурные слова (имена шапки и ключи шапки, заголовки разделов `##`, строки-ключи `- Ключ:` и `Начальное состояние:`,
-     заголовки столбцов таблиц, виды состояний в заголовках `###`) есть в таблице в колонке `ru` своего вида;
+     заголовки столбцов таблиц, виды состояний в заголовках `###` (скобки с именем JSON необязательны), значение `нет`/`none`
+     строки `Вход`) есть в таблице в колонке `ru` своего вида;
      английское структурное слово (есть в колонке `en`, нет в `ru`) в русском образце — ошибка;
   3. английский образец: те же структурные слова по колонке `en` (`Initial state:` вместо `Начальное состояние:`);
      русское структурное слово (есть в колонке `ru`, нет в `en`) в нём — ошибка; строка шапки `- language: en` обязательна
@@ -26,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TABLE = 'portolan-keywords.tsv'
 SAMPLES = [('state-machine-agent-step.portolan.md', 'ru'), ('state-machine-agent-step.en.portolan.md', 'en')]
 KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'event', 'destination', 'decl', 'type', 'expr',
-         'action', 'readable', 'catalog', 'enum_value']
+         'action', 'operator', 'readable', 'catalog', 'enum_value']
 
 
 def read(name):
@@ -98,13 +99,16 @@ def structural(text, lang='ru'):
             if m:
                 out.append((n, 'header', m.group(1)))
             continue
-        m = re.match(r'^### \S+ — (\S+) \(', line)
+        m = re.match(r'^### \S+ — (\S+)(?: \(|\s*$|\s+//)', line)  # скобки с именем JSON необязательны (спецификация 4.1)
         if m:
             out.append((n, 'kind_state', m.group(1)))
             continue
         m = re.match(r'^- ([^:`\n]+):', line)
         if m:
             out.append((n, 'key', m.group(1)))
+            v = re.match(r'^- (?:Вход|Input):\s*(нет|none)\s*$', line)
+            if v:  # значение «нет входа» — слово вида enum_value
+                out.append((n, 'enum_value', v.group(1)))
             continue
         m = re.match(initial, line)
         if m:
@@ -143,6 +147,7 @@ MUTATIONS = {
         ('строка-ключ', '- Срок тишины:', '- Срок тишыны:'),
         ('столбец таблицы состояний', '| № | Событие | Условие | Действия | Куда |', '| № | Событие | Условия | Действия | Куда |'),
         ('вид состояния', '### СТАРТ — операция (Start)', '### СТАРТ — операция2 (Start)'),
+        ('английское значение входа', '- Вход: нет', '- Вход: none'),
         ('начальное состояние', 'Начальное состояние: СТАРТ', 'Начальное состоянье: СТАРТ'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
     ],
@@ -152,7 +157,8 @@ MUTATIONS = {
         ('строка-ключ', '- Idle term:', '- Idle terms:'),
         ('русская строка-ключ', '- Party: agent', '- Сторона: agent'),
         ('столбец таблицы состояний', '| № | Event | Condition | Actions | To |', '| № | Event | Conditions | Actions | To |'),
-        ('вид состояния', '### Start — operation (Start)', '### Start — operation2 (Start)'),
+        ('вид состояния', '### Start — operation', '### Start — operation2'),
+        ('русское значение входа', '- Input: none', '- Input: нет'),
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
         ('нет строки language', '- language: en\n', ''),
