@@ -15,7 +15,7 @@
 | проверка | [task-runner-review-automaton.md](task-runner-review-automaton.md) |
 | сессия | [task-runner-session-automaton.md](task-runner-session-automaton.md) |
 | совещание | [task-runner-meeting-automaton.md](task-runner-meeting-automaton.md) |
-| формат | [state-machine-table-format.md](state-machine-table-format.md) (только имена примитивов реестра хозяина) |
+| формат | [state-machine-portolan-format.md](state-machine-portolan-format.md) (только имена примитивов реестра хозяина) |
 
 Источники имён (столбец «Источник» в таблицах ниже): **таблица соответствия** — латинское имя уже записано в таблицах «Соответствие типов и полей» файлов-автоматов и в блоках «Типы на Нове» файлов `*-states.md`; **словарь проекта-потребителя** — имя совпадает с английским словарём движка, который по правилам методики собрал нижестоящий проект (его раздел «Типы», «Поля и величины», «Операции движка»); **старый псевдокод** — имя уже стоит в [task-runner-pseudocode.md](task-runner-pseudocode.md) или [task-runner-meeting-pseudocode.md](task-runner-meeting-pseudocode.md) для того же понятия; **новое** — имени нигде не было, оно выбрано здесь. Код [протокола вызова](state-machine-call-protocol.md) и блоки «Типы на Нове» уже латинские и сверены: их имена — основа словаря, расхождений с ними нет, кроме перечисленных в разделе 3.
 
