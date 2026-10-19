@@ -175,7 +175,8 @@ type MachineData {
   open []Finding,                          // находки засчитанных заходов, не переданные в правку автора; идут в итог как «открыто»
   // Внешние объекты (хранилище и задание): пишет исполнитель при приёме ответа или в операции вместе с шагом; роль и переход их не пишут
   proposal str,                             // = входной документ совещания
-  copy Option[str],                           // предложение на начало захода с отпечатком
+  copy Option[str],                           // текст предложения на начало захода; пишет ЗАМОК
+  copy_fingerprint Option[str],               // отпечаток предложения на начало захода; пишет ЗАМОК; по нему СВЕРКА замечает правку за время проверки
   witness_answers HashMap[int, []WitnessAnswer], // [номер_захода]; нет, пока вопросов в заходе не было
   lens_findings HashMap[(str, int), []Finding], // псевдокод: ключ-кортеж; [линза, номер_захода]; начально нет; после ФИЛЬТРА на том же месте без несостоятельных
   summary HashMap[int, Summary],                      // [номер_захода]; начально нет; итоговая строка и находки с меткой линзы
@@ -206,6 +207,7 @@ fn MachineData.new() -> MachineData => {
   open: []Finding.new(),
   proposal: "",
   copy: None,
+  copy_fingerprint: None,
   witness_answers: HashMap[int, []WitnessAnswer].new(),
   lens_findings: HashMap[(str, int), []Finding].new(),   // псевдокод: ключ-кортеж (см. п. 7)
   summary: HashMap[int, Summary].new(),
@@ -454,7 +456,8 @@ fn MachineData mut @remove_unsound(pass_number int) Objects -> ()
 fn MachineData @lenses_without_critical() -> []str
 // K, Z, D — суммы по линзам, P — наименьшее из проб
 fn MachineData @build_summary(pass_number int) Objects -> Option[Summary]
-fn MachineData @proposal_with_fingerprint() Objects -> str => match Objects.read(Object { name: "proposal" }) {
+// отпечаток текущего содержимого предложения; вызывается, когда предложение прочитано (ЗАМОК, СВЕРКА)
+fn MachineData @proposal_fingerprint() Objects -> str => match Objects.read(Object { name: "proposal" }) {
   Ok(bytes) => fingerprint(bytes)
   Err(_) => unreachable("proposal not read: Lock reads it on entry")
 }
@@ -678,10 +681,10 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 
   // ===================== СВЕРКА — развилка =====================
   Comparison => {
-    // СВЕРКА #1: предложение прочитано и равно копии
-    if @proposal_read() && Some(@proposal) == @copy { return Go(Filter) }
-    // СВЕРКА #2: предложение прочитано и отличается от копии
-    if @proposal_read() && Some(@proposal) != @copy { return Go(Changed) }
+    // СВЕРКА #1: предложение прочитано и его отпечаток равен отпечатку копии
+    if @proposal_read() && Some(@proposal_fingerprint()) == @copy_fingerprint { return Go(Filter) }
+    // СВЕРКА #2: предложение прочитано и его отпечаток отличается от отпечатка копии
+    if @proposal_read() && Some(@proposal_fingerprint()) != @copy_fingerprint { return Go(Changed) }
     // СВЕРКА #3: предложение не прочитано
     if !@proposal_read() { return Go(Changed) }
     // СВЕРКА #4: иначе
@@ -945,7 +948,8 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
 /// Работа операций при входе (в одном шаге с переходом; отказа и «нет ответа» у операции нет). Результат — событие: `Сразу`, у ФИЛЬТРА — `Сразу_ФИЛЬТР` с данными.
 fn MachineData mut @run_operation(operation State, environment MachineEnvironment) Journal Objects Time -> Event => match operation {
   Lock => {
-    @copy = Some(@proposal_with_fingerprint())
+    @copy = Some(@proposal)
+    @copy_fingerprint = Some(@proposal_fingerprint())
     @close_for_writing("proposal", environment)
     Immediate
   }

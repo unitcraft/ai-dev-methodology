@@ -112,13 +112,13 @@
 | сессия | `session_not_finished` | сессия {session} не завершилась: {reason} | `session`, `reason` |
 | сессия | `session_launch_stopped` | запуск сессии остановлен: {reason} | `reason` |
 | сессия | `session_result` | запуск сессии: сессия {session}, итог {outcome} | `session`, `outcome` |
-| совещание | `witness_no_answer` | Witness не ответил: {reason} | `reason` |
+| совещание | `witness_no_answer` | СВИДЕТЕЛЬ не ответил: {reason} | `reason` |
 | совещание | `lens_no_answer` | линза {party} не ответила: {reason} | `party`, `reason` |
 | совещание | `lens_dropped` | линза {party} отброшена в заходе {pass} | `party`, `pass` |
 | совещание | `no_summary_line` | итоговой строки нет | — |
-| совещание | `author_fix_no_answer` | AuthorFix: автор не ответил: {reason} | `reason` |
-| совещание | `author_question_no_answer` | AuthorQuestion: автор не ответил: {reason} | `reason` |
-| совещание | `copy_restore_no_copy` | CopyRestore: копии нет | — |
+| совещание | `author_fix_no_answer` | ПРАВКА: автор не ответил: {reason} | `reason` |
+| совещание | `author_question_no_answer` | ВОПРОС: автор не ответил: {reason} | `reason` |
+| совещание | `copy_restore_no_copy` | ВОЗВРАТ: копии нет | — |
 | совещание | `older_findings_in_pass_files` | значимые находки прежних заходов, не вошедшие в «открыто», — в файлах заходов | — |
 
 ### Слова значений
