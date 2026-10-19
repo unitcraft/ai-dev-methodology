@@ -785,7 +785,7 @@ fn MachineData @pause_stop_reason() -> str => "pause_halt"
 fn MachineData @halted_state() -> State => Halted
 fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
-fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason }
+fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason }
 // метка инварианта 2: номера заходов не уменьшаются; у раннера — номер захода каждой из четырёх стадий, компонент на стадию (движок проверяет покомпонентно после каждого перехода шага)
 fn MachineData @invariant_mark() -> []int {
   mut label = []int.new()
@@ -800,13 +800,13 @@ fn MachineData mut @record_stop(reason str) {
 }
 // общие события: события машины, которые движок разбирает до строк состояний
 fn MachineData @common(current State, event_body Event) -> Option[CommonEvent] => match event_body {
-  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word: human_word, author: author, source: source })
-  StopFromParent { id } => Some(ParentStop { id: id })
-  CancelRequest { id } => Some(RequestCancelled { id: id })
-  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word: human_word, author: author, source: source })
+  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word, author, source })
+  StopFromParent { id } => Some(ParentStop { id })
+  CancelRequest { id } => Some(RequestCancelled { id })
+  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word, author, source })
   PauseWordHalt => Some(PauseHalt)
-  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id: id })
-  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id: id })
+  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id })
+  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id })
   _ => None
 }
 // как состояние-обращение обращается к сторонам: у раннера всегда одна сторона (запуск сессии, проверка, вратарь или человек), срок бездействия не задан
@@ -875,7 +875,7 @@ fn MachineData @reply_event(current State, role_result RoleResult) -> Event => m
 
 /// Вход вложенной проверки цикла по стадии; «вне_задачи» читается только у стадии «реализация», у остальных — `[]`
 fn MachineData @review_input(stage Stage, out_of_scope []Finding) -> ReviewInput => ReviewInput {
-  stage: stage, cycle: @cycle(stage), out_of_scope: out_of_scope,
+  stage, cycle: @cycle(stage), out_of_scope,
   task_dir: @task_dir, repo_dir: @repo_dir, delivery_mode: @delivery_mode,
   route: @route, clean_needed: @clean_needed, ceiling: @ceiling, probes_min: @probes_min, delivery_short: @delivery_short,
   proposal: None, lens_order: []str.new(), author_question: None }

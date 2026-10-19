@@ -438,7 +438,7 @@ fn MachineData mut @open_for_writing(object str, environment MachineEnvironment)
 }
 // находки_линзы[линза, номер] по каждой линзе из порядок_линз и ответы_свидетеля[номер] — в архив недействительных заходов, суффикс `*.void-<суффикс>.md`
 fn MachineData mut @move_to_archive(pass_number int, suffix int, environment MachineEnvironment) {
-  environment.add_irreversible(MoveToArchive { pass_number: pass_number, suffix: suffix })
+  environment.add_irreversible(MoveToArchive { pass_number, suffix })
 }
 // строки счёта по моделям буферизуются и пишутся при фиксации
 fn MachineData mut @count_in_model_tally(finding Finding, environment MachineEnvironment)
@@ -467,7 +467,7 @@ fn MachineData @pause_stop_reason() -> str => "pause_halt_meeting"
 fn MachineData @halted_state() -> State => Halted
 fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
-fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason }
+fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason }
 // событие с данными по результату принятого ответа роли: «ответ» у СВИДЕТЕЛЯ и ЛИНЗ, «ответ: закончена» или «ответ: вопрос» у ПРАВКИ и ВОПРОСА (вариант `ИтогПравки`)
 fn MachineData @reply_event(current State, role_result RoleResult) -> Event => match role_result {
   WitnessOutcome(_) => Replied
@@ -485,13 +485,13 @@ fn MachineData mut @record_stop(reason str) {
 }
 // общие события: события машины, которые движок разбирает до строк состояний
 fn MachineData @common(current State, event_body Event) -> Option[CommonEvent] => match event_body {
-  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word: human_word, author: author, source: source })
-  StopFromParent { id } => Some(ParentStop { id: id })
-  CancelRequest { id } => Some(RequestCancelled { id: id })
-  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word: human_word, author: author, source: source })
+  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word, author, source })
+  StopFromParent { id } => Some(ParentStop { id })
+  CancelRequest { id } => Some(RequestCancelled { id })
+  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word, author, source })
   PauseWordHaltMeeting => Some(PauseHalt)
-  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id: id })
-  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id: id })
+  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id })
+  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id })
   _ => None
 }
 // как состояние-обращение обращается к сторонам: ЛИНЗЫ — набор вложенных вызовов шага агента по линзам из к_отправке, СВИДЕТЕЛЬ, ПРАВКА и ВОПРОС — один вложенный вызов (свидетель, автор), остальные — ворота человека;

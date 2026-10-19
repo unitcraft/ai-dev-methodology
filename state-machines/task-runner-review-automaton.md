@@ -477,7 +477,7 @@ fn MachineData @pause_stop_reason() -> str => "pause_halt"
 fn MachineData @halted_state() -> State => Halted
 fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
-fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason }
+fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason }
 // метка инварианта 2: номер_захода не уменьшается (проверяет движок после каждого перехода шага, покомпонентно; у проверки компонент один)
 fn MachineData @invariant_mark() -> []int => [@number]
 // «остановка» — причина остановки проверки; пишут общие события движка и строки состояний
@@ -486,13 +486,13 @@ fn MachineData mut @record_stop(reason str) {
 }
 // общие события: события машины, которые движок разбирает до строк состояний
 fn MachineData @common(current State, event_body Event) -> Option[CommonEvent] => match event_body {
-  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word: human_word, author: author, source: source })
-  StopFromParent { id } => Some(ParentStop { id: id })
-  CancelRequest { id } => Some(RequestCancelled { id: id })
-  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word: human_word, author: author, source: source })
+  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word, author, source })
+  StopFromParent { id } => Some(ParentStop { id })
+  CancelRequest { id } => Some(RequestCancelled { id })
+  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word, author, source })
   PauseWordHalt => Some(PauseHalt)
-  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id: id })
-  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id: id })
+  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id })
+  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id })
   _ => None
 }
 // как состояние-обращение обращается к сторонам: у проверки всегда одна сторона (запуск сессии, совещание или человек), срок бездействия не задан

@@ -342,7 +342,7 @@ fn Engine @environment() -> Environment[State, Event, Action]
 fn Engine mut @write_journal(text str) Journal Time -> () {
   Journal.write(JournalEntry {
     trace: @engine_state.trace, step: @engine_state.step, cause: @engine_state.cause, state: @machine.state_name(@engine_state.state),
-    request: @engine_state.call_request_id, at: Time.now(), text: text, model_tally: @engine_state.model_tally })
+    request: @engine_state.call_request_id, at: Time.now(), text, model_tally: @engine_state.model_tally })
 }
 // писать_журнал(текст); запись_перехода = текст; Куда(состояние ошибки)
 fn Engine mut @machine_error(text str) Journal Time -> Transition[State] {
@@ -369,7 +369,7 @@ fn Engine mut @cancel_open_without_accepted(except_nested bool) Link -> () {
 // после фиксации шага: «стоп», «продолжить», «остановить», «отмена»; журнал «стоп передан <идентификатор_запроса>», «продолжить передано <идентификатор_запроса>» на каждого
 fn Engine mut @pass_to_nested(signal str) {
   for id in @nested_requests() {
-    @engine_state.nested_signals.push(NestedSignal { signal: signal, request: id })
+    @engine_state.nested_signals.push(NestedSignal { signal, request: id })
   }
 }
 // запросы из открытые_запросы к вложенным машинам: отправка помнит запрос вложенным, если так описано (`вложенная`) обращение, которое его открыло
@@ -642,7 +642,7 @@ fn common_stop_fail_code(text str) -> FailCode => match text {
 
 /// Отказ вызвавшей стороне: конверт ответа берётся из запроса вызова
 fn refuse_with[T, U](call_request Request[T], reason FailCode, text str) -> Response[U] {
-  Refusal(Rejection { request: call_request.id, party: call_request.party, reason: reason, text: text, trace: call_request.trace, step: call_request.step })
+  Refusal(Rejection { request: call_request.id, party: call_request.party, reason, text, trace: call_request.trace, step: call_request.step })
 }
 ```
 
@@ -780,7 +780,7 @@ type Engine[State, Event, T, U, RoleInput, RoleResult, Action, M Machine[State, 
 
 /// Исполнитель над готовой машиной; хранилище — эффект `Хранилище`, обработчик подставляет вызывающий код.
 fn Engine.new(machine M) -> Engine => {
-  machine: machine,
+  machine,
   engine_state: EngineState.new(machine.initial()),
   call_request: None,
   queue: []Incoming.new(),
@@ -1058,8 +1058,8 @@ fn Engine mut @send_requests(appeal State) Store Link Objects Time -> () => matc
       @engine_state.open_requests.push("${party}-${attempt_number}")
       if nested { @engine_state.nested_ids.push("${party}-${attempt_number}") }
       @commit()
-      @send(Request { id: "${party}-${attempt_number}", attempt: attempt_number, party: party,
-        input: @machine.request_input(appeal, party, @environment()), idle_term: idle_term, trace: @engine_state.trace, step: @engine_state.step })
+      @send(Request { id: "${party}-${attempt_number}", attempt: attempt_number, party,
+        input: @machine.request_input(appeal, party, @environment()), idle_term, trace: @engine_state.trace, step: @engine_state.step })
     }
   }
   Some(Single { party, idle_term, nested, .. }) => {
@@ -1070,8 +1070,8 @@ fn Engine mut @send_requests(appeal State) Store Link Objects Time -> () => matc
     @engine_state.open_requests.push("${party}-${attempt_number}")
     if nested { @engine_state.nested_ids.push("${party}-${attempt_number}") }
     @commit()
-    @send(Request { id: "${party}-${attempt_number}", attempt: attempt_number, party: party,
-      input: @machine.request_input(appeal, party, @environment()), idle_term: idle_term, trace: @engine_state.trace, step: @engine_state.step })
+    @send(Request { id: "${party}-${attempt_number}", attempt: attempt_number, party,
+      input: @machine.request_input(appeal, party, @environment()), idle_term, trace: @engine_state.trace, step: @engine_state.step })
   }
 }
 

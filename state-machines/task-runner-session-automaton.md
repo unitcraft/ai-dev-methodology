@@ -291,7 +291,7 @@ fn MachineData @halted_state() -> State => Halted
 fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
 // псевдокод: движок передаёт только код (`событие_сбоя(причина)`), текст отказа остаётся пустым, пока движок не понесёт его («Что движок не покрыл», пункт 13)
-fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason, refusal_text: "" }
+fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason, refusal_text: "" }
 // метка инварианта: не убывающих счётчиков у запуска сессии нет, компонентов нет (движок сравнивает покомпонентно после каждого перехода шага)
 fn MachineData @invariant_mark() -> []int => []int.new()
 // «остановка» — причина остановки запуска; пишут общие события движка и строки состояний
@@ -300,13 +300,13 @@ fn MachineData mut @record_stop(reason str) {
 }
 // общие события: события машины, которые движок разбирает до строк состояний
 fn MachineData @common(current State, event_body Event) -> Option[CommonEvent] => match event_body {
-  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word: human_word, author: author, source: source })
-  StopFromParent { id } => Some(ParentStop { id: id })
-  CancelRequest { id } => Some(RequestCancelled { id: id })
-  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word: human_word, author: author, source: source })
+  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word, author, source })
+  StopFromParent { id } => Some(ParentStop { id })
+  CancelRequest { id } => Some(RequestCancelled { id })
+  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word, author, source })
   PauseWordHalt => Some(PauseHalt)
-  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id: id })
-  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id: id })
+  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id })
+  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id })
   _ => None
 }
 // как состояние-обращение обращается к сторонам: у запуска всегда одна сторона (шаг агента или человек), срок бездействия не задан

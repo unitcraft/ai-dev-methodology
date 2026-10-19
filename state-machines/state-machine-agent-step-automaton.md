@@ -451,8 +451,8 @@ fn MachineData @collect_usage(updated int) -> Usage {
     None => None
   }
   Usage {
-    session: request.session, result: result, family: request.profile.family, model: model, tokens: tokens, cost: cost,
-    created: @started ?? updated, updated: updated, context_used: context_used,
+    session: request.session, result, family: request.profile.family, model, tokens, cost,
+    created: @started ?? updated, updated, context_used,
     trace: request.trace, step: request.step }
 }
 
@@ -464,7 +464,7 @@ fn MachineData @pause_stop_reason() -> str => "pause_halt"
 fn MachineData @halted_state() -> State => Halted
 fn MachineData @error_state() -> State => Errored
 fn MachineData @immediate_event() -> Event => Immediate
-fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason: reason }
+fn MachineData @failure_event(reason FailCode) -> Event => Failure { reason }
 // метка инварианта: четыре счётчика, которые не убывают (число_повторов, число_продолжений, число_возвратов, число_ходов); движок сравнивает покомпонентно после каждого перехода шага
 fn MachineData @invariant_mark() -> []int => [@retry_count, @continuation_count, @return_count, @turn_count]
 // «остановка» — причина остановки шага; пишут общие события движка и строки состояний
@@ -473,13 +473,13 @@ fn MachineData mut @record_stop(reason str) {
 }
 // общие события: события машины, которые движок разбирает до строк состояний
 fn MachineData @common(current State, event_body Event) -> Option[CommonEvent] => match event_body {
-  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word: human_word, author: author, source: source })
-  StopFromParent { id } => Some(ParentStop { id: id })
-  CancelRequest { id } => Some(RequestCancelled { id: id })
-  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word: human_word, author: author, source: source })
+  StopFromHuman { human_word, author, source } => Some(HumanStop { human_word, author, source })
+  StopFromParent { id } => Some(ParentStop { id })
+  CancelRequest { id } => Some(RequestCancelled { id })
+  PauseWordContinue { human_word, author, source } => Some(PauseContinue { human_word, author, source })
   PauseWordHalt => Some(PauseHalt)
-  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id: id })
-  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id: id })
+  PauseWordContinueFromParent { id } => Some(PauseContinueFromParent { id })
+  PauseWordHaltFromParent { id } => Some(PauseHaltFromParent { id })
   _ => None
 }
 // как состояние-обращение обращается к сторонам: у шага всегда одна сторона (агент, вратарь или человек), вложенных машин нет;
@@ -531,14 +531,14 @@ fn MachineData mut @on_resume(saved State, environment MachineEnvironment) Journ
 // событие с данными по результату принятого ответа роли (метод протокола `Автомат`)
 fn MachineData @reply_event(current State, role_result RoleResult) -> Event => match role_result {
   TurnOutcome(outcome) => match outcome {
-    TurnResult.Finished { text, artifact, usage } => RepliedFinished { text: text, artifact: artifact, usage: usage }
-    TurnResult.Truncated { usage } => RepliedTruncated { usage: usage }
-    TurnResult.TurnRequestLimit { usage } => RepliedTurnRequestLimit { usage: usage }
-    TurnResult.ModelRefusal { usage } => RepliedModelRefusal { usage: usage }
-    TurnResult.Stopped { usage } => RepliedStopped { usage: usage }
+    TurnResult.Finished { text, artifact, usage } => RepliedFinished { text, artifact, usage }
+    TurnResult.Truncated { usage } => RepliedTruncated { usage }
+    TurnResult.TurnRequestLimit { usage } => RepliedTurnRequestLimit { usage }
+    TurnResult.ModelRefusal { usage } => RepliedModelRefusal { usage }
+    TurnResult.Stopped { usage } => RepliedStopped { usage }
     TurnResult.TransientError => RepliedTransientError
     TurnResult.PermanentError => RepliedPermanentError
-    TurnResult.NeedsPermission { permission_request } => RepliedNeedsPermission { permission_request: permission_request }
+    TurnResult.NeedsPermission { permission_request } => RepliedNeedsPermission { permission_request }
   }
 }
 
