@@ -10,7 +10,7 @@
 |---|---|
 | движок | [state-machine-engine-automaton.md](state-machine-engine-automaton.md) |
 | методика | [state-machine-methodology-automaton.md](state-machine-methodology-automaton.md) |
-| шаг агента | [state-machine-agent-step-automaton.md](state-machine-agent-step-automaton.md) |
+| шаг агента | [state-machine-agent-step.portolan.md](state-machine-agent-step.portolan.md) (прежний автомат — [в архиве](archive/state-machine-agent-step-automaton.md)) |
 | раннер | [task-runner-automaton.md](task-runner-automaton.md) |
 | проверка | [task-runner-review-automaton.md](task-runner-review-automaton.md) |
 | сессия | [task-runner-session-automaton.md](task-runner-session-automaton.md) |

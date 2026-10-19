@@ -23,7 +23,7 @@ MACHINES = {  # файл состояний -> (файл автомата, со�
     'task-runner-review-states.md': ('task-runner-review-automaton.md', 'проверка'),
     'task-runner-session-states.md': ('task-runner-session-automaton.md', 'сессия'),
     'task-runner-meeting-states.md': ('task-runner-meeting-automaton.md', 'совещание'),
-    'state-machine-agent-step-states.md': ('state-machine-agent-step-automaton.md', 'шаг агента'),
+    'archive/state-machine-agent-step-states.md': ('archive/state-machine-agent-step-automaton.md', 'шаг агента'),
 }
 # «Куда», которое не имя состояния: переменная (правило 24 спецификации) и слова без перехода
 ДОПУСТИМЫЕ_КУДА = {'предыдущее', 'возврат_подготовки', 'не меняется', 'остаётся', 'остаётся в этом состоянии', 'то же', 'то же состояние'}
@@ -145,7 +145,7 @@ def check(states_file, automaton_file, machine):
 JOURNAL_FILE = 'state-machine-journal.md'
 JOURNAL_AUTOMATA = {  # файл автомата -> имя машины в столбце «Машина» таблицы шаблонов
     'state-machine-engine-automaton.md': 'движок',
-    'state-machine-agent-step-automaton.md': 'шаг агента',
+    'archive/state-machine-agent-step-automaton.md': 'шаг агента',
     'task-runner-automaton.md': 'раннер',
     'task-runner-review-automaton.md': 'проверка',
     'task-runner-session-automaton.md': 'сессия',

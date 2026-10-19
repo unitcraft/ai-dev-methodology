@@ -727,7 +727,7 @@ Example (the “Meeting” pilot; E2, E8). Changed: `journal_findings`, `journal
 | Errored | 1 | true | Refusal(FailCode.NoResult, record_text(transition_note)) |
 ```
 
-(Not all rows of Halted are shown in the “Ends” table: “Agent step” has 11 of them ([state-machine-agent-step-states.md](state-machine-agent-step-states.md), “end → response”; the example shows №№ 1, 2, 7, 10, 11), “Meeting” has 10, by the number of values of `stop_reason` without `""`. For “Meeting” four rows `stop_reason == "Witness_halt_meeting"` … `"AuthorQuestion_halt_meeting"` lead to `Refusal(FailCode.StoppedByHuman, stop_reason)`, the values are computed by FailedRequest #2, section 3.2.)
+(Not all rows of Halted are shown in the “Ends” table: “Agent step” has 11 of them ([archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md), “end → response”; the example shows №№ 1, 2, 7, 10, 11), “Meeting” has 10, by the number of values of `stop_reason` without `""`. For “Meeting” four rows `stop_reason == "Witness_halt_meeting"` … `"AuthorQuestion_halt_meeting"` lead to `Refusal(FailCode.StoppedByHuman, stop_reason)`, the values are computed by FailedRequest #2, section 3.2.)
 
 ## 5. Actions
 
