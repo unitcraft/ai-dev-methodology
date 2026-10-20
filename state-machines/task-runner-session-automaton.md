@@ -82,7 +82,7 @@ ro IDLE_TERM int = 0
 type MachineData {
   // Переменные машины (состояние машины); сохраняются целиком вместе со снимком (правило 22); данные движка (конверт, очереди запросов, журнал) — в `СостояниеДвижка`
   session str,                                  // код запускаемой сессии; из запроса вызова, не меняется
-  source str,                        // источник правок для запускаемой сессии; `""` — источника нет; из запроса вызова, не меняется
+  launch_source str,                        // источник правок для запускаемой сессии; `""` — источника нет; из запроса вызова, не меняется
   launch_pass Option[int],                   // номер захода сессии проверки цикла; None у вызова из раннера; из запроса вызова, не меняется
   phase Option[str],                            // фаза цикла задачи для профиля; None у вызова из проверки цикла; из запроса вызова, не меняется
   route str,                                 // маршрут задачи: у быстрого хвост промптов получает строку про постановку вместо plan.md; из запроса вызова, не меняется
@@ -107,7 +107,7 @@ type MachineData {
 /// Начальные значения данных машины — раздел «Данные» первоисточника; поля «из запроса» заполняет `Машина.из_входа`.
 fn MachineData.new() -> MachineData => {
   session: "",
-  source: "",
+  launch_source: "",
   launch_pass: None,
   phase: None,
   route: "",
@@ -131,7 +131,7 @@ fn MachineData.new() -> MachineData => {
 fn MachineData.from_input(input SessionLaunchInput) -> MachineData {
   mut machine = MachineData.new()
   machine.session = input.session
-  machine.source = input.source ?? ""
+  machine.launch_source = input.launch_source ?? ""
   machine.launch_pass = input.launch_pass
   machine.phase = input.phase
   machine.route = input.route
@@ -363,7 +363,7 @@ fn MachineData @request_input(appeal State, party str, environment MachineEnviro
   Session => RoleAgentRequest(AgentRequest {
     kind: CallerKind.CycleSession, profile: launch_profile(@session), session: @session, dialog_kind: session_dialog_kind(@session),
     context: session_context(
-      @session, if @source == "" { None } else { Some(@source) }, @launch_pass, @delivery_mode, @task_dir, @repo_dir,
+      @session, if @launch_source == "" { None } else { Some(@launch_source) }, @launch_pass, @delivery_mode, @task_dir, @repo_dir,
       @route, @source_list, @delivery_short),
     limits: AgentLimits { silence_term: None, token_budget: None, cost_budget: None, turn_limit: None },     // решение 12 первоисточника
     trace: call_trace(environment), step: call_step(environment) })

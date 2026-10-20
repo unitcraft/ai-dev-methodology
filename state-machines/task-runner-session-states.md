@@ -106,7 +106,7 @@
 type Summary { essential int, probes int }
 
 /// ВходЗапускаСессии
-type SessionLaunchInput { session str, source Option[str], phase Option[str], launch_pass Option[int], task_dir str, repo_dir str, delivery_mode str, route str, source_list Option[str], delivery_short bool }
+type SessionLaunchInput { session str, launch_source Option[str], phase Option[str], launch_pass Option[int], task_dir str, repo_dir str, delivery_mode str, route str, source_list Option[str], delivery_short bool }
 
 /// ИтогЗапускаСессии
 type SessionLaunchResult { result SessionResult, summary Option[Summary], findings Option[[]Finding] }

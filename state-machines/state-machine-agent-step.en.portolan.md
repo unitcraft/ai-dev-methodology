@@ -1,11 +1,11 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: portolan-2.11
-- format: 2.11
+- machine_version: portolan-2.12
+- format: 2.12
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Portolan format, format version 2.11 ([state-machine-portolan-spec.md](state-machine-portolan-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.portolan.md](state-machine-agent-step.portolan.md): the same machine, row for row, with the English keywords of the [word table](portolan-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files. The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; its expansion (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is given in the reference section at the end of the file.
+This is an **illustration**: the "Agent step" machine in full, written in the Portolan format, format version 2.12 ([state-machine-portolan-spec.md](state-machine-portolan-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.portolan.md](state-machine-agent-step.portolan.md): the same machine, row for row, with the English keywords of the [word table](portolan-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files. The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; its expansion (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is given in the reference section at the end of the file.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The source of truth stays the same:** the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md); where they differ, they are right, and this file is edited after them. The "Pause" fragment is [state-machine-pause-states.md](state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-portolan-samples.py](check-portolan-samples.py).
 
@@ -71,9 +71,16 @@ The sources call both values a project parameter but give no project key: the co
 
 | name | type | note |
 |---|---|---|
-| agent_request | AgentRequest | kind, profile, session, dialog kind, context, limits, trace and step number of the caller, as one value |
+| kind | CallerKind | the caller kind |
+| profile | AgentProfile | the agent profile; at the caller — the column `profile` of its "Parties" |
+| session | text | the agent session |
+| dialog_kind | text | the dialog kind |
+| context | text | the turn context |
+| limits | AgentLimits | the step limits |
+| trace | text | the trace of the caller |
+| step | int | the step number of the caller |
 
-The input has no invariant. The call request identifier (`call_request_id`) is not in the input: the executor supplies it.
+The input fields are exactly the fields of `AgentRequest`: the callers name the party `machine agent_step(input AgentRequest, result AgentReply)`, and the fields of their request are the fields of this type (the format, section 1, "The input of a called machine"). The record `agent_request` as a whole is built by `initial` in "Data". The input has no invariant. The call request identifier (`call_request_id`) is not in the input: the executor supplies it.
 
 ## Data
 
@@ -81,7 +88,7 @@ The data of the "Pause" fragment (`previous`, `call_request_id`, `open_requests`
 
 | name | type | initial | non_decreasing | writes |
 |---|---|---|---|---|
-| agent_request | AgentRequest | input.agent_request | — | rows |
+| agent_request | AgentRequest | AgentRequest { kind: input.kind, profile: input.profile, session: input.session, dialog_kind: input.dialog_kind, context: input.context, limits: input.limits, trace: input.trace, step: input.step } | — | rows |
 | turn | "first" \| "retry" \| "continue" \| "fix" \| "permission" | "first" | — | rows |
 | retry_count | int>=0 | 0 | yes, <= RETRIES | rows |
 | continuation_count | int>=0 | 0 | yes, <= CONTINUATIONS | rows |

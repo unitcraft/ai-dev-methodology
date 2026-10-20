@@ -23,7 +23,7 @@
 | Критичность: существенная, поверхностная | `Критичность`: `Существенная`, `Поверхностная` | `Severity`: `Essential`, `Superficial` |
 | Уровень: реализация, план, требования, вне задачи, сдача | `Уровень`: `Реализация`, `План`, `Требования`, `ВнеЗадачи`, `Сдача` | `Level`: `Implementation`, `Plan`, `Requirements`, `OutOfScope`, `Delivery` |
 | Свод: существенных, проб | `Свод`: `существенных`, `проб` | `Summary`: `essential`, `probes` |
-| ВходЗапускаСессии: сессия, источник_запуска, фаза, заход_запуска, папка_задачи, рабочее_дерево, режим_сдачи, маршрут, перечень_источников, сдача_сжата | `ВходЗапускаСессии`: те же имена | `SessionLaunchInput`: `session`, `source`, `phase`, `launch_pass`, `task_dir`, `repo_dir`, `delivery_mode`, `route`, `source_list`, `delivery_short` |
+| ВходЗапускаСессии: сессия, источник_запуска, фаза, заход_запуска, папка_задачи, рабочее_дерево, режим_сдачи, маршрут, перечень_источников, сдача_сжата | `ВходЗапускаСессии`: те же имена | `SessionLaunchInput`: `session`, `launch_source`, `phase`, `launch_pass`, `task_dir`, `repo_dir`, `delivery_mode`, `route`, `source_list`, `delivery_short` |
 | ИтогЗапускаСессии: итог_сессии, свод, находки_проверки | `ИтогЗапускаСессии`: те же имена | `SessionLaunchResult`: `result`, `summary`, `findings` |
 | ИтогСессии: готово, ревизия, план, требования, вопрос | `ИтогСессии`: `Готово`, `Ревизия`, `План`, `Требования`, `Вопрос` | `SessionResult`: `Done`, `Revision`, `Plan`, `Requirements`, `Question` |
 | ВходПроверки: стадия, цикл, вне_задачи, папка_задачи, рабочее_дерево, режим_сдачи, маршрут, чистых_подряд, потолок_заходов, проб_в_чистом, сдача_сжата, предложение, порядок_линз, вопрос_автора | `ВходПроверки`: те же имена | `ReviewInput`: `stage`, `cycle`, `out_of_scope`, `task_dir`, `repo_dir`, `delivery_mode`, `route`, `clean_needed`, `ceiling`, `probes_min`, `delivery_short`, `proposal`, `lens_order`, `author_question` |
@@ -89,7 +89,7 @@ type Level enum
 type Summary { essential int, probes int }
 
 /// ВходЗапускаСессии: вход вложенной машины запуска сессии; один у раннера и проверки цикла; источник правок, фаза, номер захода и перечень источников необязательны (фазы нет у вызова из проверки цикла, номера захода — у вызова из раннера, перечня — у полного маршрута и у вызова из проверки цикла); маршрут и сдача_сжата — данные задачи для подстановок хвоста промптов
-type SessionLaunchInput { session str, source Option[str], phase Option[str], launch_pass Option[int], task_dir str, repo_dir str, delivery_mode str, route str, source_list Option[str], delivery_short bool }
+type SessionLaunchInput { session str, launch_source Option[str], phase Option[str], launch_pass Option[int], task_dir str, repo_dir str, delivery_mode str, route str, source_list Option[str], delivery_short bool }
 
 /// ИтогЗапускаСессии: итог вложенной машины запуска сессии; свод и находки захода — только у сессий проверки цикла
 type SessionLaunchResult { result SessionResult, summary Option[Summary], findings Option[[]Finding] }

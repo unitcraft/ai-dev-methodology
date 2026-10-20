@@ -108,7 +108,7 @@ type MachineData {
   verdict str,                                 // что вернуть вызвавшей машине: чисто, требования, план, вопрос, перезапуск или остановлено
   verdict_source str,                       // файл, на который опирается маршрут «требования» или «план»
   session str,                                  // код запускаемой сессии: проверка (С2, С4, С6, С8), правка (С1п, С3п, С5п, С7п)
-  source str,                        // источник правок для запускаемой сессии; `""` — источника нет
+  launch_source str,                        // источник правок для запускаемой сессии; `""` — источника нет
   launch_pass int,                           // номер захода, с которым запускается сессия
   continuation str,                             // метка места, из которого запущена сессия: «проверка», «правка» или «не делаю»
   result Option[SessionResult],              // чем кончилась последняя сессия; None — сессия ещё не кончалась
@@ -149,7 +149,7 @@ fn MachineData.new() -> MachineData => {
   verdict: "",
   verdict_source: "",
   session: "",
-  source: "",
+  launch_source: "",
   launch_pass: 0,
   continuation: "",
   result: None,
@@ -462,7 +462,7 @@ fn MachineData @cycle_findings() -> []Finding {
 // сессия ← код; источник_запуска ← источник; заход_запуска ← номер; продолжение ← метка (четыре присваивания строк «Что меняется» в этом порядке)
 fn MachineData mut @assign_launch(session_code str, source str, number int, label str) {
   @session = session_code
-  @source = source
+  @launch_source = source
   @launch_pass = number
   @continuation = label
 }
@@ -553,7 +553,7 @@ fn MachineData @reply_event(current State, role_result RoleResult) -> Event => m
 fn MachineData @request_input(appeal State, party str, environment MachineEnvironment) Objects -> RoleInput => match appeal {
   SessionLaunch => RoleSessionLaunchInput(SessionLaunchInput {
     session: @session,
-    source: if @source == "" { None } else { Some(@source) },
+    launch_source: if @launch_source == "" { None } else { Some(@launch_source) },
     phase: None, launch_pass: Some(@launch_pass),     // заход_запуска передаётся всегда (поле машины — int, не Option): без номера итоговая строка и находки не нашли бы свой заход
     task_dir: @task_dir, repo_dir: @repo_dir, delivery_mode: @delivery_mode,
     route: @route, source_list: None, delivery_short: @delivery_short })      // перечня источников у сессий проверки цикла нет: проверяющий читает широко

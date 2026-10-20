@@ -206,7 +206,7 @@ type MachineData {
   out_of_scope []Finding,                        // находки уровня «вне задачи» заходов проверки реализации, копятся до решения у В8
   feedback_round int,                            // номер раунда обратной связи
   session str,                                  // код запускаемой сессии: С1, С1п, С3, С3п, С5, С5д, С5п, С7, С9, КОММИТ или ПУШ
-  source str,                        // источник правок для запускаемой сессии; `""` — источника нет
+  launch_source str,                        // источник правок для запускаемой сессии; `""` — источника нет
   continuation str,                             // метка места, из которого запущена сессия; по ней ПОСЛЕ_СЕССИИ решает, куда идти
   result Option[SessionResult],              // чем кончилась последняя сессия; None — сессия ещё не кончалась
   route_source str,                       // источник правок, с которым К_ТРЕБОВАНИЯМ или К_ПЛАНУ откладывают сессии правки
@@ -251,7 +251,7 @@ fn MachineData.new() -> MachineData => {
   out_of_scope: [],
   feedback_round: 0,
   session: "",
-  source: "",
+  launch_source: "",
   continuation: "",
   result: None,
   route_source: "",
@@ -666,7 +666,7 @@ fn MachineData mut @set_next_source(phase str, value str) {
 // сессия ← код; источник_запуска ← источник; продолжение ← метка (три присваивания строк «Что меняется» в этом порядке)
 fn MachineData mut @assign_launch(session_code str, source str, label str) {
   @session = session_code
-  @source = source
+  @launch_source = source
   @continuation = label
 }
 // утверждения[документ]; None — записи нет
@@ -884,7 +884,7 @@ fn MachineData @review_input(stage Stage, out_of_scope []Finding) -> ReviewInput
 fn MachineData @request_input(appeal State, party str, environment MachineEnvironment) Objects -> RoleInput => match appeal {
   SessionLaunch => RoleSessionLaunchInput(SessionLaunchInput {
     session: @session,
-    source: if @source == "" { None } else { Some(@source) },
+    launch_source: if @launch_source == "" { None } else { Some(@launch_source) },
     phase: Some(@phase), launch_pass: None,     // фаза передаётся всегда (поле машины — str, не Option): без неё профиль выбрался бы по умолчаниям другой фазы
     task_dir: @task_dir, repo_dir: @repo_dir, delivery_mode: @delivery_mode,
     route: @route, source_list: if @source_list() == "" { None } else { Some(@source_list()) }, delivery_short: @delivery_short })
@@ -1508,7 +1508,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РАЗБОР #6: маршрут = «полный», и отложенная_сессия[РАЗБОР] не равна `""`
     if @route == "full" && @next_session("AnalysisPhase") != "" {
       @session = @next_session("AnalysisPhase")
-      @source = @next_source("AnalysisPhase")
+      @launch_source = @next_source("AnalysisPhase")
       @set_next_session("AnalysisPhase", "")
       @set_next_source("AnalysisPhase", "")
       @continuation = "analysis_queue"
@@ -1627,7 +1627,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // ПЛАН #3: маршрут = «полный», и отложенная_сессия[ПЛАН] не равна `""`
     if @route == "full" && @next_session("PlanPhase") != "" {
       @session = @next_session("PlanPhase")
-      @source = @next_source("PlanPhase")
+      @launch_source = @next_source("PlanPhase")
       @set_next_session("PlanPhase", "")
       @set_next_source("PlanPhase", "")
       @continuation = "plan_queue"
@@ -1774,7 +1774,7 @@ fn MachineData mut @step(current State, event_body Event, event Incoming[Event],
     // РЕАЛИЗАЦИЯ #1: отложенная_сессия[РЕАЛИЗАЦИЯ] не равна `""`
     if @next_session("ImplementationPhase") != "" {
       @session = @next_session("ImplementationPhase")
-      @source = @next_source("ImplementationPhase")
+      @launch_source = @next_source("ImplementationPhase")
       @set_next_session("ImplementationPhase", "")
       @set_next_source("ImplementationPhase", "")
       @continuation = "implementation_queue"
