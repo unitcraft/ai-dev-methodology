@@ -130,7 +130,7 @@
       }
     }
   },
-  "profile_set": "codex",
+  "profile_set": "kimi",
   "tier_max": "light",
   "branch_name": "task/{n}-{slug}",
   "worktree_name": "{repo}-{n}-{slug}",
