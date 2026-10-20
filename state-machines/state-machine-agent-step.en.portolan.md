@@ -1,15 +1,15 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: portolan-2.12
-- format: 2.12
+- machine_version: portolan-2.13
+- format: 2.13
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Portolan format, format version 2.12 ([state-machine-portolan-spec.md](state-machine-portolan-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.portolan.md](state-machine-agent-step.portolan.md): the same machine, row for row, with the English keywords of the [word table](portolan-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files. The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; its expansion (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is given in the reference section at the end of the file.
+This is an **illustration**: the "Agent step" machine in full, written in the Portolan format, format version 2.13 ([state-machine-portolan-spec.md](state-machine-portolan-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.portolan.md](state-machine-agent-step.portolan.md): the same machine, row for row, with the English keywords of the [word table](portolan-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The source of truth stays the same:** the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md); where they differ, they are right, and this file is edited after them. The "Pause" fragment is [state-machine-pause-states.md](state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-portolan-samples.py](check-portolan-samples.py).
 
-**How the notation is laid out.** Sections follow the order of section 1 of the format. The `№` of a state row equals the label `NAME #n` in the tables and in the automaton code (the label of a fork default is the next number; the `else` rows are written out and equal the default). The key lines of states are list items (`- Party: …`), tables stand at block level; paragraphs of prose outside tables and code blocks are comments for the reader, the parser skips them. Text values (`turn`, `stop_reason`, decisions) are the words of the automaton code (Latin). There are 37 transition rows: Start 1, AgentTurn 9, Retry 4, Continuation 3, ReplyValidation 5, Policy 4, Permission 2, Budget 5, Accounting 1, StepOutcome 3; the rows PAUSE 1-4 and COMMON 1-6 come from the fragment. The "Ends" table has 13 rows: End 1, Errored 1, Halted 11. Names are English by the glossary.
+**How the notation is laid out.** Sections follow the order of section 1 of the format. The `№` of a state row equals the label `NAME #n` in the tables and in the automaton code (the label of a fork default is the next number; the `else` rows are written out and equal the default). The key lines of states are list items (`- Party: …`), tables stand at block level; paragraphs of prose outside tables and code blocks are comments for the reader, the parser skips them. Text values (`turn`, `stop_reason`, decisions) are the words of the automaton code (Latin). There are 37 transition rows: Start 1, AgentTurn 9, Retry 4, Continuation 3, ReplyValidation 5, Policy 4, Permission 2, Budget 5, Accounting 1, StepOutcome 3; the rows PAUSE 1-4 and COMMON 1-6 come from the fragment. The "Ends" table has 13 rows: End 1, Errored 1, Halted 11. The names are English and Latin, so each name is its own JSON name (spec, section 1a, "JSON name"); the Russian sample gives the same JSON names in parentheses at the declarations.
 
 ## Types
 
@@ -47,7 +47,7 @@ variant TurnResult {
 }
 ```
 
-The envelope types (request, response, refusal) are not declared: the executor builds them; the machine writes only `Response(value)` and `Refusal(code, text)` (section "Ends"). The source calls "float" non-negative; the format does not express a bound on a float, so the `?float` fields have no bound, as in the code. The value words of `ActionKind` and `FailCode` are the words of the journal and of the wire; `CallerKind` and `ReplyCheck` have no words in the source, in the data they go by the value name.
+The envelope types (request, response, refusal) are not declared: the executor builds them; the machine writes only `Response(value)` and `Refusal(code, text)` (section "Ends"). The source calls "float" non-negative; the format does not express a bound on a float, so the `?float` fields have no bound, as in the code. The values of `ActionKind` and `FailCode` (the texts in quotes) are the texts of the journal and of the wire; `CallerKind` and `ReplyCheck` have no values in the source, in the data they go by the JSON name of the element.
 
 ## Constants
 
@@ -111,7 +111,7 @@ The bound `turn_count <= turn limit` is not written: when the limit is below 1, 
 
 ## Parties
 
-| name | id | kind | profile | gate_words | counter |
+| name | id | kind | profile | signals | counter |
 |---|---|---|---|---|---|
 | agent | agent | agent(result TurnResult) | — | — | agent_attempt |
 | gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | allow, deny | gatekeeper_attempt |
@@ -198,12 +198,12 @@ define usage_event(u Usage) -> JournalEvent =
                 cache_read: text(u.tokens.cache_read), cache_write: text(u.tokens.cache_write), cost: text(u.cost))
 ```
 
-Correspondence to the automaton code: the names of the definitions are the names of the code (`sum_ints`, `sum_floats`, `add_tokens`, `add_usage`, `tokens_spent`, `cost_spent`, `token_limit_reached`, `cost_limit_reached`, `turn_limit_reached`, `interactive`, `needs_elevated_attention`, `decision_by_policy`, `retry_pause`, `turn_term`, `usage_event`, `collect_usage`); `project_policy` is the parameter `PERMISSION_POLICY`; `action_kind_word` is `text(ActionKind)` (the words are in the enum), `number_word` and `float_word` are `text(x)` (none is `none`). `record_end_usage` and `journal_machine_data` are not functions but actions in the "On entry" of the ends; `reply_validation`, `close_agent_turn`, `time_now` are primitives (section "Primitives").
+Correspondence to the automaton code: the names of the definitions are the names of the code (`sum_ints`, `sum_floats`, `add_tokens`, `add_usage`, `tokens_spent`, `cost_spent`, `token_limit_reached`, `cost_limit_reached`, `turn_limit_reached`, `interactive`, `needs_elevated_attention`, `decision_by_policy`, `retry_pause`, `turn_term`, `usage_event`, `collect_usage`); `project_policy` is the parameter `PERMISSION_POLICY`; `action_kind_word` is `text(ActionKind)` (the values are in the enum), `number_word` and `float_word` are `text(x)` (none is `none`). `record_end_usage` and `journal_machine_data` are not functions but actions in the "On entry" of the ends; `reply_validation`, `close_agent_turn`, `time_now` are primitives (section "Primitives").
 
 ## Includes
 
 ```
-Pause(halt_word: halt, halt_code: "pause_halt", nested: [],
+Pause(halt_signal: halt, halt_code: "pause_halt", nested: [],
       cancel_requests: stop_transport_turn, reenter: nothing,
       write_right: "files the agent edits; the pause does not touch their rights")
 ```
@@ -213,7 +213,6 @@ Pause(halt_word: halt, halt_code: "pause_halt", nested: [],
 Initial state: Start
 
 ### Start — operation
-- Input: none
 - On entry: let moment = call(time_now)
 
 | № | Event | Condition | Actions | To |
@@ -224,7 +223,7 @@ Initial state: Start
 - Party: agent
 - Idle term: turn_term(agent_request, turn, retry_count)
 - Form returns: 0
-- Input:
+- Request:
 
 | request_field | expression | reads |
 |---|---|---|
@@ -250,7 +249,7 @@ Initial state: Start
 The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goes not as a return within the same request but as a new turn "fix" by the rows of ReplyValidation, hence `Form returns: 0`. A failure code outside the list of row 9 is brought by the executor to `NoResult`, which is in the list.
 
 ### Retry — fork
-- Input: retry_count, turn
+- Reads: retry_count, turn
 
 | № | Condition | Actions | To |
 |---|---|---|---|
@@ -260,7 +259,7 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 | 4 | else | machine_error("fork_no_match", fork: "Retry") | — |
 
 ### Continuation — fork
-- Input: continuation_count
+- Reads: continuation_count
 
 | № | Condition | Actions | To |
 |---|---|---|---|
@@ -269,7 +268,7 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 | 3 | else | machine_error("fork_no_match", fork: "Continuation") | — |
 
 ### ReplyValidation — fork
-- Input: return_count, reply_text, reply_artifact, agent_request
+- Reads: return_count, reply_text, reply_artifact, agent_request
 - On entry: let validation = call(reply_validation)
 
 | № | Condition | Actions | To |
@@ -281,7 +280,7 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 | 5 | else | machine_error("fork_no_match", fork: "ReplyValidation") | — |
 
 ### Policy — fork
-- Input: agent_request, permission_request
+- Reads: agent_request, permission_request
 - On entry:
   - let request = require(permission_request);
   - let decision = decision_by_policy(request.action, agent_request.kind)
@@ -295,8 +294,7 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 
 ### Permission — appeal
 - Party: gatekeeper
-- Idle term: —
-- Input:
+- Request:
 
 | request_field | expression | reads |
 |---|---|---|
@@ -305,13 +303,13 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 
 | № | Event | Condition | Actions | To |
 |---|---|---|---|---|
-| 1 | word(allow) | — | permission_decision = "allow"; turn = "permission"; journal(permission_human_allowed, action: text(require(permission_request).action)) | Budget |
-| 2 | word(deny) | — | permission_decision = "deny"; turn = "permission"; journal(permission_human_denied, action: text(require(permission_request).action)) | Budget |
+| 1 | signal(allow) | — | permission_decision = "allow"; turn = "permission"; journal(permission_human_allowed, action: text(require(permission_request).action)) | Budget |
+| 2 | signal(deny) | — | permission_decision = "deny"; turn = "permission"; journal(permission_human_denied, action: text(require(permission_request).action)) | Budget |
 
 The request field `permission_request` is named as the data but with another expression: when building the request the code applies `require`, the rows read the data and take `require` themselves.
 
 ### Budget — fork
-- Input: agent_request, transport_usage, turn_count
+- Reads: agent_request, transport_usage, turn_count
 - On entry:
   - let tokens_exhausted = token_limit_reached(agent_request, transport_usage);
   - let cost_exhausted = cost_limit_reached(agent_request, transport_usage);
@@ -326,7 +324,7 @@ The request field `permission_request` is named as the data but with another exp
 | 5 | else | machine_error("fork_no_match", fork: "Budget") | — |
 
 ### Accounting — operation
-- Input: agent_request, stop_reason, transport_usage, started
+- Reads: agent_request, stop_reason, transport_usage, started
 - On entry:
   - let now = call(time_now);
   - let collected = collect_usage(agent_request, stop_reason, transport_usage, started, now)
@@ -336,7 +334,7 @@ The request field `permission_request` is named as the data but with another exp
 | 1 | immediate | — | usage = collected; journal(usage_event(collected)) | StepOutcome |
 
 ### StepOutcome — fork
-- Input: stop_reason
+- Reads: stop_reason
 
 | № | Condition | Actions | To |
 |---|---|---|---|
@@ -344,14 +342,13 @@ The request field `permission_request` is named as the data but with another exp
 | 2 | stop_reason != "" | — | Halted |
 | 3 | else | machine_error("fork_no_match", fork: "StepOutcome") | — |
 
-The Pause state is brought by the "Pause" fragment (section "Includes"); it is not declared here, its description is in the section "Fragment expansion "Pause"" at the end of the file.
+The Pause state is brought by the "Pause" fragment (section "Includes"); it is not declared here, its rows PAUSE 1-4 and the common events COMMON 1-6 are in section 9 of the specification.
 
 ### End — end
-- Input: transport_usage, reply_text, reply_artifact, usage
-- On entry: —
+- Reads: transport_usage, reply_text, reply_artifact, usage
 
 ### Halted — end
-- Input: usage, agent_request, stop_reason, transport_usage, started
+- Reads: usage, agent_request, stop_reason, transport_usage, started
 - On entry:
   - let now = call(time_now);
   - call(close_agent_turn);
@@ -360,7 +357,7 @@ The Pause state is brought by the "Pause" fragment (section "Includes"); it is n
 - Except: stop_reason in {""}
 
 ### Errored — end
-- Input: all_data
+- Reads: all_data
 - On entry:
   - let now = call(time_now);
   - call(close_agent_turn);
@@ -401,70 +398,3 @@ The set of `stop_reason` has 12 values; Halted covers 11, the twelfth (`""`) is 
 | close_agent_turn | — | — | irreversible | — | — |
 
 `time_now` is milliseconds of the epoch. `reply_validation` is measured by the executor before the ReplyValidation fork: the form of the reply is valid, violated, or the reply is empty; the form remarks stay with the executor and do not enter the data. `close_agent_turn` tells the transport about the cancellation of the open turn, including one held until the permission decision; it runs as the last stage of fixation and may be repeated without harm.
-
-## Fragment expansion "Pause"
-
-A reference for the reader; the parser skips this section. The fragment is substituted into the machine: `<halt_word>` = `halt`, `<halt_code>` = `"pause_halt"`; the parameter `nested` stays in the rows as a name with the value `[]`. The states, events and data of the fragment are states, events and data of the machine; declaring them in the sections of the machine is neither needed nor allowed. The parameter names are the English names of the Russian fragment parameters (the fragment file has no English twin yet).
-
-### Include parameters
-
-All six parameters are named, kinds and values fit. The values of the parameters:
-
-| parameter | kind | value here | meaning |
-|---|---|---|---|
-| halt_word | word | halt | the gate word of the party "enhanced" that halts the machine |
-| halt_code | text | "pause_halt" | the value of `stop_reason` on a halt by the pause |
-| nested | []machine | [] | the step has no nested machines: the agent transport and the human are request parties |
-| cancel_requests | behavior | stop_transport_turn | cancellation of open requests without an accepted reply; the turn at the transport is stopped; a turn held until the permission decision is closed by `call(close_agent_turn)` in the ends of the machine |
-| reenter | behavior | nothing | re-entry into the saved state only by rule 12 of the specification |
-| write_right | note | text | the executor does not evaluate it |
-
-### Requires
-
-`stop_reason` contains `"pause_halt"` and `"cancel_request"`; "Ends" has rows for both values (codes `StoppedByHuman` and `Cancelled`: Halted No. 10 and No. 11); the ends Halted and Errored; "Parties" has the party `enhanced` of kind `enhanced` with the words `continue(human_word text, author text, source text)` and `halt`. The value of `previous` is always an appeal (AgentTurn or Permission): the machine stands only in appeals and ends, and in ends and in Pause COMMON 1 and COMMON 2 discard it by the condition.
-
-### Fragment data
-
-| name | type | initial | non_decreasing | writes |
-|---|---|---|---|---|
-| previous | ?State | none | — | fragment |
-| call_request_id | text | "" | — | mechanics |
-| open_requests | []text | [] | — | mechanics |
-
-`human_words` is the executor's store (rule 31 of the specification), it is not entered in the table and not part of `all_data`.
-
-### Common events
-
-They are parsed before the state rows (rule 23 of the specification). "Continue" and "halt" (and the ones from the parent) outside Pause are surplus signals: the executor discards them with a journal record.
-
-| № | Event | Condition | Actions | To |
-|---|---|---|---|---|
-| COMMON 1 | signal(human_stop(human_word, author, source)) | not end(state) and state != Pause | journal(human_stop, author: author, source: source, event: event.id); previous = state; pass(nested, stop); cancel_open(except: nested) | Pause |
-| COMMON 2 | signal(stop_from_parent(id)) | not end(state) and state != Pause and id == call_request_id | journal(pause_by_parent_stop, request: id, event: event.id); previous = state; pass(nested, stop); cancel_open(except: nested) | Pause |
-| COMMON 3 | signal(cancel_request(id)) | id != call_request_id | journal(cancel_discarded_foreign_request, request: id, event: event.id) | same |
-| COMMON 4 | signal(cancel_request(id)) | id == call_request_id and end(state) | journal(cancel_discarded_already_replied, request: id, event: event.id) | same |
-| COMMON 5 | signal(cancel_request(id)) | id == call_request_id and not end(state) | journal(request_cancelled, request: id, event: event.id); stop_reason = "cancel_request"; pass(nested, cancel); cancel_open | Halted |
-| COMMON 6 | signal(cancel_request(id)) | else | machine_error("cancel_parse_no_match") | — |
-
-### The Pause state
-
-An appeal (`Pause`). It is not declared by a heading `### Pause — …` in `## States`: the state is brought by the include.
-
-- Party: enhanced
-- Idle term: —
-- Input:
-
-| request_field | expression | reads |
-|---|---|---|
-| previous | require(previous) | party |
-| call_request_id | call_request_id | party |
-
-| № | Event | Condition | Actions | To |
-|---|---|---|---|---|
-| PAUSE 1 | word(continue(author, source)) | — | journal(human_continue, previous: text(require(previous)), author: author, source: source, event: event.id); pass(nested, continue) | previous |
-| PAUSE 2 | word(halt) | — | stop_reason = "pause_halt"; pass(nested, halt) | Halted |
-| PAUSE 3 | signal(continue_from_parent(id)) | id == call_request_id | journal(parent_continue, previous: text(require(previous)), request: id, event: event.id); pass(nested, continue) | previous |
-| PAUSE 4 | signal(halt_from_parent(id)) | id == call_request_id | stop_reason = "pause_halt"; pass(nested, halt) | Halted |
-
-- `To: previous` leads by re-entry into the saved state (rule 12; the parameter `reenter: nothing`); `previous` is not written then. The saved state is only AgentTurn or Permission: the other states do not wait, and COMMON 1 and COMMON 2 cannot interrupt them.
-- The words "continue" and "halt" outside Pause and their variants from the parent are surplus signals; the executor discards them with a journal record (rule 17).
