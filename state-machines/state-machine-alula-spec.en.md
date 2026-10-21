@@ -18,6 +18,8 @@ The examples are taken from the pilots (excerpts of “Agent step” and “Meet
 |---|---|---|
 | Я-50 | the name of the language is **Alula** (`Alula`): the title and the text of the specification, the file extensions `*.alula.md` (machine, definitions, fragment) and `*.alula.json` (compiled machine), the recommended machine version `alula-<format version>` (for example `alula-2.14`), the word table `alula-keywords.tsv`, the scripts `check-alula-keywords.py`, `check-alula-samples.py`, `check-alula-translation.py`, the samples `*.alula.md`; the former name of the language and the former file extensions are neither used nor accepted, there is no transition period; `machine/2`, `scenario/0` and `*.scenario.test.json` do not change; why the name was changed is in [doc/alula-history.md](../doc/alula-history.md), section 10 | title, 0, 1, 1a, 1b, 6, 8, 9, 14, samples |
 
+In the rows of earlier versions the name of the language and the file names are brought to the current ones (Я-50); the names of that time are in the history ([doc/alula-history.md](../doc/alula-history.md)).
+
 `format: 2.14` stands in the headers of the machine, the fragment and the definitions file; the hash of the definitions file sample is recomputed (section 8): only the line `format` of the sample changed.
 
 **Against version 2.12.** The labels of version 2.13 are **Я-38…Я-49**: a simplification release. The source is the methodology's list of simplifications after the remarks of the consumer project (the neighbour's runtime, its task on nested machines and the cycle check); the owner's word, 2026-10-20: “agreed” («согласовано»).
