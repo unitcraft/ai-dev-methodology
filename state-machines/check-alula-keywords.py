@@ -29,7 +29,9 @@
      которая ничего не меняет, — ошибка «лишняя строка»; строка для имени, которого среди объявлений файла нет, — ошибка;
      имя повторено в таблице; JSON-имя строки не латинское; JSON-имена одного пространства (состояния, вместе с состоянием
      подключённого фрагмента «Пауза»; данные; поля входа; типы; поля одной записи или варианта; варианты одного типа;
-     элементы одного перечисления; сигналы одной стороны; поля одного сигнала; примитивы; имена настроек) различны,
+     элементы одного перечисления; сигналы одной стороны; поля одного сигнала; примитивы; имена настроек) различны; JSON-имена
+     данных контракта и фрагмента «Пауза» (`previous`, `call_request_id`, `open_requests`, `stop_reason`, `to_send`, `human_words`)
+     заняты в пространстве данных; константы и параметры (пространство 10) скрипт не сверяет — это проверка переводчика продукта;
      разные пространства друг другу не мешают (Я-58); слово имени (часть между `_` и пробелами) — только кириллица или
      только латиница (Я-59);
   5а. словарь (Я-62): хеш нормативной части словаря (функция `dictionary_hash`) равен закреплённому форматом (`DICT_HASH`),
@@ -61,6 +63,8 @@ SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-st
 KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'event', 'destination', 'decl', 'type', 'expr',
          'action', 'operator', 'readable', 'catalog', 'enum_value']
 FRAGMENT_STATE = 'Pause'  # JSON-имя состояния, которое приносит подключённый фрагмент «Пауза» (раздел 9)
+# данные контракта и фрагмента «Пауза» — читаемые имена таблицы слов: их JSON-имена (слово `en`) занимают пространство данных (Я-58)
+CONTRACT_DATA = ('предыдущее', 'запрос_вызова', 'открытые_запросы', 'остановка', 'к_отправке', 'слова_человека')
 
 
 def read(name):
@@ -76,12 +80,15 @@ def check_table(text):
     if not lines or lines[0] != 'kind\tru\ten':
         errs.append('%s:1: первая строка должна быть заголовком `kind<TAB>ru<TAB>en`' % TABLE)
     words = {k: (set(), set()) for k in KINDS}
+    pairs = []
     for n, line in enumerate(lines[1:], 2):
         cells = line.split('\t')
         if len(cells) != 3:
             errs.append('%s:%d: колонок %d, нужно 3' % (TABLE, n, len(cells)))
             continue
         kind, ru, en = cells
+        if kind == 'readable':
+            pairs.append((ru, en))
         if '' in (kind.strip(), ru.strip(), en.strip()):
             errs.append('%s:%d: пустая ячейка' % (TABLE, n))
             continue
@@ -95,6 +102,7 @@ def check_table(text):
     for k in KINDS:
         if not words[k][0]:
             errs.append('%s: вид `%s` не представлен' % (TABLE, k))
+    words['readable_pairs'] = pairs
     return errs, words
 
 
@@ -465,8 +473,8 @@ def namespace(where, path):
     return (where,) + tuple(path[:-1])
 
 
-def check_json_names(text, words, name, lang, gloss):
-    """JSON-имена имён, которые выходят из машины (Я-53, Я-58…Я-60)."""
+def check_json_names(text, words, name, lang, gloss, contract=None):
+    """JSON-имена имён, которые выходят из машины (Я-53, Я-58…Я-60); `contract` — JSON-имена данных контракта и фрагмента."""
     errs = []
     readable = words['readable'][0 if lang == 'ru' else 1]
     for n, where, pascal, nm, path, js in declarations(text, lang, readable):
@@ -485,6 +493,7 @@ def check_json_names(text, words, name, lang, gloss):
     spaces = {}
     if re.search(r'^(?:Пауза|Pause)\(', text, re.M):  # состояния фрагмента входят в пространство состояний машины (Я-58)
         spaces[('состояния',)] = {FRAGMENT_STATE: 'состояния фрагмента «Пауза»'}
+    spaces[('данного',)] = {js: 'данного контракта или фрагмента' for js in (contract or ())}
     for n, where, pascal, nm, path, js in names:
         if not LATIN.match(js):
             errs.append('%s:%d: у %s `%s` JSON-имя `%s` не латинское: нужна строка в `## Имена` (Я-60)' % (name, n, where, nm, js))
@@ -497,9 +506,10 @@ def check_json_names(text, words, name, lang, gloss):
 
 
 def check_sample(text, words, name, lang, gloss):
-    errs = check_operators(text, name) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss)
-    own = {k: v[0 if lang == 'ru' else 1] for k, v in words.items()}
-    other = {k: v[1 if lang == 'ru' else 0] for k, v in words.items()}
+    contract = [en for ru, en in words['readable_pairs'] if ru in CONTRACT_DATA] if 'readable_pairs' in words else []
+    errs = check_operators(text, name) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
+    own = {k: v[0 if lang == 'ru' else 1] for k, v in words.items() if k in KINDS}
+    other = {k: v[1 if lang == 'ru' else 0] for k, v in words.items() if k in KINDS}
     declared = re.search(r'^- language: (\w+)\s*$', text, re.M)
     if lang == 'en' and not (declared and declared.group(1) == 'en'):
         errs.append('%s:1: в английском образце нет строки шапки `- language: en`' % name)
@@ -545,6 +555,8 @@ MUTATIONS = {
         ('два данных с одним JSON-именем', ROW_RU, ROW_RU + '| текст_ответа | reply_x |\n| артефакт_ответа | reply_x |\n'),
         ('два поля одной записи с одним JSON-именем', ROW_RU, ROW_RU + '| Токены.вход | output |\n'),
         ('состояние с JSON-именем состояния фрагмента', ROW_RU, ROW_RU + '| УЧЁТ | Pause |\n'),
+        ('данное с JSON-именем данного фрагмента', ROW_RU, ROW_RU + '| начато | open_requests |\n'),
+        ('данное с JSON-именем данного контракта', ROW_RU, ROW_RU + '| начато | stop_reason |\n'),
         ('смешанное слово (кириллица и латиница)', '| начато | ?число |', '| начатоAt | ?число |'),
         ('убранное событие слово', '| 1 | сигнал(разрешить) |', '| 1 | слово(разрешить) |'),
         ('начальное состояние', 'Начальное состояние: СТАРТ', 'Начальное состоянье: СТАРТ'),
@@ -564,6 +576,8 @@ MUTATIONS = {
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
         ('нет строки language', '- language: en\n', ''),
         ('скобки у латинского имени (убраны)', '| retry_count | int>=0 |', '| retry_count (retry_count) | int>=0 |'),
+        ('данное с JSON-именем данного фрагмента', '\n## Constants\n',
+         '\n## Names\n\n| name | json_name |\n|---|---|\n| started | open_requests |\n\n## Constants\n'),
         ('лишняя строка `## Names`', '\n## Constants\n',
          '\n## Names\n\n| name | json_name |\n|---|---|\n| retry_count | retry_count |\n\n## Constants\n'),
     ],
@@ -632,7 +646,7 @@ def main():
         errs += selftest_dictionary(gtext, specs)
     for e in errs:
         print(e)
-    rows = sum(len(w[0]) for w in words.values())
+    rows = sum(len(words[k][0]) for k in KINDS)
     print('таблица слов: %d строк, %d видов; словарь версии %s: %d имён, хеш %s; образцов: %d; расхождений: %d' % (
         rows, len(KINDS), version, len(gloss), dictionary_hash(gtext), len(SAMPLES), len(errs)))
     return 1 if errs else 0
