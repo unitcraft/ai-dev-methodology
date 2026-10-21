@@ -10,16 +10,16 @@
 
 | Сокр. | Файл |
 |---|---|
-| движок | [state-machine-engine-automaton.md](state-machine-engine-automaton.md) |
-| методика | [state-machine-methodology-automaton.md](state-machine-methodology-automaton.md) |
+| движок | [archive/state-machine-engine-automaton.md](archive/state-machine-engine-automaton.md) |
+| методика | [archive/state-machine-methodology-automaton.md](archive/state-machine-methodology-automaton.md) |
 | шаг агента | [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md) (прежний автомат — [в архиве](archive/state-machine-agent-step-automaton.md)) |
-| раннер | [task-runner-automaton.md](task-runner-automaton.md) |
-| проверка | [task-runner-review-automaton.md](task-runner-review-automaton.md) |
-| сессия | [task-runner-session-automaton.md](task-runner-session-automaton.md) |
-| совещание | [task-runner-meeting-automaton.md](task-runner-meeting-automaton.md) |
+| раннер | [archive/task-runner-automaton.md](archive/task-runner-automaton.md) |
+| проверка | [archive/task-runner-review-automaton.md](archive/task-runner-review-automaton.md) |
+| сессия | [archive/task-runner-session-automaton.md](archive/task-runner-session-automaton.md) |
+| совещание | [archive/task-runner-meeting-automaton.md](archive/task-runner-meeting-automaton.md) |
 | формат | [state-machine-alula-spec.md](state-machine-alula-spec.md) (только имена примитивов реестра хозяина) |
 
-Источники имён (столбец «Источник» в таблицах ниже): **таблица соответствия** — латинское имя уже записано в таблицах «Соответствие типов и полей» файлов-автоматов и в блоках «Типы на Нове» файлов `*-states.md`; **словарь проекта-потребителя** — имя совпадает с английским словарём движка, который по правилам методики собрал нижестоящий проект (его раздел «Типы», «Поля и величины», «Операции движка»); **старый псевдокод** — имя уже стоит в [task-runner-pseudocode.md](task-runner-pseudocode.md) или [task-runner-meeting-pseudocode.md](task-runner-meeting-pseudocode.md) для того же понятия; **новое** — имени нигде не было, оно выбрано здесь. Код [протокола вызова](state-machine-call-protocol.md) и блоки «Типы на Нове» уже латинские и сверены: их имена — основа словаря, расхождений с ними нет, кроме перечисленных в разделе 3.
+Источники имён (столбец «Источник» в таблицах ниже): **таблица соответствия** — латинское имя уже записано в таблицах «Соответствие типов и полей» файлов-автоматов и в блоках «Типы на Нове» файлов `*-states.md`; **словарь проекта-потребителя** — имя совпадает с английским словарём движка, который по правилам методики собрал нижестоящий проект (его раздел «Типы», «Поля и величины», «Операции движка»); **старый псевдокод** — имя уже стоит в [archive/task-runner-pseudocode.md](archive/task-runner-pseudocode.md) или [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md) для того же понятия; **новое** — имени нигде не было, оно выбрано здесь. Код [протокола вызова](state-machine-call-protocol.md) и блоки «Типы на Нове» уже латинские и сверены: их имена — основа словаря, расхождений с ними нет, кроме перечисленных в разделе 3.
 
 ## 1. Соглашения
 
@@ -1525,7 +1525,7 @@
 
 ## 3. Расхождения источников и решения
 
-Источники: **таблицы соответствия** автоматов и блоки «Типы на Нове» (основа: их латинские имена взяты без изменений везде, где они есть); **словарь проекта-потребителя** — английский движок, который нижестоящий проект построил по правилам методики на более раннем состоянии (до шага агента и протокола вызова; его имена сохранены для общего подмножества, кроме перечисленных ниже случаев); **старый псевдокод** — [task-runner-pseudocode.md](task-runner-pseudocode.md), [task-runner-meeting-pseudocode.md](task-runner-meeting-pseudocode.md) (его английские имена взяты для тех же понятий, где таблицы молчат).
+Источники: **таблицы соответствия** автоматов и блоки «Типы на Нове» (основа: их латинские имена взяты без изменений везде, где они есть); **словарь проекта-потребителя** — английский движок, который нижестоящий проект построил по правилам методики на более раннем состоянии (до шага агента и протокола вызова; его имена сохранены для общего подмножества, кроме перечисленных ниже случаев); **старый псевдокод** — [archive/task-runner-pseudocode.md](archive/task-runner-pseudocode.md), [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md) (его английские имена взяты для тех же понятий, где таблицы молчат).
 
 ### 3.1. Расхождения с таблицами соответствия
 

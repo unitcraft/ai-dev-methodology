@@ -13,16 +13,19 @@
   7. имена параметров в вызове совпадают с `{…}` шаблона и со столбцом «Параметры»;
   8. в вызовах `write_journal(` и `machine_error(` нет строкового литерала (русский текст журнала живёт только в таблице шаблонов).
 Чего не проверяет: данные событий, условия развилок, тела функций, значения параметров.
+Где файлы: таблицы и автоматы машин и движок — прежние описания в `state-machines/archive/` (не обновляются: машины записываются
+на Алуле; владелец, 2026-10-22: «в методике оставь только Алулу в итоге, остальное в архив»); скрипт читает их из архива;
+словарь и журнал — в `state-machines/`.
 Запуск: из корня репозитория `python state-machines/check-tables.py`; код возврата 1 при расхождениях.
 """
 import io, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MACHINES = {  # файл состояний -> (файл автомата, сокращение «Где» в словаре)
-    'task-runner-states.md': ('task-runner-automaton.md', 'раннер'),
-    'task-runner-review-states.md': ('task-runner-review-automaton.md', 'проверка'),
-    'task-runner-session-states.md': ('task-runner-session-automaton.md', 'сессия'),
-    'task-runner-meeting-states.md': ('task-runner-meeting-automaton.md', 'совещание'),
+    'archive/task-runner-states.md': ('archive/task-runner-automaton.md', 'раннер'),
+    'archive/task-runner-review-states.md': ('archive/task-runner-review-automaton.md', 'проверка'),
+    'archive/task-runner-session-states.md': ('archive/task-runner-session-automaton.md', 'сессия'),
+    'archive/task-runner-meeting-states.md': ('archive/task-runner-meeting-automaton.md', 'совещание'),
     'archive/state-machine-agent-step-states.md': ('archive/state-machine-agent-step-automaton.md', 'шаг агента'),
 }
 # «Куда», которое не имя состояния: переменная (правило 24 спецификации) и слова без перехода
@@ -144,12 +147,12 @@ def check(states_file, automaton_file, machine):
 
 JOURNAL_FILE = 'state-machine-journal.md'
 JOURNAL_AUTOMATA = {  # файл автомата -> имя машины в столбце «Машина» таблицы шаблонов
-    'state-machine-engine-automaton.md': 'движок',
+    'archive/state-machine-engine-automaton.md': 'движок',
     'archive/state-machine-agent-step-automaton.md': 'шаг агента',
-    'task-runner-automaton.md': 'раннер',
-    'task-runner-review-automaton.md': 'проверка',
-    'task-runner-session-automaton.md': 'сессия',
-    'task-runner-meeting-automaton.md': 'совещание',
+    'archive/task-runner-automaton.md': 'раннер',
+    'archive/task-runner-review-automaton.md': 'проверка',
+    'archive/task-runner-session-automaton.md': 'сессия',
+    'archive/task-runner-meeting-automaton.md': 'совещание',
 }
 CODE_RE = re.compile(r'^[a-z][a-z0-9]*(_[a-z0-9]+)*$')
 CALL_RE = re.compile(r'journal_event\("([^"]*)"\s*,\s*(\[\]JournalParam\.new\(\)|\[(.*?)\]\))', re.S)
