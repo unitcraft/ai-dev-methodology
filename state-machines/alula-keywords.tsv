@@ -113,10 +113,11 @@ type	Состояние	State
 type	Сигнал	Signal
 type	СобытиеЖурнала	JournalEvent
 type	ИсходВорот	GateOutcome
-type	сигнал	signal
-type	[]машина	[]machine
-type	поведение	behavior
-type	примечание	note
+kind_param	сигнал	signal
+kind_param	текст	text
+kind_param	[]машина	[]machine
+kind_param	поведение	behavior
+kind_param	примечание	note
 expr	если	if
 expr	то	then
 expr	иначе	else

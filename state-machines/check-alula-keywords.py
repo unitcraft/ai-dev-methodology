@@ -7,8 +7,10 @@
 молчит до первой реализации разбора.
 Что проверяет:
   1. таблица: первая строка — заголовок `kind<TAB>ru<TAB>en`; в каждой строке три колонки без пустых ячеек;
-     `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, event, destination, decl, type, expr,
-     action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en` не повторяются;
+     `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, kind_param, event, destination, decl, type,
+     expr, action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en`
+     не повторяются (в разных видах слово может повторяться); вид `kind_param` (виды параметров фрагмента, раздел 9, AL-63) — ровно
+     `сигнал`, `текст`, `[]машина`, `поведение`, `примечание`, и из них в виде `type` стоит только `текст` (виды параметров — не типы данных);
   2. русский образец: структурные слова (имена шапки и ключи шапки, заголовки разделов `##`, строки-ключи `- Ключ:` и `Начальное состояние:`,
      заголовки столбцов таблиц, виды состояний в заголовках `###`) есть в таблице в колонке `ru` своего вида;
      английское структурное слово (есть в колонке `en`, нет в `ru`) в русском образце — ошибка;
@@ -41,7 +43,8 @@
      в объявлении, имя без латинского JSON-имени, два состояния, два данных, два поля одной записи с одним JSON-именем,
      состояние с JSON-именем состояния фрагмента, смешанное слово) в копии образцов «Шага агента» и изменённая запись
      словаря дают ошибку, исправный образец — нет; одно JSON-имя в разных пространствах и смешение письменностей через `_`
-     ошибки не дают.
+     ошибки не дают; в копии таблицы слов вид параметра фрагмента, перенесённый обратно в `type`, и таблица без вида `kind_param`
+     дают ошибку, исправная таблица — нет.
 Пропускает: прозу, имена и значения (кроме проверки 5) и содержимое ячеек таблиц (кроме заголовков и проверок 4, 5).
 Чего не проверяет: слова внутри выражений и действий, соответствие английских слов JSON-схеме, правило стиля «имя поля
 не совпадает с названием его типа» (спецификация, раздел 2, Я-54; предупреждение — позже), выражение `—` таблицы
@@ -55,13 +58,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TABLE = 'alula-keywords.tsv'
 GLOSSARY = 'state-machine-glossary.md'
 SPECS = [('state-machine-alula-spec.md', 'хеш словаря'), ('state-machine-alula-spec.en.md', 'glossary hash')]
-DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 (спецификация, 1а, Я-62)
+DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 и тем же в 2.17 (спецификация, 1а, Я-62)
 GLOSSARY_VERSION = 11  # версия словаря (для людей), при которой закреплён хеш; проверка сверяет хеш, а не номер
 NORMATIVE_TABLES = ['2.%d' % i for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 16)]  # разделы-таблицы словаря; 2.10 — записи
 SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-step.en.alula.md', 'en'),
            ('task-runner-meeting.alula.md', 'ru')]
-KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'event', 'destination', 'decl', 'type', 'expr',
-         'action', 'operator', 'readable', 'catalog', 'enum_value']
+KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'kind_param', 'event', 'destination', 'decl', 'type',
+         'expr', 'action', 'operator', 'readable', 'catalog', 'enum_value']
+# виды параметров фрагмента (раздел 9, AL-63): закрытый перечень вида `kind_param`; из них тип данных — только `текст`
+KIND_PARAM = ('сигнал', 'текст', '[]машина', 'поведение', 'примечание')
+KIND_PARAM_ALSO_TYPE = ('текст',)
 FRAGMENT_STATE = 'Pause'  # JSON-имя состояния, которое приносит подключённый фрагмент «Пауза» (раздел 9)
 # данные контракта и фрагмента «Пауза» — читаемые имена таблицы слов: их JSON-имена (слово `en`) занимают пространство данных (Я-58)
 CONTRACT_DATA = ('предыдущее', 'запрос_вызова', 'открытые_запросы', 'остановка', 'к_отправке', 'слова_человека')
@@ -102,6 +108,12 @@ def check_table(text):
     for k in KINDS:
         if not words[k][0]:
             errs.append('%s: вид `%s` не представлен' % (TABLE, k))
+    kp = words['kind_param'][0]
+    if kp and kp != set(KIND_PARAM):
+        errs.append('%s: вид `kind_param` — ровно виды параметров фрагмента %s, а в таблице %s (AL-63)' % (
+            TABLE, ', '.join(KIND_PARAM), ', '.join(sorted(kp))))
+    for w in sorted((words['type'][0] & set(KIND_PARAM)) - set(KIND_PARAM_ALSO_TYPE)):
+        errs.append('%s: `%s` — вид параметра фрагмента, не тип данных: его вид `kind_param`, не `type` (AL-63)' % (TABLE, w))
     words['readable_pairs'] = pairs
     return errs, words
 
@@ -617,6 +629,21 @@ def selftest(sample, words, name, lang, gloss):
     return bad
 
 
+def selftest_table(text):
+    """Вид параметра фрагмента в `type` и таблица без `kind_param` — ошибка (AL-63)."""
+    a = 'kind_param\tсигнал\tsignal\n'
+    if a not in text:
+        return ['самопроверка таблицы слов: нет заменяемой строки']
+    if check_table(text)[0]:
+        return ['самопроверка таблицы слов: исправная таблица не прошла']
+    bad = []
+    if not check_table(text.replace(a, 'type\tсигнал\tsignal\n', 1))[0]:
+        bad.append('самопроверка таблицы слов: вид параметра в группе `type` не замечен')
+    if not check_table(''.join(l for l in text.splitlines(True) if not l.startswith('kind_param\t')))[0]:
+        bad.append('самопроверка таблицы слов: таблица без `kind_param` не замечена')
+    return bad
+
+
 def selftest_dictionary(gtext, specs):
     """Изменённая запись словаря без смены формата — ошибка (Я-62)."""
     a = '| `число_повторов` | `retry_count` |'
@@ -632,7 +659,8 @@ def selftest_dictionary(gtext, specs):
 def main():
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    errs, words = check_table(read(TABLE))
+    table = read(TABLE)
+    errs, words = check_table(table)
     gtext = read(GLOSSARY)
     gloss, version = load_glossary(gtext)
     specs = [(n, read(n), w) for n, w in SPECS]
@@ -644,6 +672,7 @@ def main():
             errs += selftest(sample, words, name, lang, gloss)
     if '--selftest' in sys.argv:
         errs += selftest_dictionary(gtext, specs)
+        errs += selftest_table(table)
     for e in errs:
         print(e)
     rows = sum(len(words[k][0]) for k in KINDS)

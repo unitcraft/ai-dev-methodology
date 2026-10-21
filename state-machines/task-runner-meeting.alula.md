@@ -1,10 +1,10 @@
 # Машина: Совещание
 
 - machine: meeting
-- machine_version: alula-2.16
-- format: 2.16
+- machine_version: alula-2.17
+- format: 2.17
 
-Это **запись машины «Совещание агентов» целиком на Алуле**, версия формата 2.16 ([state-machine-alula-spec.md](state-machine-alula-spec.md); он единственное определение языка записи). Первоисточник — эта запись на Алуле; прежние таблицы лежат в архиве и не обновляются. Прежняя запись — таблицы состояний [archive/task-runner-meeting-states.md](archive/task-runner-meeting-states.md), код автомата [archive/task-runner-meeting-automaton.md](archive/task-runner-meeting-automaton.md) и псевдокод [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md). Фрагмент «Пауза» — [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), коды журнала — [state-machine-journal.md](state-machine-journal.md), имена — [state-machine-glossary.md](state-machine-glossary.md). Вложенная машина «Шаг агента» — [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md). Справка к записи — что не уложилось в формат, неоднозначности спецификации, соответствие источнику — [task-runner-meeting.alula-notes.md](task-runner-meeting.alula-notes.md).
+Это **запись машины «Совещание агентов» целиком на Алуле**, версия формата 2.17 ([state-machine-alula-spec.md](state-machine-alula-spec.md); он единственное определение языка записи). Первоисточник — эта запись на Алуле; прежние таблицы лежат в архиве и не обновляются. Прежняя запись — таблицы состояний [archive/task-runner-meeting-states.md](archive/task-runner-meeting-states.md), код автомата [archive/task-runner-meeting-automaton.md](archive/task-runner-meeting-automaton.md) и псевдокод [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md). Фрагмент «Пауза» — [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), коды журнала — [state-machine-journal.md](state-machine-journal.md), имена — [state-machine-glossary.md](state-machine-glossary.md). Вложенная машина «Шаг агента» — [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md). Справка к записи — что не уложилось в формат, неоднозначности спецификации, соответствие источнику — [task-runner-meeting.alula-notes.md](task-runner-meeting.alula-notes.md).
 
 **Статус.** Эквивалентность этой записи автомату по журналу не проверялась: интерпретатор «Совещания» не гонялся, сценарии не сравнивались. Состояний 30 (развилок 9, операций 6, обращений 12, концов 3), из них ПАУЗА приносит подключение «Пауза»; в разделе «Состояния» объявлено 29. Строк переходов в разделе «Состояния» — 67, столько же в таблицах первоисточника (девять из них — строки `иначе` развилок, равные умолчанию: ЗАХОД, ОТКАЗ, ВСЕ_ЗАКРЫТЫ, ПОВТОР_ОБРАЩЕНИЯ, СВЕРКА, РАЗБОР, БЕЗ_ПРОБ, ИТОГ, ПОТОЛОК); строки ПАУЗА 1–4 и ОБЩ 1–6 приходят из фрагмента. Строк «Концов» 12: КОНЕЦ 1, ОШИБКА 1, ОСТАНОВЛЕНО 10 (шесть строк таблицы «конец → ответ» первоисточника, развёрнутые по значениям `остановка`).
 
@@ -178,7 +178,7 @@
 ## Подключения
 
 ```
-определения: арифметика_цикла версия 1 хеш 5b654d5fa9ba
+определения: арифметика_цикла версия 1 хеш 1e30254f66f9
 Пауза(сигнал_остановки: остановить совещание, код_остановки: "pause_halt_meeting", вложенные: [шаг_агента],
       отмена_запросов: без_возврата_в_к_отправке, вход_заново: запросы_из_к_отправке,
       право_записи: "право записи на предложение: закрытое в окне проверки линз остаётся закрытым; кто хочет его править, выбирает «остановить совещание»")
