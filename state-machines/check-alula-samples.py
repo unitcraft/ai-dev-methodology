@@ -12,17 +12,25 @@
      число действий (разделитель `;`) и коды журнала `журнал(код, …)`/`journal(code, …)` в каждой строке;
   3. строки «Концов»: число, конец (имя переведено), метка `№`, число конструкторов `Отказ(…)`/`Refusal(…)` и `Ответ(…)`/`Response(…)`
      в ответе (имена кодов отказа в двух языках разные — по глоссарию — и не сверяются);
-  4. набор кодов журнала файла целиком (`журнал(код, …)`, кроме вызовов с выражением) одинаков.
+  4. набор кодов журнала файла целиком (`журнал(код, …)`, кроме вызовов с выражением) одинаков;
+  5. JSON-имена объявленных имён, которые выходят из машины (состояния, поля входа, данные, примитивы, имя настройки вратаря,
+     сигналы сторон и их поля, типы, элементы перечислений, варианты, поля): у русского образца — в скобках или автоматическое
+     (спецификация, 1а, Я-53: словарь, затем транслитерация; функции `declarations`, `auto_name` из `check-alula-keywords.py`),
+     у английского — само имя; списки по порядку объявления равны (дерево `machine/2` одно).
 Самопроверка (`--selftest`): порча английского образца (другое «куда», удалённая строка, другой код журнала, лишнее действие,
-лишнее состояние, лишнее определение, лишняя строка концов, другая метка строки) даёт расхождение, неискажённая пара — нет.
-Чего не проверяет: тела выражений, имена данных и JSON-имена (их проверяет `check-alula-keywords.py`); строки фрагмента «Пауза»
+лишнее состояние, лишнее определение, лишняя строка концов, другая метка строки, другое имя поля) и русского (снятые скобки
+переопределения, лишние скобки с другим именем) даёт расхождение, неискажённая пара — нет.
+Чего не проверяет: тела выражений и имена внутри выражений (структурные слова и скобки JSON-имён проверяет `check-alula-keywords.py`); строки фрагмента «Пауза»
 (образцы его не раскрывают, раздел 9 спецификации); значения-строки (тексты отказов, сообщения, текстовые литералы) — автор пишет их
 на своём языке, и дерево JSON одинаково, если они совпадают (спецификация, 1а); поэтому перевод текста отказа и прозы допустим.
 Запуск: из корня репозитория `python state-machines/check-alula-samples.py` (`--selftest` — с самопроверкой); код возврата 1 при расхождениях.
 """
-import io, os, re, sys
+import importlib.util, io, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+_spec = importlib.util.spec_from_file_location('check_alula_keywords', os.path.join(HERE, 'check-alula-keywords.py'))
+KW = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(KW)
 RU = 'state-machine-agent-step.alula.md'
 EN = 'state-machine-agent-step.en.alula.md'
 TABLE = 'alula-keywords.tsv'
@@ -105,13 +113,13 @@ def code_blocks(lines):
     return out
 
 
-def states_in(lines):
-    """Состояния раздела: список (имя, вид, латинское имя, [строки тела])."""
+def states_in(lines, gloss):
+    """Состояния раздела: список (имя, вид, JSON-имя, [строки тела]); без скобок JSON-имя автоматическое (1а, Я-53)."""
     out = []
     for line in lines:
-        m = re.match(r'^### (\S+) — (\S+)(?: \((\S+)\))?(?:\s|$)', line)  # скобки с именем JSON необязательны (4.1)
+        m = re.match(r'^### (\S+) — (\S+)(?: \((\S+)\))?(?:\s|$)', line)  # скобки — переопределение JSON-имени (4.1)
         if m:
-            out.append((m.group(1), m.group(2), m.group(3) or m.group(1), []))
+            out.append((m.group(1), m.group(2), m.group(3) or KW.auto_name(m.group(1), True, gloss), []))
         elif out:
             out[-1][3].append(line)
     return out
@@ -121,7 +129,7 @@ def journal_codes(s):
     return [c for c in re.findall(r'(?:журнал|journal)\(([a-z_]+)', s) if c not in NOT_CODES]
 
 
-def summarize(text, lang, words):
+def summarize(text, lang, words, gloss):
     """Сводка образца: словарь признаков, одинаковый по смыслу для обоих языков."""
     dest = words['destination']
     ru_dest = dest if lang == 'ru' else {v: v for v in dest.values()}
@@ -131,7 +139,7 @@ def summarize(text, lang, words):
     S['sections'] = []
     rename = {}  # имя состояния файла -> латинское
     for title, lines in secs:
-        for n, k, lat, _ in states_in(lines):
+        for n, k, lat, _ in states_in(lines, gloss):
             rename[n] = lat
     rename[FRAGMENT_STATE[0]] = FRAGMENT_STATE[1]
     rename[FRAGMENT_STATE[1]] = FRAGMENT_STATE[1]
@@ -163,7 +171,7 @@ def summarize(text, lang, words):
             info['decls'] = [{'перечисление': 'enum', 'тип': 'type', 'вариант': 'variant'}.get(d, d) for d in info['decls']]
         if key == 'States':
             st = []
-            for n, k, lat, body in states_in(lines):
+            for n, k, lat, body in states_in(lines, gloss):
                 rows = []
                 for hdr, trs in tables(body):
                     if hdr and hdr[0] == '№':
@@ -182,6 +190,8 @@ def summarize(text, lang, words):
                                  len(re.findall(r'\b(?:Ответ|Response)\(', resp))))
             info['ends'] = rows
     S['codes'] = sorted(journal_codes(text))
+    readable = set(words['readable'].keys()) if lang == 'ru' else set(words['readable'].values())
+    S['names'] = [(where, js or KW.auto_name(nm, pascal, gloss)) for _, where, pascal, nm, js in KW.declarations(text, lang, readable)]
     return S
 
 
@@ -217,6 +227,10 @@ def compare(ru, en):
             nb = sum(len(x[2]) for x in sb)
             if na != nb:
                 errs.append('всего строк переходов: ru %d, en %d' % (na, nb))
+    if ru['names'] != en['names']:
+        diff = [(a, b) for a, b in zip(ru['names'], en['names']) if a != b]
+        errs.append('JSON-имена объявлений: ru %d, en %d; первое расхождение: %s' % (
+            len(ru['names']), len(en['names']), diff[0] if diff else 'в длине списка'))
     if ru['codes'] != en['codes']:
         only_ru = [c for c in ru['codes'] if c not in en['codes']]
         only_en = [c for c in en['codes'] if c not in ru['codes']]
@@ -245,8 +259,20 @@ def mutations(en_text):
         ('лишнее определение', sub('define interactive(', 'define extra(x int) -> int = x\n\ndefine interactive(')),
         ('лишняя строка концов', sub('| Halted | 11 |', '| Halted | 12 | stop_reason == "x" | Refusal(FailCode.Cancelled, stop_reason) |\n| Halted | 11 |')),
         ('другая метка строки', sub('| 9 | failure(', '| 10 | failure(')),
+        ('другое имя поля', sub('cache_write ?int', 'cache_writes ?int')),
     ]
     return muts
+
+
+def ru_mutations(ru_text):
+    def sub(a, b):
+        assert a in ru_text, a
+        return ru_text.replace(a, b, 1)
+    return [
+        ('снятые скобки переопределения у поля', sub('расход (transport_usage) РасходТранспорта }', 'расход РасходТранспорта }')),
+        ('снятые скобки переопределения у сигнала', sub('| разрешить (allow), отказать (deny) |', '| разрешить, отказать (deny) |')),
+        ('скобки с другим JSON-именем у состояния', sub('### ПОВТОР — развилка\n', '### ПОВТОР — развилка (Retrying)\n')),
+    ]
 
 
 def main():
@@ -254,23 +280,27 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     words = load_words()
     ru_text, en_text = read(RU), read(EN)
-    ru = summarize(ru_text, 'ru', words)
-    en = summarize(en_text, 'en', words)
+    gloss = KW.load_glossary(KW.read(KW.GLOSSARY))[0]
+    ru = summarize(ru_text, 'ru', words, gloss)
+    en = summarize(en_text, 'en', words, gloss)
     errs = compare(ru, en)
     if '--selftest' in sys.argv:
         if errs:
             errs.append('самопроверка: исправная пара уже расходится')
         else:
             for what, mut in mutations(en_text):
-                if not compare(ru, summarize(mut, 'en', words)):
+                if not compare(ru, summarize(mut, 'en', words, gloss)):
+                    errs.append('самопроверка: порча не замечена (%s)' % what)
+            for what, mut in ru_mutations(ru_text):
+                if not compare(summarize(mut, 'ru', words, gloss), en):
                     errs.append('самопроверка: порча не замечена (%s)' % what)
     for e in errs:
         print(e)
     st = [s for s in ru['sections'] if 'states' in s][0]['states']
     ends = [s for s in ru['sections'] if 'ends' in s][0]['ends']
     defs = [s for s in ru['sections'] if 'defs' in s][0]['defs']
-    print('образцы: состояний %d, строк переходов %d, строк концов %d, определений %d, кодов журнала %d; расхождений: %d' % (
-        len(st), sum(len(x[2]) for x in st), len(ends), defs, len(ru['codes']), len(errs)))
+    print('образцы: состояний %d, строк переходов %d, строк концов %d, определений %d, кодов журнала %d, JSON-имён %d; расхождений: %d' % (
+        len(st), sum(len(x[2]) for x in st), len(ends), defs, len(ru['codes']), len(ru['names']), len(errs)))
     return 1 if errs else 0
 
 
