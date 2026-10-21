@@ -1,15 +1,15 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: alula-2.15
-- format: 2.15
+- machine_version: alula-2.16
+- format: 2.16
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.15 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
+This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.16 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The first source is this Alula record; the old tables are in the archive and are not updated.** The former notation is the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md). The "Pause" fragment is [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-alula-samples.py](check-alula-samples.py).
 
-**How the notation is laid out.** Sections follow the order of section 1 of the format. The `№` of a state row equals the label `NAME #n` in the tables and in the automaton code (the label of a fork default is the next number; the `else` rows are written out and equal the default). The key lines of states are list items (`- Party: …`), tables stand at block level; paragraphs of prose outside tables and code blocks are comments for the reader, the parser skips them. Text values (`turn`, `stop_reason`, decisions) are the words of the automaton code (Latin). There are 37 transition rows: Start 1, AgentTurn 9, Retry 4, Continuation 3, ReplyValidation 5, Policy 4, Permission 2, Budget 5, Accounting 1, StepOutcome 3; the rows PAUSE 1-4 and COMMON 1-6 come from the fragment. The "Ends" table has 13 rows: End 1, Errored 1, Halted 11. The names are English and Latin, so each name is its own JSON name (spec, section 1a, "JSON name"); the Russian sample gets the same JSON names automatically (the glossary, then transliteration) and writes parentheses only where the automatic name is wrong (11 places).
+**How the notation is laid out.** Sections follow the order of section 1 of the format. The `№` of a state row equals the label `NAME #n` in the tables and in the automaton code (the label of a fork default is the next number; the `else` rows are written out and equal the default). The key lines of states are list items (`- Party: …`), tables stand at block level; paragraphs of prose outside tables and code blocks are comments for the reader, the parser skips them. Text values (`turn`, `stop_reason`, decisions) are the words of the automaton code (Latin). There are 37 transition rows: Start 1, AgentTurn 9, Retry 4, Continuation 3, ReplyValidation 5, Policy 4, Permission 2, Budget 5, Accounting 1, StepOutcome 3; the rows PAUSE 1-4 and COMMON 1-6 come from the fragment. The "Ends" table has 13 rows: End 1, Errored 1, Halted 11. The names are English and Latin, so each name is its own JSON name (spec, section 1a, "JSON name"); the Russian sample gets the same JSON names automatically (the glossary, then transliteration) and lists in its section `## Имена` only the names whose automatic name is wrong (2 rows); this file needs no `## Names` section. In the "Request" tables a field whose expression is the same name carries `—` in the column `expression` (`| turn | — | party |`).
 
 ## Types
 
@@ -227,12 +227,12 @@ Initial state: Start
 
 | request_field | expression | reads |
 |---|---|---|
-| agent_request | agent_request | party |
-| turn | turn | party |
-| retry_count | retry_count | party |
-| turn_before_retry | turn_before_retry | party |
-| permission_decision | permission_decision | party |
-| transport_usage | transport_usage | executor |
+| agent_request | — | party |
+| turn | — | party |
+| retry_count | — | party |
+| turn_before_retry | — | party |
+| permission_decision | — | party |
+| transport_usage | — | executor |
 
 | № | Event | Condition | Actions | To |
 |---|---|---|---|---|
@@ -298,7 +298,7 @@ The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goe
 
 | request_field | expression | reads |
 |---|---|---|
-| agent_request | agent_request | party |
+| agent_request | — | party |
 | permission_request | require(permission_request) | party |
 
 | № | Event | Condition | Actions | To |

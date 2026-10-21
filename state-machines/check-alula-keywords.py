@@ -10,8 +10,7 @@
      `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, event, destination, decl, type, expr,
      action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en` не повторяются;
   2. русский образец: структурные слова (имена шапки и ключи шапки, заголовки разделов `##`, строки-ключи `- Ключ:` и `Начальное состояние:`,
-     заголовки столбцов таблиц, виды состояний в заголовках `###` (скобки с JSON-именем необязательны)) есть в таблице в колонке
-     `ru` своего вида;
+     заголовки столбцов таблиц, виды состояний в заголовках `###`) есть в таблице в колонке `ru` своего вида;
      английское структурное слово (есть в колонке `en`, нет в `ru`) в русском образце — ошибка;
   3. английский образец: те же структурные слова по колонке `en` (`Initial state:` вместо `Начальное состояние:`);
      русское структурное слово (есть в колонке `ru`, нет в `en`) в нём — ошибка; строка шапки `- language: en` обязательна
@@ -19,33 +18,49 @@
   4. знаки операторов (спецификация, 1а, Я-42): в блоках кода, строках таблиц и строках-ключах нет знаков `≥`, `≤`, `≠`, `→`, `∈`
      (только ASCII: `>=`, `<=`, `!=`, `->`, `in`); в прозе знак `→` допустим;
   4а. убранное событие (Я-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
-  5. JSON-имена (спецификация, 1а, «JSON-имя», Я-46, Я-53) у объявленных имён, которые выходят из машины, — заголовок состояния `###`,
-     первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных контракта из вида `readable`
-     таблицы слов), объявления блока кода `## Типы` (тип, элемент перечисления, вариант, поле), сигналы сторон в столбце `сигналы`
-     «Сторон» (сигнал и его поля) и имя настройки вратаря в виде стороны `human или agent по настройке <имя>`: автоматическое
-     JSON-имя (латинское имя — оно само; иначе запись словаря методики `state-machine-glossary.md` для всего имени; иначе
-     транслитерация с правилом регистра; функции `load_glossary`, `auto_name`) латинское; скобки после имени — латинское имя,
-     отличное от автоматического (переопределение); скобки, равные автоматическому имени, — ошибка «лишние скобки»; JSON-имена
-     состояний файла различны; версия словаря — та, по которой формат строит имена (`GLOSSARY_VERSION`);
-  6. самопроверка мутацией (`--selftest`): порча структурного слова, знака оператора или JSON-имени (лишние скобки, нелатинские
-     скобки, имя без латинского JSON-имени, два состояния с одним JSON-именем) в копии образцов «Шага агента» даёт ошибку,
-     исправный образец — нет.
+  5. JSON-имена (спецификация, 1а, «JSON-имя», Я-53, Я-58…Я-60) у объявленных имён, которые выходят из машины, — заголовок
+     состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
+     контракта из вида `readable` таблицы слов), объявления блока кода `## Типы` (тип, элемент перечисления, вариант, поле),
+     сигналы сторон в столбце `сигналы` «Сторон» (сигнал и его поля) и имя настройки вратаря в виде стороны
+     `human или agent по настройке <имя>`: скобок после имени нет (убраны, Я-60); JSON-имя — строка раздела `## Имена`
+     (`| имя | JSON-имя |`; уточнённое имя `Тип.Вариант.поле`, `сторона.сигнал` сильнее простого), иначе автоматическое
+     (латинское имя — оно само; иначе запись словаря методики `state-machine-glossary.md` для всего имени; иначе
+     транслитерация с правилом регистра; функции `load_glossary`, `auto_name`); итоговое JSON-имя латинское; строка `## Имена`,
+     которая ничего не меняет, — ошибка «лишняя строка»; строка для имени, которого среди объявлений файла нет, — ошибка;
+     имя повторено в таблице; JSON-имя строки не латинское; JSON-имена одного пространства (состояния, вместе с состоянием
+     подключённого фрагмента «Пауза»; данные; поля входа; типы; поля одной записи или варианта; варианты одного типа;
+     элементы одного перечисления; сигналы одной стороны; поля одного сигнала; примитивы; имена настроек) различны,
+     разные пространства друг другу не мешают (Я-58); слово имени (часть между `_` и пробелами) — только кириллица или
+     только латиница (Я-59);
+  5а. словарь (Я-62): хеш нормативной части словаря (функция `dictionary_hash`) равен закреплённому форматом (`DICT_HASH`),
+     и спецификация (русская и английская) называет тот же хеш;
+  6. самопроверка мутацией (`--selftest`): порча структурного слова, знака оператора, JSON-имени (лишняя строка `## Имена`,
+     строка для необъявленного, внутреннего или читаемого имени, повтор имени в таблице, нелатинское JSON-имя, скобки
+     в объявлении, имя без латинского JSON-имени, два состояния, два данных, два поля одной записи с одним JSON-именем,
+     состояние с JSON-именем состояния фрагмента, смешанное слово) в копии образцов «Шага агента» и изменённая запись
+     словаря дают ошибку, исправный образец — нет; одно JSON-имя в разных пространствах и смешение письменностей через `_`
+     ошибки не дают.
 Пропускает: прозу, имена и значения (кроме проверки 5) и содержимое ячеек таблиц (кроме заголовков и проверок 4, 5).
 Чего не проверяет: слова внутри выражений и действий, соответствие английских слов JSON-схеме, правило стиля «имя поля
-не совпадает с названием его типа» (спецификация, раздел 2, Я-54; предупреждение — позже).
-Функции `load_glossary`, `auto_name`, `declarations` берёт и `check-alula-samples.py` (сверка JSON-имён двух образцов).
+не совпадает с названием его типа» (спецификация, раздел 2, Я-54; предупреждение — позже), выражение `—` таблицы
+«Запрос» (Я-56) и исчерпание развилок по типу (Я-57) — это проверки переводчика продукта.
+Функции `load_glossary`, `auto_name`, `declarations`, `json_names` берёт и `check-alula-samples.py` (сверка JSON-имён двух образцов).
 Запуск: из корня репозитория `python state-machines/check-alula-keywords.py` (`--selftest` — с самопроверкой); код возврата 1 при расхождениях.
 """
-import io, os, re, sys
+import hashlib, io, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TABLE = 'alula-keywords.tsv'
 GLOSSARY = 'state-machine-glossary.md'
-GLOSSARY_VERSION = 10  # версия словаря, по которой формат 2.15 строит JSON-имена (спецификация, 1а, Я-53)
+SPECS = [('state-machine-alula-spec.md', 'хеш словаря'), ('state-machine-alula-spec.en.md', 'glossary hash')]
+DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 (спецификация, 1а, Я-62)
+GLOSSARY_VERSION = 11  # версия словаря (для людей), при которой закреплён хеш; проверка сверяет хеш, а не номер
+NORMATIVE_TABLES = ['2.%d' % i for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 16)]  # разделы-таблицы словаря; 2.10 — записи
 SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-step.en.alula.md', 'en'),
            ('task-runner-meeting.alula.md', 'ru')]
 KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'event', 'destination', 'decl', 'type', 'expr',
          'action', 'operator', 'readable', 'catalog', 'enum_value']
+FRAGMENT_STATE = 'Pause'  # JSON-имя состояния, которое приносит подключённый фрагмент «Пауза» (раздел 9)
 
 
 def read(name):
@@ -110,7 +125,7 @@ def structural(text, lang='ru'):
             if m:
                 out.append((n, 'header', m.group(1)))
             continue
-        m = re.match(r'^### \S+ — (\S+)(?: \(|\s*$|\s+//)', line)  # скобки с именем JSON необязательны (спецификация 4.1)
+        m = re.match(r'^### \S+ — (\S+)(?: \(|\s*$|\s+//)', line)
         if m:
             out.append((n, 'kind_state', m.group(1)))
             continue
@@ -137,18 +152,49 @@ TRANSLIT = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', '�
             'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'}
 
 
+def dictionary_pairs(text):
+    """Нормативная часть словаря (спецификация, 1а, Я-62): пары «русское -> английское» в порядке файла — строки таблиц
+    разделов 2.1–2.9, 2.11, 2.12, 2.16 (`| `рус` | `англ` | …`) и записи `` `рус` → `англ` `` раздела 2.10."""
+    pairs, sec = [], None
+    for line in text.replace('\r\n', '\n').split('\n'):
+        m = re.match(r'^#{2,4} (\d+(?:\.\d+)*)\.? ', line)
+        if m:
+            sec = m.group(1)
+            continue
+        if sec in NORMATIVE_TABLES:
+            pairs += re.findall(r'^\| `([^`]+)` \| `([^`]+)` \|', line)
+        elif sec == '2.10':
+            pairs += re.findall(r'`([^`]+)` → `([^`]+)`', line)
+    return pairs
+
+
+def dictionary_hash(text):
+    """Хеш словаря: первые 12 знаков SHA-256 строк `рус → англ` нормативной части, соединённых LF (без LF в конце), UTF-8."""
+    body = '\n'.join('%s → %s' % p for p in dictionary_pairs(text))
+    return hashlib.sha256(body.encode('utf-8')).hexdigest()[:12]
+
+
 def load_glossary(text):
-    """Словарь «русское имя -> английское» (спецификация, 1а, Я-53): строки таблиц `| `рус` | `англ` | …` и записи `` `рус` → `англ` ``
-    разделов 2.1–2.12 словаря; строковые литералы (2.14) и контекстные исключения (2.15) не входят; имя, которому словарь даёт
-    два разных английских имени, в словарь не входит. Возвращает (словарь, версия словаря или None)."""
+    """Словарь «русское имя -> английское» (1а, Я-53): нормативная часть (`dictionary_pairs`); имя, которому она даёт два
+    разных английских имени, в поиск не входит. Возвращает (словарь, версия словаря из шапки или None)."""
     m = re.search(r'\*\*Версия словаря: (\d+)', text)
-    start, end = text.index('\n## 2.'), text.index('\n### 2.14.')
     seen = {}
-    for line in text[start:end].split('\n'):
-        pairs = re.findall(r'^\| `([^`]+)` \| `([^`]+)` \|', line) + re.findall(r'`([^`]+)` → `([^`]+)`', line)
-        for ru, en in pairs:
-            seen.setdefault(ru, set()).add(en)
+    for ru, en in dictionary_pairs(text):
+        seen.setdefault(ru, set()).add(en)
     return {ru: next(iter(en)) for ru, en in seen.items() if len(en) == 1}, (int(m.group(1)) if m else None)
+
+
+def check_dictionary(gtext, specs):
+    """Хеш словаря равен закреплённому форматом, и спецификация называет его (Я-62); `specs` — список (имя, текст, слово)."""
+    errs = []
+    h = dictionary_hash(gtext)
+    if h != DICT_HASH:
+        errs.append('%s: хеш нормативной части словаря %s, формат закрепил %s: словарь изменён без смены формата (Я-62)' % (
+            GLOSSARY, h, DICT_HASH))
+    for name, text, word in specs:
+        if ('%s `%s`' % (word, DICT_HASH)) not in text:
+            errs.append('%s: нет записи «%s `%s`» (раздел 1а, Я-62)' % (name, word, DICT_HASH))
+    return errs
 
 
 def translit(word):
@@ -164,15 +210,27 @@ def translit(word):
     return out
 
 
+def words_of(name):
+    """Слова имени: части между `_` и пробелами."""
+    return [w for w in re.split(r'[_ ]+', name) if w]
+
+
+def mixed_words(name):
+    """Слова имени, где смешаны кириллица и латиница (Я-59)."""
+    return [w for w in words_of(name)
+            if any('Ѐ' <= c <= 'ӿ' for c in w) and any(c.isascii() and c.isalpha() for c in w)]
+
+
 def auto_name(name, pascal, gloss):
     """Автоматическое JSON-имя (1а, Я-53). `pascal` — имя-тип (состояние, тип, вариант, элемент перечисления): слова склеиваются,
     каждое с заглавной буквы (`ХОД_АГЕНТА` -> `KhodAgenta`); иначе имя-значение (данное, поле входа, поле, сигнал и его поле,
-    примитив, имя настройки вратаря): слова строчными через `_` (`остановить совещание` -> `ostanovit_soveshchanie`)."""
+    примитив, имя настройки вратаря): слова строчными через `_` (`оставить правку` -> `ostavit_pravku`).
+    Каждое слово транслитерируется отдельно, латинское слово остаётся (`запрос_Agent` -> `ZaprosAgent`, Я-59)."""
     if LATIN.match(name):
         return name
     if name in gloss:
         return gloss[name]
-    words = [w for w in re.split(r'[_ ]+', name) if w]
+    words = words_of(name)
     if pascal:
         out = ''
         for w in words:
@@ -219,8 +277,9 @@ def split_top(s, sep=','):
     return [x.strip() for x in out if x.strip()]
 
 
-def json_name(decl):
-    """Разбор объявления `имя (JsonИмя) остальное`: (имя, JSON-имя или None, остальное); имя может быть из нескольких слов."""
+def split_name(decl):
+    """Разбор объявления `имя остальное`: (имя, скобки после имени или None, остальное); имя может быть из нескольких слов.
+    Скобки `имя (X)` убраны из языка (Я-60): находка скобок — ошибка проверки."""
     m = re.match(r'^([^({\["]+?) \(([^()\s]+)\)(.*)$', decl)
     if m:
         return m.group(1).strip(), m.group(2), m.group(3).strip()
@@ -231,9 +290,20 @@ def json_name(decl):
     return head, None, decl[len(head):].strip()
 
 
+def split_signal(sig):
+    """Разбор сигнала стороны `имя[(поля)]`: имя — всё до первой скобки, может быть из нескольких слов (`остановить совещание`);
+    скобки `имя (X)` убраны (Я-60)."""
+    m = re.match(r'^(.+?) \(([A-Za-z_][A-Za-z0-9_]*)\)(.*)$', sig)
+    if m:
+        return m.group(1).strip(), m.group(2), m.group(3).strip()
+    nm = sig.split('(')[0].strip()
+    return nm, None, sig[len(nm):].strip()
+
+
 def declarations(text, lang, readable=()):
-    """Объявленные имена, которые выходят из машины (1а): список (номер строки, где, имя-тип?, имя, JSON-имя в скобках или None);
-    сначала заголовки состояний и строки таблиц в порядке файла, затем объявления блока `## Типы` в порядке блока."""
+    """Объявленные имена, которые выходят из машины (1а): список (номер строки, где, имя-тип?, имя, путь, скобки или None);
+    путь — уточнённое имя (`(Тип, Вариант, поле)`, `(сторона, сигнал, поле)`; у состояния, данного, поля входа, типа,
+    примитива, настройки — `(имя,)`); сначала заголовки состояний и строки таблиц в порядке файла, затем объявления блока `## Типы`."""
     out = []
     names = ('Вход', 'Данные', 'Примитивы', 'Типы', 'Стороны') if lang == 'ru' else ('Input', 'Data', 'Primitives', 'Types', 'Parties')
     sec_input, sec_data, sec_prim, sec_types, sec_parties = names
@@ -242,10 +312,10 @@ def declarations(text, lang, readable=()):
     sec, in_code, header, in_variant = None, False, None, False
     decls = []  # (номер строки, объявление, член варианта?) блока типов
 
-    def fields(body, n):
+    def fields(body, n, where, path):
         for f in split_top(body):
-            fn, fj, _ = json_name(f)
-            out.append((n, 'поля', False, fn, fj))
+            fn, fj, _ = split_name(f)
+            out.append((n, where, False, fn, path + (fn,), fj))
 
     for n, line in enumerate(text.split('\n'), 1):
         if line.startswith('```'):
@@ -271,7 +341,7 @@ def declarations(text, lang, readable=()):
             continue
         m = re.match(r'^### (.+?) — \S+(?: \((\S+)\))?(?:\s|$)', line)
         if m:
-            out.append((n, 'состояния', True, m.group(1), m.group(2)))
+            out.append((n, 'состояния', True, m.group(1), (m.group(1),), m.group(2)))
             continue
         if not line.startswith('|'):
             header = None
@@ -283,61 +353,146 @@ def declarations(text, lang, readable=()):
             header = cells
             continue
         if sec in (sec_input, sec_data, sec_prim) and header[0] in ('имя', 'name'):
-            nm, js, _ = json_name(cells[0])
+            nm, js, _ = split_name(cells[0])
             if '[*]' not in cells[0] and not (js is None and nm in readable):
-                out.append((n, {sec_input: 'поля входа', sec_data: 'данного', sec_prim: 'примитива'}[sec], False, nm, js))
+                out.append((n, {sec_input: 'поля входа', sec_data: 'данного', sec_prim: 'примитива'}[sec], False, nm, (nm,), js))
         if sec == sec_parties and kind_col in header:
             m = re.search(r'(?:по настройке|by setting) (\S+?)(?: \(([^()\s]+)\))?\(', cells[header.index(kind_col)])
             if m:
-                out.append((n, 'настройки вратаря', False, m.group(1), m.group(2)))
+                out.append((n, 'настройки вратаря', False, m.group(1), (m.group(1),), m.group(2)))
         if sec == sec_parties and signals_col in header and cells[header.index(signals_col)] != '—':
+            party = cells[0]
             for sig in split_top(cells[header.index(signals_col)]):
-                nm, js, rest = json_name(sig)
-                out.append((n, 'сигнала', False, nm, js))
+                nm, js, rest = split_signal(sig)
+                out.append((n, 'сигнала', False, nm, (party, nm), js))
                 if rest.startswith('(') and rest.endswith(')'):
-                    fields(rest[1:-1], n)
+                    fields(rest[1:-1], n, 'поля сигнала', (party, nm))
+    owner = None
     for n, d, member in decls:
         if member:
-            nm, js, rest = json_name(d)
-            out.append((n, 'варианта', True, nm, js))
+            nm, js, rest = split_name(d)
+            out.append((n, 'варианта', True, nm, (owner, nm), js))
             if rest.startswith('{') and rest.endswith('}'):
-                fields(rest[1:-1], n)
+                fields(rest[1:-1], n, 'поля', (owner, nm))
             continue
         m = re.match(r'^(?:перечисление|enum) (.+?) = (.*)$', d)
         if m:
-            nm, js, _ = json_name(m.group(1))
-            out.append((n, 'типа', True, nm, js))
+            nm, js, _ = split_name(m.group(1))
+            owner = nm
+            out.append((n, 'типа', True, nm, (nm,), js))
             for el in split_top(re.sub(r'"[^"]*"', '', m.group(2)), '|'):
-                en_, ej, _ = json_name(el)
-                out.append((n, 'элемента перечисления', True, en_, ej))
+                en_, ej, _ = split_name(el)
+                out.append((n, 'элемента перечисления', True, en_, (nm, en_), ej))
             continue
         m = re.match(r'^(?:тип|type|вариант|variant) (.+?) \{(.*)$', d)
         if m:
-            nm, js, _ = json_name(m.group(1))
-            out.append((n, 'типа', True, nm, js))
+            nm, js, _ = split_name(m.group(1))
+            owner = nm
+            out.append((n, 'типа', True, nm, (nm,), js))
             body = m.group(2).strip()
             if body.endswith('}'):
-                fields(body[:-1], n)
+                fields(body[:-1], n, 'поля', (nm,))
     return out
 
 
-def check_json_names(text, words, name, lang, gloss):
-    """JSON-имена имён, которые выходят из машины (Я-46, Я-53): автоматическое имя латинское, скобки — только переопределение."""
-    errs, states = [], {}
-    readable = words['readable'][0 if lang == 'ru' else 1]
-    for n, where, pascal, nm, js in declarations(text, lang, readable):
+def names_table(text, lang):
+    """Строки раздела `## Имена` (`## Names`): список (номер строки, имя или уточнённое имя, JSON-имя)."""
+    title = 'Имена' if lang == 'ru' else 'Names'
+    rows, sec, in_code, header = [], None, False, None
+    for n, line in enumerate(text.split('\n'), 1):
+        if line.startswith('```'):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if line.startswith('## '):
+            sec, header = line[3:].strip(), None
+            continue
+        if sec != title or not line.startswith('|') or re.match(r'^\|[-:| ]+\|\s*$', line):
+            continue
+        cells = [c.strip() for c in re.split(r'(?<!\\)\|', line.strip())[1:-1]]
+        if header is None:
+            header = cells
+            continue
+        if len(cells) == 2:
+            rows.append((n, cells[0], cells[1]))
+    return rows
+
+
+def json_names(text, lang, gloss, readable=()):
+    """JSON-имена объявлений (1а, Я-60): (список (номер строки, где, имя-тип?, имя, путь, JSON-имя), ошибки таблицы `## Имена`
+    списком (номер строки, текст)). Строка с уточнённым именем (путём) сильнее строки с простым именем; имя без строки —
+    автоматическое JSON-имя."""
+    decls = declarations(text, lang, readable)
+    rows, errs = {}, []
+    for n, key, js in names_table(text, lang):
+        path = tuple(p.strip() for p in key.split('.'))
+        if path in rows:
+            errs.append((n, 'имя `%s` повторено в `## Имена` (строка %d)' % (key, rows[path][0])))
+            continue
+        rows[path] = (n, js)
+        if not LATIN.match(js):
+            errs.append((n, 'JSON-имя `%s` строки `## Имена` у `%s` не латинское' % (js, key)))
+    without = {p: [] for p in rows}  # строка -> имена, которые её объявления получили бы без неё
+    out = []
+    for n, where, pascal, nm, path, _ in decls:
         auto = auto_name(nm, pascal, gloss)
-        if js is not None and not LATIN.match(js):
-            errs.append('%s:%d: JSON-имя `%s` у %s `%s` не латинское' % (name, n, js, where, nm))
-        elif js is not None and js == auto:
-            errs.append('%s:%d: лишние скобки у %s `%s`: `%s` — его автоматическое JSON-имя (Я-53)' % (name, n, where, nm, js))
-        elif js is None and not LATIN.match(auto):
-            errs.append('%s:%d: у %s `%s` автоматическое JSON-имя `%s` не латинское: нужны скобки' % (name, n, where, nm, auto))
-        if where == 'состояния':
-            final = js or auto
-            if final in states:
-                errs.append('%s:%d: JSON-имя `%s` уже у состояния в строке %d' % (name, n, final, states[final]))
-            states.setdefault(final, n)
+        full, bare = rows.get(path), rows.get((nm,))
+        if full is not None:
+            without[path].append(bare[1] if bare is not None and len(path) > 1 else auto)
+            final = full[1]
+        elif bare is not None:
+            without[(nm,)].append(auto)
+            final = bare[1]
+        else:
+            final = auto
+        out.append((n, where, pascal, nm, path, final))
+    names = {d[3] for d in decls}
+    paths = {d[4] for d in decls}
+    for path, (n, js) in rows.items():
+        known = (path[0] in names) if len(path) == 1 else (path in paths)
+        if not known:
+            errs.append((n, 'строка `## Имена` для `%s`: такого объявления в файле нет (внутренние и читаемые имена в таблицу '
+                            'не пишутся, Я-60)' % '.'.join(path)))
+        elif all(alt == js for alt in without[path]):
+            errs.append((n, 'лишняя строка `## Имена` у `%s`: `%s` — имя, которое объявление получает без неё (Я-60)' % (
+                '.'.join(path), js)))
+    return out, errs
+
+
+def namespace(where, path):
+    """Пространство различимости JSON-имени (1а, Я-58): вид объявления и путь без последнего имени."""
+    return (where,) + tuple(path[:-1])
+
+
+def check_json_names(text, words, name, lang, gloss):
+    """JSON-имена имён, которые выходят из машины (Я-53, Я-58…Я-60)."""
+    errs = []
+    readable = words['readable'][0 if lang == 'ru' else 1]
+    for n, where, pascal, nm, path, js in declarations(text, lang, readable):
+        if js is not None:
+            errs.append('%s:%d: скобки `(%s)` после имени %s `%s`: скобки убраны, JSON-имя пишется в `## Имена` (Я-60)' % (
+                name, n, js, where, nm))
+        for w in mixed_words(nm):
+            errs.append('%s:%d: в слове `%s` имени %s `%s` смешаны кириллица и латиница: смешивать можно только через `_` '
+                        'или пробел (Я-59)' % (name, n, w, where, nm))
+    names, table_errs = json_names(text, lang, gloss, readable)
+    errs += ['%s:%d: %s' % (name, n, e) for n, e in table_errs]
+    for n, key, js in names_table(text, lang):
+        for part in key.split('.'):
+            for w in mixed_words(part):
+                errs.append('%s:%d: в слове `%s` имени `%s` смешаны кириллица и латиница (Я-59)' % (name, n, w, key))
+    spaces = {}
+    if re.search(r'^(?:Пауза|Pause)\(', text, re.M):  # состояния фрагмента входят в пространство состояний машины (Я-58)
+        spaces[('состояния',)] = {FRAGMENT_STATE: 'состояния фрагмента «Пауза»'}
+    for n, where, pascal, nm, path, js in names:
+        if not LATIN.match(js):
+            errs.append('%s:%d: у %s `%s` JSON-имя `%s` не латинское: нужна строка в `## Имена` (Я-60)' % (name, n, where, nm, js))
+        space = spaces.setdefault(namespace(where, path), {})
+        if js in space:
+            errs.append('%s:%d: JSON-имя `%s` у %s `%s` уже у %s: коллизия в одном пространстве (Я-58)' % (
+                name, n, js, where, '.'.join(path), space[js]))
+        space.setdefault(js, '%s `%s` (строка %d)' % (where, '.'.join(path), n))
     return errs
 
 
@@ -361,27 +516,36 @@ def check_sample(text, words, name, lang, gloss):
     return errs
 
 
+ROW_RU = '| расход | transport_usage |\n'
 MUTATIONS = {
     'ru': [  # (описание, что заменить, на что)
         ('заголовок раздела', '\n## Состояния\n', '\n## Статусы\n'),
         ('английский раздел', '\n## Данные\n', '\n## Data\n'),
         ('строка-ключ', '- Срок тишины:', '- Срок тишыны:'),
         ('столбец таблицы состояний', '| № | Событие | Условие | Действия | Куда |', '| № | Событие | Условия | Действия | Куда |'),
+        ('столбец таблицы имён', '| имя | JSON-имя |', '| имя | JSON имя |'),
         ('вид состояния', '### СТАРТ — операция\n', '### СТАРТ — операция2\n'),
         ('английская строка-ключ чтений', '- Читает: число_повторов, ход', '- Reads: число_повторов, ход'),
         ('знак оператора не ASCII', '| 3 | число_повторов >= ЧИСЛО_ПОВТОРОВ |', '| 3 | число_повторов ≥ ЧИСЛО_ПОВТОРОВ |'),
-        ('лишние скобки у данного (словарь)', '| число_повторов | число>=0 |', '| число_повторов (retry_count) | число>=0 |'),
-        ('лишние скобки у состояния (словарь)', '### СТАРТ — операция\n', '### СТАРТ — операция (Start)\n'),
-        ('лишние скобки у поля типа (словарь)', 'вход ?число', 'вход (input) ?число'),
-        ('лишние скобки у элемента перечисления (словарь)', 'Нарушена | Пуста\n', 'Нарушена | Пуста (Empty)\n'),
-        ('лишние скобки у варианта (словарь)', '  ВременнаяОшибка\n', '  ВременнаяОшибка (TransientError)\n'),
-        ('лишние скобки у сигнала (транслитерация)', '| разрешить (allow), отказать (deny) |', '| разрешить (razreshit), отказать (deny) |'),
-        ('лишние скобки у поля сигнала (словарь)', 'автор текст', 'автор (author) текст'),
-        ('лишние скобки у настройки вратаря (транслитерация)', '(elevated_attention_executor)(', '(ispolnitel_povyshennogo_vnimaniya)('),
-        ('лишние скобки у латинского имени', '| time_now |', '| time_now (time_now) |'),
-        ('нелатинское JSON-имя', 'расход (transport_usage) РасходТранспорта }', 'расход (расход_транспорта) РасходТранспорта }'),
+        ('лишняя строка `## Имена` у данного (словарь)', ROW_RU, ROW_RU + '| число_повторов | retry_count |\n'),
+        ('лишняя строка `## Имена` у состояния (словарь)', ROW_RU, ROW_RU + '| СТАРТ | Start |\n'),
+        ('лишняя строка `## Имена` у сигнала (словарь)', ROW_RU, ROW_RU + '| разрешить | allow |\n'),
+        ('лишняя строка `## Имена` у поля (уточнённое имя, словарь)', ROW_RU, ROW_RU + '| Токены.вход | input |\n'),
+        ('лишняя строка `## Имена` у латинского имени', ROW_RU, ROW_RU + '| time_now | time_now |\n'),
+        ('строка `## Имена` для необъявленного имени', ROW_RU, ROW_RU + '| нет_такого | no_such |\n'),
+        ('строка `## Имена` для внутреннего имени (константа)', ROW_RU, ROW_RU + '| ЧИСЛО_ПОВТОРОВ | RETRIES |\n'),
+        ('строка `## Имена` для читаемого имени', ROW_RU, ROW_RU + '| остановка | stop |\n'),
+        ('имя повторено в `## Имена`', ROW_RU, ROW_RU + '| расход | spend |\n'),
+        ('нелатинское JSON-имя строки', ROW_RU, '| расход | расход_транспорта |\n'),
+        ('скобки у состояния (убраны)', '### СТАРТ — операция\n', '### СТАРТ — операция (Begin)\n'),
+        ('скобки у данного (убраны)', '| число_повторов | число>=0 |', '| число_повторов (retries) | число>=0 |'),
+        ('скобки у сигнала (убраны)', '| разрешить, отказать |', '| разрешить (permit), отказать |'),
         ('JSON-имя не строится', '| начато | ?число |', '| начато§ | ?число |'),
-        ('два состояния с одним JSON-именем', '### ПОВТОР — развилка\n', '### ПОВТОР — развилка (Continuation)\n'),
+        ('два состояния с одним JSON-именем', ROW_RU, ROW_RU + '| ПОВТОР | Continuation |\n'),
+        ('два данных с одним JSON-именем', ROW_RU, ROW_RU + '| текст_ответа | reply_x |\n| артефакт_ответа | reply_x |\n'),
+        ('два поля одной записи с одним JSON-именем', ROW_RU, ROW_RU + '| Токены.вход | output |\n'),
+        ('состояние с JSON-именем состояния фрагмента', ROW_RU, ROW_RU + '| УЧЁТ | Pause |\n'),
+        ('смешанное слово (кириллица и латиница)', '| начато | ?число |', '| начатоAt | ?число |'),
         ('убранное событие слово', '| 1 | сигнал(разрешить) |', '| 1 | слово(разрешить) |'),
         ('начальное состояние', 'Начальное состояние: СТАРТ', 'Начальное состоянье: СТАРТ'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
@@ -399,8 +563,17 @@ MUTATIONS = {
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
         ('нет строки language', '- language: en\n', ''),
-        ('лишние скобки у латинского имени', '| retry_count | int>=0 |', '| retry_count (retry_count) | int>=0 |'),
+        ('скобки у латинского имени (убраны)', '| retry_count | int>=0 |', '| retry_count (retry_count) | int>=0 |'),
+        ('лишняя строка `## Names`', '\n## Constants\n',
+         '\n## Names\n\n| name | json_name |\n|---|---|\n| retry_count | retry_count |\n\n## Constants\n'),
     ],
+}
+CLEAN = {  # порча, которая ошибки давать не должна
+    'ru': [
+        ('одно JSON-имя в разных пространствах (поле записи и данное)', ROW_RU, ROW_RU + '| Токены.вход | retry_count |\n'),
+        ('смешение письменностей через `_`', '| начато | ?число |', '| начато_at | ?число |'),
+    ],
+    'en': [],
 }
 
 
@@ -420,27 +593,48 @@ def selftest(sample, words, name, lang, gloss):
             continue
         if not check_sample(sample.replace(a, b, 1), words, name, lang, gloss):
             bad.append('самопроверка (%s): порча не замечена (%s)' % (lang, what))
+    for what, a, b in CLEAN[lang]:
+        if a not in sample:
+            bad.append('самопроверка (%s): образец не содержит заменяемого (%s)' % (lang, what))
+            continue
+        e = check_sample(sample.replace(a, b, 1), words, name, lang, gloss)
+        if e:
+            bad.append('самопроверка (%s): ложная ошибка (%s): %s' % (lang, what, e[0]))
     return bad
+
+
+def selftest_dictionary(gtext, specs):
+    """Изменённая запись словаря без смены формата — ошибка (Я-62)."""
+    a = '| `число_повторов` | `retry_count` |'
+    if a not in gtext:
+        return ['самопроверка словаря: нет заменяемой записи']
+    if check_dictionary(gtext, specs):
+        return ['самопроверка словаря: исправный словарь не прошёл']
+    if not check_dictionary(gtext.replace(a, '| `число_повторов` | `retries` |', 1), specs):
+        return ['самопроверка словаря: изменённая запись не замечена']
+    return []
 
 
 def main():
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     errs, words = check_table(read(TABLE))
-    gloss, version = load_glossary(read(GLOSSARY))
-    if version != GLOSSARY_VERSION:
-        errs.append('%s: версия словаря %s, а формат строит JSON-имена по версии %d (спецификация, 1а, Я-53)' % (
-            GLOSSARY, version, GLOSSARY_VERSION))
+    gtext = read(GLOSSARY)
+    gloss, version = load_glossary(gtext)
+    specs = [(n, read(n), w) for n, w in SPECS]
+    errs += check_dictionary(gtext, specs)
     for name, lang in SAMPLES:
         sample = read(name)
         errs += check_sample(sample, words, name, lang, gloss)
         if '--selftest' in sys.argv:
             errs += selftest(sample, words, name, lang, gloss)
+    if '--selftest' in sys.argv:
+        errs += selftest_dictionary(gtext, specs)
     for e in errs:
         print(e)
     rows = sum(len(w[0]) for w in words.values())
-    print('таблица слов: %d строк, %d видов; словарь: %d имён; образцов: %d; расхождений: %d' % (
-        rows, len(KINDS), len(gloss), len(SAMPLES), len(errs)))
+    print('таблица слов: %d строк, %d видов; словарь версии %s: %d имён, хеш %s; образцов: %d; расхождений: %d' % (
+        rows, len(KINDS), version, len(gloss), dictionary_hash(gtext), len(SAMPLES), len(errs)))
     return 1 if errs else 0
 
 
