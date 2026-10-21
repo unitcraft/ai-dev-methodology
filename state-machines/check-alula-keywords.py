@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Проверка таблицы ключевых слов Портолана (`portolan-keywords.tsv`) и сверка с ней образцов машины.
+"""Проверка таблицы ключевых слов Алулы (`alula-keywords.tsv`) и сверка с ней образцов машины.
 
-Зачем: таблица слов — единый нормативный источник ключевых слов обоих языков Портолана (спецификация, раздел 1а);
-образцы `state-machine-agent-step.portolan.md` (русский), `state-machine-agent-step.en.portolan.md` (английский) и запись
-«Совещания» `task-runner-meeting.portolan.md` (русская) записаны на разных языках, и расхождение слов образца с таблицей
+Зачем: таблица слов — единый нормативный источник ключевых слов обоих языков Алулы (спецификация, раздел 1а);
+образцы `state-machine-agent-step.alula.md` (русский), `state-machine-agent-step.en.alula.md` (английский) и запись
+«Совещания» `task-runner-meeting.alula.md` (русская) записаны на разных языках, и расхождение слов образца с таблицей
 молчит до первой реализации разбора.
 Что проверяет:
   1. таблица: первая строка — заголовок `kind<TAB>ru<TAB>en`; в каждой строке три колонки без пустых ячеек;
@@ -28,14 +28,14 @@
      даёт ошибку, исправный образец — нет.
 Пропускает: прозу, имена и значения (кроме проверки 5) и содержимое ячеек таблиц (кроме заголовков и проверок 4, 5).
 Чего не проверяет: слова внутри выражений и действий, соответствие английских слов JSON-схеме.
-Запуск: из корня репозитория `python state-machines/check-portolan-keywords.py` (`--selftest` — с самопроверкой); код возврата 1 при расхождениях.
+Запуск: из корня репозитория `python state-machines/check-alula-keywords.py` (`--selftest` — с самопроверкой); код возврата 1 при расхождениях.
 """
 import io, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TABLE = 'portolan-keywords.tsv'
-SAMPLES = [('state-machine-agent-step.portolan.md', 'ru'), ('state-machine-agent-step.en.portolan.md', 'en'),
-           ('task-runner-meeting.portolan.md', 'ru')]
+TABLE = 'alula-keywords.tsv'
+SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-step.en.alula.md', 'en'),
+           ('task-runner-meeting.alula.md', 'ru')]
 KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'event', 'destination', 'decl', 'type', 'expr',
          'action', 'operator', 'readable', 'catalog', 'enum_value']
 
@@ -326,7 +326,7 @@ MUTATIONS = {
 }
 
 
-MUTATED = {'state-machine-agent-step.portolan.md', 'state-machine-agent-step.en.portolan.md'}
+MUTATED = {'state-machine-agent-step.alula.md', 'state-machine-agent-step.en.alula.md'}
 
 
 def selftest(sample, words, name, lang):
