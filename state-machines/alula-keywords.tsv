@@ -152,6 +152,7 @@ operator	!=	!=
 operator	->	->
 operator	=>	=>
 operator	...	...
+operator	..	..
 operator	in	in
 operator	??	??
 operator	_	_
@@ -200,7 +201,7 @@ catalog	текст_записи	record_text
 catalog	дробное	float
 catalog	число	int
 catalog	длина	length
-catalog	диапазон	range
+catalog	склеить	concat
 catalog	наибольшее	max
 catalog	наименьшее	min
 catalog	ключи	keys

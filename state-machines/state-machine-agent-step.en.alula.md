@@ -1,11 +1,11 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: alula-2.18
-- format: 2.18
+- machine_version: alula-2.19
+- format: 2.19
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.18 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
+This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.19 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The first source is this Alula record; the old tables are in the archive and are not updated.** The former notation is the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md). The "Pause" fragment is [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-alula-samples.py](check-alula-samples.py).
 
@@ -173,7 +173,7 @@ define decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | 
 }
 
 define retry_pause(n int>=0) -> int =>
-  fold(range(1, n), RETRY_PAUSE, (m, _) => m * 2)
+  (1..n).fold(RETRY_PAUSE, (m, _) => m * 2)
 
 define turn_term(req AgentRequest, request_turn text, retries int>=0) -> int => {
   let extra = if request_turn == "retry" then { retry_pause(retries) } else { 0 };
@@ -239,15 +239,15 @@ Initial state: Start
 
 | № | Event | Condition | Actions | To |
 |---|---|---|---|---|
-| 1 | response: Finished(text, artifact, transport_usage: received) | — | transport_usage = add_usage(transport_usage, received); reply_text = text; reply_artifact = artifact | ReplyValidation |
-| 2 | response: Truncated(transport_usage: received) | — | transport_usage = add_usage(transport_usage, received) | Continuation |
-| 3 | response: TurnRequestLimit(transport_usage: received) | — | transport_usage = add_usage(transport_usage, received); stop_reason = "max_turn_requests"; journal(turn_requests_exhausted) | Accounting |
-| 4 | response: ModelRefusal(transport_usage: received) | — | transport_usage = add_usage(transport_usage, received); stop_reason = "model_refused"; journal(model_refused) | Accounting |
-| 5 | response: Stopped(transport_usage: received) | — | transport_usage = add_usage(transport_usage, received); stop_reason = "stopped_by_agent"; journal(turn_cancelled) | Accounting |
+| 1 | response: Finished { text, artifact, transport_usage: received } | — | transport_usage = add_usage(transport_usage, received); reply_text = text; reply_artifact = artifact | ReplyValidation |
+| 2 | response: Truncated { transport_usage: received } | — | transport_usage = add_usage(transport_usage, received) | Continuation |
+| 3 | response: TurnRequestLimit { transport_usage: received } | — | transport_usage = add_usage(transport_usage, received); stop_reason = "max_turn_requests"; journal(turn_requests_exhausted) | Accounting |
+| 4 | response: ModelRefusal { transport_usage: received } | — | transport_usage = add_usage(transport_usage, received); stop_reason = "model_refused"; journal(model_refused) | Accounting |
+| 5 | response: Stopped { transport_usage: received } | — | transport_usage = add_usage(transport_usage, received); stop_reason = "stopped_by_agent"; journal(turn_cancelled) | Accounting |
 | 6 | response: TransientError | — | — | Retry |
 | 7 | response: PermanentError | — | stop_reason = "no_result"; journal(agent_permanent_error) | Accounting |
-| 8 | response: NeedsPermission(permission_request: request) | — | permission_request = request | Policy |
-| 9 | failure(reason in {FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult}) | — | stop_reason = text(reason); journal(turn_failed, reason: text(reason)) | Accounting |
+| 8 | response: NeedsPermission { permission_request: request } | — | permission_request = request | Policy |
+| 9 | failure(reason in [FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult]) | — | stop_reason = text(reason); journal(turn_failed, reason: text(reason)) | Accounting |
 
 The appeal has no "On accept" (in the code `on_accept` is empty). A form fix goes not as a return within the same request but as a new turn "fix" by the rows of ReplyValidation, hence `Form returns: 0`. A failure code outside the list of row 9 is brought by the executor to `NoResult`, which is in the list.
 
@@ -357,7 +357,7 @@ The Pause state is brought by the "Pause" fragment (section "Includes"); it is n
   - call(close_agent_turn);
   - if not has(usage) then { journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))) };
   - journal(agent_step_stopped, reason: stop_reason)
-- Except: stop_reason in {""}
+- Except: stop_reason in [""]
 
 ### Errored — end
 - Reads: all_data
