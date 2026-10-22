@@ -179,8 +179,10 @@ fn interactive(call_kind CallerKind) -> bool =>
   call_kind == CallerKind.CycleSession or call_kind == CallerKind.ChatTurn
 
 fn needs_elevated_attention(action ActionKind) -> bool =>
-  match action { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true,
-                 else => false }
+  match action {
+    ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true
+    else => false
+  }
 
 fn decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" {
   let by_table = if needs_elevated_attention(action) then { "ask" } else { PERMISSION_POLICY[action] };
