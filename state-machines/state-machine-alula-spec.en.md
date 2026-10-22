@@ -14,6 +14,12 @@ The examples are taken from the pilots (excerpts of “Agent step” and “Meet
 
 Change labels: the prefix AL- (Alula); before 2.17 the labels were written as Я-NN, the number is the same (the owner's word, 2026-10-22: «AL- — ОК»).
 
+**Clarifications after 2.17 (the format does not change).** Text edits without a change of the language: `format: 2.17`, the hashes of the definitions file sample (section 8) and the glossary hash are the same. The word of the owner of the methodology, 2026-10-22: «по рекомендации».
+
+| № | Edit | Where |
+|---|---|---|
+| AL-65 | the lifetime of data is collected in one place (section 2, “Lifetime of data”); the language does not change | 2 |
+
 **Against version 2.16.** The labels of version 2.17 are **AL-63, AL-64**: the word table and the case rule; there are no other changes of the language, the tree `machine/2` does not change. The words of the owner of the methodology, 2026-10-22 (the methodology chat): «виды параметров фрагмента - это что?» and «по рекомендации» (on the composition of the release); the owner's verbatim words and the reasons are in the history ([doc/alula-history.md](../doc/alula-history.md), section 5, item 21).
 
 | № | Change | Where |
@@ -439,6 +445,22 @@ Example (pilots; the bounds and `writes` are as in the pilots, except `lenses`: 
 | witness_answers | map[int>=0, []WitnessAnswer] | {} | — | rows |
 ```
 (The types `turn`, `turn_before_retry`, `stop_reason` are rewritten to a literal set, the values are the same as in the earlier record. The first seven rows are “Agent step”, the rest are “Meeting”; `agent_request` is built by a constructor from the input fields (section 1, AL-30); `open_requests` is entered by the “Pause” fragment, its row is not written in the machine table. In `stop_reason` a part of the set is shown; the full set of the pilot is twelve values. `turn_count` has no `<=` bound: with a turn limit below 1 the code gives 1. `number` is `int>=1`: in the code `Cycle.new()` and `MachineData.new()` give 1, it changes only by `+= 1` (the invariant “does not decrease”); `number - 1` is `int`, 3.2. The row `lenses` changes `lost` and `probes`, `attempt` only by the mechanics: the record `lenses[k] = { ...l, field: expr }` that does not name `attempt` is a copy, not a write into it.)
+
+### Lifetime of data
+
+A summary of what is said in sections 1–5, 7–9 and in rules 12, 13, 14, 22 of the [specification](state-machine-spec.md); there are no new rules (AL-65).
+
+| Names | How long they live | Who sets and changes them |
+|---|---|---|
+| **machine data**: the rows of `## Data` of the machine and of the included fragments (fragment data enter the host machine, section 9), the contract data `open_requests`, `to_send`, the attempt counters of the parties (section 1) | the whole machine instance: the `initial` value (an expression or `input.<field>`) — at start; saved together with the machine state, they survive a pause and a restart (rule 22) | only the one named in `writes` (`rows`, `mechanics`, `fragment`); the `non_decreasing` bound is checked after the transition; the changes of a step are one commit, an unfinished step is rolled back (rule 13) |
+| **executor data**: `state`, `accepted_requests`, the event queue with accepted responses and words, the gate records | the whole instance; saved together with the state (rules 13, 14, 22) | only the mechanics; they are not written in `## Data` and do not enter `all_data` (above) |
+| `input`, constants, parameters (sections 1, 8) | the whole instance | do not change: `input` is the input of the call, a parameter is the default value or the project override at load |
+| `event.<field>`, the event field bindings (`response(name)`, `response: Variant(field: name)`, `signal(s(field: name))`), `reason`, `party` of a set event (3.1, 4.3) | one step: the event row and the chain of operations and forks up to the next appeal or end; after the step there is no event (rule 13) | the executor when it accepts the event; a binding named as a datum is an error (4.3, AL-26) |
+| `let` in “On entry” (4.5–4.7) | one entry into the state: visible further in “On entry” and in all rows of the state; on re-entry (rule 12) it is computed anew; the value of `new_id` is fixed by the `immediate` event of the step (section 7) | the binding expression |
+| `let` in “On accept” (4.4) | saved with the accepted event, that is, with the queue (rule 14); visible to the row of that event and its chain | the binding expression |
+| `let … in …`, a lambda parameter, the name of `for each` (3.1, 5) | its own scope: the body of `in`, the lambda body, the loop body | — |
+
+**Data “in memory”.** Rule 22 divides variables into those saved together with the state and variables “in memory”, which are lost on a restart; a machine with them enters after a restart not the “state” again but the start of the pass named in its “Terms”. In Alula a datum cannot be marked as “in memory”, and there is no “Terms” section and no start of a pass in a machine file: every `## Data` datum is saved with the state, and an Alula machine after a restart always re-enters the “state” (rule 12). How to write in Alula a machine with data “in memory” is an open question.
 
 ## 3. Expressions
 

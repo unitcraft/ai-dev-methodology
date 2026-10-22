@@ -10,7 +10,8 @@
      `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, kind_param, event, destination, decl, type,
      expr, action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en`
      не повторяются (в разных видах слово может повторяться); вид `kind_param` (виды параметров фрагмента, раздел 9, AL-63) — ровно
-     `сигнал`, `текст`, `[]машина`, `поведение`, `примечание`, и из них в виде `type` стоит только `текст` (виды параметров — не типы данных);
+     `сигнал`, `текст`, `[]машина`, `поведение`, `примечание` с английскими словами ровно `signal`, `text`, `[]machine`, `behavior`, `note`
+     (по парам), и из них в виде `type` стоит только `текст` (виды параметров — не типы данных);
   2. русский образец: структурные слова (имена шапки и ключи шапки, заголовки разделов `##`, строки-ключи `- Ключ:` и `Начальное состояние:`,
      заголовки столбцов таблиц, виды состояний в заголовках `###`) есть в таблице в колонке `ru` своего вида;
      английское структурное слово (есть в колонке `en`, нет в `ru`) в русском образце — ошибка;
@@ -43,7 +44,8 @@
      в объявлении, имя без латинского JSON-имени, два состояния, два данных, два поля одной записи с одним JSON-именем,
      состояние с JSON-именем состояния фрагмента, смешанное слово) в копии образцов «Шага агента» и изменённая запись
      словаря дают ошибку, исправный образец — нет; одно JSON-имя в разных пространствах и смешение письменностей через `_`
-     ошибки не дают; в копии таблицы слов вид параметра фрагмента, перенесённый обратно в `type`, и таблица без вида `kind_param`
+     ошибки не дают; в копии таблицы слов вид параметра фрагмента, перенесённый обратно в `type`, испорченное английское слово
+     вида `kind_param` (`сигнал sgnl`) и таблица без вида `kind_param`
      дают ошибку, исправная таблица — нет.
 Пропускает: прозу, имена и значения (кроме проверки 5) и содержимое ячеек таблиц (кроме заголовков и проверок 4, 5).
 Чего не проверяет: слова внутри выражений и действий, соответствие английских слов JSON-схеме, правило стиля «имя поля
@@ -68,6 +70,9 @@ KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'kind
 # виды параметров фрагмента (раздел 9, AL-63): закрытый перечень вида `kind_param`; из них тип данных — только `текст`
 KIND_PARAM = ('сигнал', 'текст', '[]машина', 'поведение', 'примечание')
 KIND_PARAM_ALSO_TYPE = ('текст',)
+# пары «русское слово -> английское слово» вида `kind_param`: английская колонка проверяется так же строго, как русская
+KIND_PARAM_PAIRS = (('сигнал', 'signal'), ('текст', 'text'), ('[]машина', '[]machine'), ('поведение', 'behavior'),
+                    ('примечание', 'note'))
 FRAGMENT_STATE = 'Pause'  # JSON-имя состояния, которое приносит подключённый фрагмент «Пауза» (раздел 9)
 # данные контракта и фрагмента «Пауза» — читаемые имена таблицы слов: их JSON-имена (слово `en`) занимают пространство данных (AL-58)
 CONTRACT_DATA = ('предыдущее', 'запрос_вызова', 'открытые_запросы', 'остановка', 'к_отправке', 'слова_человека')
@@ -87,6 +92,7 @@ def check_table(text):
         errs.append('%s:1: первая строка должна быть заголовком `kind<TAB>ru<TAB>en`' % TABLE)
     words = {k: (set(), set()) for k in KINDS}
     pairs = []
+    kp_pairs = set()
     for n, line in enumerate(lines[1:], 2):
         cells = line.split('\t')
         if len(cells) != 3:
@@ -95,6 +101,8 @@ def check_table(text):
         kind, ru, en = cells
         if kind == 'readable':
             pairs.append((ru, en))
+        if kind == 'kind_param':
+            kp_pairs.add((ru, en))
         if '' in (kind.strip(), ru.strip(), en.strip()):
             errs.append('%s:%d: пустая ячейка' % (TABLE, n))
             continue
@@ -112,6 +120,9 @@ def check_table(text):
     if kp and kp != set(KIND_PARAM):
         errs.append('%s: вид `kind_param` — ровно виды параметров фрагмента %s, а в таблице %s (AL-63)' % (
             TABLE, ', '.join(KIND_PARAM), ', '.join(sorted(kp))))
+    elif kp and kp_pairs != set(KIND_PARAM_PAIRS):
+        errs.append('%s: вид `kind_param` — ровно пары %s, а в таблице %s (AL-63)' % (
+            TABLE, ', '.join('%s/%s' % p for p in KIND_PARAM_PAIRS), ', '.join('%s/%s' % p for p in sorted(kp_pairs))))
     for w in sorted((words['type'][0] & set(KIND_PARAM)) - set(KIND_PARAM_ALSO_TYPE)):
         errs.append('%s: `%s` — вид параметра фрагмента, не тип данных: его вид `kind_param`, не `type` (AL-63)' % (TABLE, w))
     words['readable_pairs'] = pairs
@@ -630,7 +641,7 @@ def selftest(sample, words, name, lang, gloss):
 
 
 def selftest_table(text):
-    """Вид параметра фрагмента в `type` и таблица без `kind_param` — ошибка (AL-63)."""
+    """Вид параметра фрагмента в `type`, испорченное английское слово вида `kind_param` и таблица без `kind_param` — ошибка (AL-63)."""
     a = 'kind_param\tсигнал\tsignal\n'
     if a not in text:
         return ['самопроверка таблицы слов: нет заменяемой строки']
@@ -639,6 +650,8 @@ def selftest_table(text):
     bad = []
     if not check_table(text.replace(a, 'type\tсигнал\tsignal\n', 1))[0]:
         bad.append('самопроверка таблицы слов: вид параметра в группе `type` не замечен')
+    if not check_table(text.replace(a, 'kind_param\tсигнал\tsgnl\n', 1))[0]:
+        bad.append('самопроверка таблицы слов: испорченное английское слово вида `kind_param` не замечено')
     if not check_table(''.join(l for l in text.splitlines(True) if not l.startswith('kind_param\t')))[0]:
         bad.append('самопроверка таблицы слов: таблица без `kind_param` не замечена')
     return bad
