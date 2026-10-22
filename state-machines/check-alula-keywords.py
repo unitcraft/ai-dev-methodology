@@ -23,7 +23,10 @@
      в заголовке определения `определение имя(…) -> Тип` (`define`) первый знак `=` после типа результата — не `=>` (тело
      пишется после `=>`; `==`, `<=`, `>=`, `!=` знаком `=` не считаются); любой знак `->`, кроме типа результата после списка
      параметров определения и в `разбор: примитив[("роль")] -> Тип` (`parse:`), — ветка `выбор` или лямбда, они пишутся через `=>`;
-     а также тип `да/нет` (с 2.18 — `булево`, AL-66);
+     а также тип `да/нет` (с 2.18 — `булево`, AL-66); условное действие (действие, которое начинается словом `если`/`if`,
+     в столбце «Действия»/«действия» таблиц, во вложенном элементе списка и в строке-ключе «При входе»/«При приёме»),
+     ветки которого не в фигурных скобках `то { … } [иначе { … }]` (AL-70); условное выражение (`x = если a то (b) иначе c`)
+     действием не начинается и не проверяется;
   4а. убранное событие (AL-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
   5. JSON-имена (спецификация, 1а, «JSON-имя», AL-53, AL-58…AL-60) у объявленных имён, которые выходят из машины, — заголовок
      состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
@@ -334,15 +337,90 @@ def auto_name(name, pascal, gloss):
     return '_'.join(translit(w.lower()) for w in words)
 
 
+ACTION_COLUMNS = {'действия', 'actions'}  # столбцы действий: таблица состояния и «При приёме»
+ACTION_KEYS = re.compile(r'^- (?:При входе|При приёме|On entry|On accept):\s*(.*)$')
+COND_START = re.compile(r'^(?:если|if)\s')
+CELL_PIPE = re.compile(r'(?<!\\)\|')
+
+
+def top_word(s, words, start=0):
+    """Позиция первого слова из `words` (с пробелами вокруг) вне скобок ()[]{} начиная с `start`, или -1."""
+    depth = 0
+    for i in range(start, len(s)):
+        ch = s[i]
+        if ch in '([{':
+            depth += 1
+        elif ch in ')]}':
+            depth -= 1
+        elif depth == 0 and ch == ' ':
+            for w in words:
+                if s.startswith(' %s ' % w, i):
+                    return i + 1
+    return -1
+
+
+def closing(s, i):
+    """Позиция скобки, закрывающей открывающую `s[i]`."""
+    depth = 0
+    for j in range(i, len(s)):
+        depth += {'(': 1, '[': 1, '{': 1, ')': -1, ']': -1, '}': -1}.get(s[j], 0)
+        if depth == 0:
+            return j
+    return len(s)
+
+
+def old_conditional(action):
+    """Условное действие с ветками не в фигурных скобках (до 2.18: `то (…) иначе (…)`, AL-70).
+    Действие, которое начинается словом `если`, — всегда условное действие (условное выражение действием не бывает),
+    поэтому прежнюю запись можно отличить от условного выражения с круглой веткой (`x = если a то (b) иначе c`)."""
+    a = action.strip()
+    if not COND_START.match(a):
+        return False
+    k = top_word(a, ('то', 'then'))
+    if k < 0:
+        return True
+    rest = a[k:].split(' ', 1)[1].lstrip() if ' ' in a[k:] else ''
+    if not rest.startswith('{'):
+        return True
+    j = closing(rest, 0)
+    tail = rest[j + 1:].strip()
+    if not tail:
+        return False
+    w = tail.split(' ', 1)
+    return w[0] not in ('иначе', 'else') or len(w) < 2 or not w[1].lstrip().startswith('{')
+
+
+def actions_of(line, cols):
+    """Действия строки вне блока кода: ячейки столбцов действий таблицы, вложенный элемент списка «При входе»,
+    значение строки-ключа «При входе»/«При приёме»."""
+    if line.startswith('|'):
+        cells = [c.strip() for c in CELL_PIPE.split(line.strip())[1:-1]]
+        return [a for i in cols if i < len(cells) for a in split_top(cells[i].replace('\\|', '|'), ';')]
+    m = ACTION_KEYS.match(line)
+    if m:
+        return split_top(m.group(1), ';')
+    if re.match(r'^\s+- ', line):
+        return split_top(line.strip()[2:], ';')
+    return []
+
+
 def check_operators(text, name):
     """Знаки операторов только ASCII в блоках кода, строках таблиц и строках-ключах (AL-42); прежняя запись тела
     определения, ветки `выбор` и лямбды (`=`, `->` до 2.18, AL-67…AL-69) и тип `да/нет` (AL-66) — ошибка."""
     errs, in_code, header = [], False, DefHeader()
+    cols, prev_table = [], False
     for n, line in enumerate(text.split('\n'), 1):
         if line.startswith('```'):
             in_code = not in_code
             header.reset()
             continue
+        is_table = not in_code and line.startswith('|')
+        if is_table and not prev_table:
+            cols = [i for i, c in enumerate(CELL_PIPE.split(line.strip())[1:-1]) if c.strip().lower() in ACTION_COLUMNS]
+        prev_table = is_table
+        if not in_code and not re.match(r'^\|[-:| ]+\|$', line):
+            if any(old_conditional(a) for a in actions_of(line, cols if is_table else [])):
+                errs.append('%s:%d: ветки условного действия пишутся в фигурных скобках: `если выр то { … } иначе { … }` (AL-70)' % (name, n))
         if not (in_code or line.startswith('|') or line.lstrip().startswith('- ')):
             continue
         if any(ch in line for ch in UNICODE_OPS):
@@ -644,6 +722,9 @@ MUTATIONS = {
         ('многострочный заголовок, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число ='),
         ('`->` на следующей строке, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(п число>=0)\n  -> число ='),
         ('пробел перед скобкой, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора (п число>=0) -> число ='),
+        ('условное действие с ветками в круглых скобках (до 2.18)', 'то { журнал(событие_расхода(собрать_использование(запрос_агента, остановка, расход, начато, сейчас))) };',
+         'то (журнал(событие_расхода(собрать_использование(запрос_агента, остановка, расход, начато, сейчас))));'),
+        ('условное действие в ячейке с веткой `иначе` в круглых скобках', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если истина то { число_ходов += 1 } иначе (число_ходов += 2) | ХОД_АГЕНТА |'),
         ('лишняя строка `## Имена` у данного (словарь)', ROW_RU, ROW_RU + '| число_повторов | retry_count |\n'),
         ('лишняя строка `## Имена` у состояния (словарь)', ROW_RU, ROW_RU + '| СТАРТ | Start |\n'),
         ('лишняя строка `## Имена` у сигнала (словарь)', ROW_RU, ROW_RU + '| разрешить | allow |\n'),
@@ -689,6 +770,9 @@ MUTATIONS = {
         ('многострочный заголовок, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int ='),
         ('`->` на следующей строке, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int ='),
         ('пробел перед скобкой, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int ='),
+        ('условное действие с ветками в круглых скобках (до 2.18)', 'then { journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))) };',
+         'then (journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))));'),
+        ('условное действие в ячейке с веткой `else` в круглых скобках', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else (turn_count += 2) | AgentTurn |'),
         ('убранное событие word', '| 1 | signal(allow) |', '| 1 | word(allow) |'),
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
@@ -708,12 +792,16 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('многострочный заголовок с `) -> число =>`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число =>'),
         ('`->` на следующей строке', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(п число>=0)\n  -> число =>'),
         ('пробел перед скобкой', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора (п число>=0) -> число =>'),
+        ('условное действие в ячейке с `иначе { … }`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если истина то { число_ходов += 1 } иначе { число_ходов += 2; журнал(x) } | ХОД_АГЕНТА |'),
+        ('условное выражение с круглой веткой в действии', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += если истина то (1) иначе 2 | ХОД_АГЕНТА |'),
     ],
     'en': [
         ('однострочное тело через `=>` с `let`, `>=` и `==`', '-> int =>\n  fold(', '-> int => let k = n >= 0 in if k == true then fold('),
         ('многострочный заголовок с `) -> int =>`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int =>'),
         ('`->` на следующей строке', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int =>'),
         ('пробел перед скобкой', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int =>'),
+        ('условное действие в ячейке с `else { … }`', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else { turn_count += 2; journal(x) } | AgentTurn |'),
+        ('условное выражение с круглой веткой в действии', '| turn_count += 1 | AgentTurn |', '| turn_count += if true then (1) else 2 | AgentTurn |'),
     ],
 }
 

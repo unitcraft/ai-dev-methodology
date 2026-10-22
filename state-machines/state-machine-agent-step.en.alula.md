@@ -352,7 +352,7 @@ The Pause state is brought by the "Pause" fragment (section "Includes"); it is n
 - On entry:
   - let now = call(time_now);
   - call(close_agent_turn);
-  - if not has(usage) then (journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))));
+  - if not has(usage) then { journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))) };
   - journal(agent_step_stopped, reason: stop_reason)
 - Except: stop_reason in {""}
 
@@ -361,7 +361,7 @@ The Pause state is brought by the "Pause" fragment (section "Includes"); it is n
 - On entry:
   - let now = call(time_now);
   - call(close_agent_turn);
-  - if not has(usage) then (journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))));
+  - if not has(usage) then { journal(usage_event(collect_usage(agent_request, stop_reason, transport_usage, started, now))) };
   - journal(transition_note);
   - journal(all_data)
 
