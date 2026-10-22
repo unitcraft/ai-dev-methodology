@@ -14,7 +14,7 @@ The examples are taken from the pilots (excerpts of “Agent step” and “Meet
 
 Change labels: the prefix AL- (Alula); before 2.17 the labels were written as Я-NN, the number is the same (the owner's word, 2026-10-22: «AL- — ОК»).
 
-**Clarifications after 2.17 (the format does not change).** Text edits without a change of the language: `format: 2.17`, the hashes of the definitions file sample (section 8) and the glossary hash are the same. The word of the owner of the methodology, 2026-10-22: «по рекомендации».
+**Clarifications after 2.17 (the format does not change).** Text edits without a change of the language: `format: 2.17`, the hashes of the definitions file sample (section 8) and the glossary hash are the same. The word of the owner of the methodology, 2026-10-22 (methodology chat): «по рекомендации».
 
 | № | Change | Where |
 |---|---|---|
@@ -448,7 +448,7 @@ Example (pilots; the bounds and `writes` are as in the pilots, except `lenses`: 
 
 ### Lifetime of data
 
-A summary of what is said in sections 1–5, 7–9 and in rules 4, 12, 13, 14, 22, 31 of the [specification](state-machine-spec.md); there are no new rules (AL-65).
+A summary of what is said in sections 1–5, 7–9 and in rules 4, 12, 13, 14, 19, 22, 31 of the [specification](state-machine-spec.md); there are no new rules (AL-65).
 
 | Names | How long they live | Who sets and changes them |
 |---|---|---|
