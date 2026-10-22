@@ -36,8 +36,10 @@
      в ячейке события (столбцы «Событие»/«событие», `Event`/`event`; `event_cells`) — `in {`, образец `ответ: Вар(` и
      сигнал с полями `сигнал(с(`; в участках кода и строках таблиц — пустая `${}` и незакрытая вставка в текстовом
      литерале, литерал со вставкой рядом со знаком набора литералов (`|`, в таблице `\\|`) или внутри `in […]`; литерал
-     читается с экранированием `\\` и вложенными литералами во вставке (`string_end`); типы выражений во вставке не
-     проверяются (это проверка переводчика продукта);
+     читается с экранированием `\\` и вложенными литералами во вставке (`string_end`); `in` после `for each <имя>` —
+     слово цикла, а не множество (`loop_in`); типы выражений во вставке не проверяются (это проверка переводчика
+     продукта); пространство вызовов (AL-81, `check_calls`): имя определения (как написано и английское имя по 1а,
+     `auto_name`) и примитива (как написано и JSON-имя) не совпадает со словом функции каталога и с `range`;
   4а. убранное событие (AL-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
   5. JSON-имена (спецификация, 1а, «JSON-имя», AL-53, AL-58…AL-60) у объявленных имён, которые выходят из машины, — заголовок
      состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
@@ -633,6 +635,14 @@ def event_cells(text):
     return out
 
 
+LOOP_HEAD = re.compile(r'(?<!\w)for\s+each\s+\w+\s*$')  # `for each x` перед `in`: слово цикла, а не множество (AL-79)
+
+
+def loop_in(seg, i):
+    """Слово `in` в позиции i — слово цикла `for each <имя> in` (английский файл; в русском у цикла слово `в`)."""
+    return LOOP_HEAD.search(seg, 0, i) is not None
+
+
 def literal_errors(seg, table):
     """Вставки в текстовых литералах участка (AL-80): пустая и незакрытая вставка; литерал со вставкой рядом со знаком
     набора литералов (`|`; в строке таблицы — `\\|`) и внутри `in […]`. Возвращает список (позиция, метка)."""
@@ -655,6 +665,8 @@ def literal_errors(seg, table):
         if near:
             errs.append((a, 'SET_INS'))
     for m in IN_LIST.finditer(seg):
+        if loop_in(seg, m.start()):
+            continue
         x = block_close(seg, m.end() - 1)
         errs += [(a, 'IN_INS') for a, b in spans if m.end() <= a < x]
     return errs
@@ -677,7 +689,7 @@ def check_v219(text, name, lang):
             if m.start() in outside:
                 found.append((first, m.start(), seg, 'MACRO', m.group(1)))
         for m in IN_BRACE.finditer(seg):
-            if m.start() in outside:
+            if m.start() in outside and not loop_in(seg, m.start()):
                 found.append((first, m.start(), seg, 'IN', ''))
     for first, cell in event_cells(text):
         outside = set(outside_strings(cell))
@@ -696,6 +708,35 @@ def check_v219(text, name, lang):
         e = '%s:%d: %s' % (name, first + seg.count('\n', 0, pos) + 1, msg)
         if e not in errs:
             errs.append(e)
+    return errs
+
+
+DEF_NAME = re.compile(r'^\s*(?:определение|define|definition)\s+([^\s(]+)\s*\(')
+
+
+def check_calls(text, words, name, lang, gloss):
+    """Пространство вызовов (1а, AL-81): имя определения (как написано и английское имя по 1а — словарь или
+    транслитерация, `auto_name`) и имя примитива (как написано и JSON-имя, `json_names`) не совпадают со словом функции
+    каталога ни в одном языке (вид `catalog` таблицы слов) и с `range` (имя вызова диапазона в дереве, AL-76)."""
+    cat = words['catalog'][0] | words['catalog'][1] | {'range'}
+    errs, in_code = [], False
+    for n, line in enumerate(text.split('\n'), 1):
+        if line.startswith('```'):
+            in_code = not in_code
+            continue
+        m = DEF_NAME.match(line) if in_code else None
+        if m:
+            nm = m.group(1)
+            hit = sorted({nm, auto_name(nm, False, gloss)} & cat)
+            if hit:
+                errs.append('%s:%d: определение `%s` совпадает с функцией каталога `%s` (пространство вызовов, AL-81)' % (
+                    name, n, nm, hit[0]))
+    readable = words['readable'][0 if lang == 'ru' else 1]
+    for n, where, pascal, nm, path, js in json_names(text, lang, gloss, readable)[0]:
+        hit = sorted({nm, js} & cat) if where == 'примитива' else []
+        if hit:
+            errs.append('%s:%d: примитив `%s` совпадает с функцией каталога `%s` (пространство вызовов, AL-81)' % (
+                name, n, nm, hit[0]))
     return errs
 
 
@@ -944,7 +985,7 @@ def check_json_names(text, words, name, lang, gloss, contract=None):
 
 def check_sample(text, words, name, lang, gloss):
     contract = [en for ru, en in words['readable_pairs'] if ru in CONTRACT_DATA] if 'readable_pairs' in words else []
-    errs = check_operators(text, name) + check_v219(text, name, lang) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
+    errs = check_operators(text, name) + check_v219(text, name, lang) + check_calls(text, words, name, lang, gloss) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
     own = {k: v[0 if lang == 'ru' else 1] for k, v in words.items() if k in KINDS}
     other = {k: v[1 if lang == 'ru' else 0] for k, v in words.items() if k in KINDS}
     declared = re.search(r'^- language: (\w+)\s*$', text, re.M)
@@ -992,6 +1033,9 @@ MUTATIONS = {
         ('незакрытая вставка', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "ход ${число_ходов" | ХОД_АГЕНТА |'),
         ('литерал со вставкой в наборе литералов', '| ход | "first" \\| "retry"', '| ход | "first${число_ходов}" \\| "retry"'),
         ('литерал со вставкой в `in […]`', '- Кроме: остановка in [""]', '- Кроме: остановка in ["${число_ходов}"]'),
+        ('определение с английским именем функции каталога по словарю (`добавить` → `concat`)', 'определение пауза_повтора(п число>=0) -> число =>', 'определение добавить(а число) -> число =>\n  а\n\nопределение пауза_повтора(п число>=0) -> число =>'),
+        ('определение с именем функции каталога', 'определение пауза_повтора(п число>=0) -> число =>', 'определение склеить(а текст, б текст) -> текст =>\n  а + б\n\nопределение пауза_повтора(п число>=0) -> число =>'),
+        ('настоящее множество `in […]` со вставкой в условии', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если остановка in ["a${число_ходов}"] то { число_ходов += 1 } | ХОД_АГЕНТА |'),
         ('ветка с текстовым образцом через `->`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; "ask" -> "ask";'),
         ('ветка со стражем через `->`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если есть(вид_действия) -> истина;'),
         ('трёхместная лямбда через `->`', '(н, _) => н * 2', '(а, б, в) -> а * 2'),
@@ -1065,6 +1109,9 @@ MUTATIONS = {
         ('незакрытая вставка', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${turn_count" | AgentTurn |'),
         ('литерал со вставкой в наборе литералов', '| turn | "first" \\| "retry"', '| turn | "first${turn_count}" \\| "retry"'),
         ('литерал со вставкой в `in […]`', '- Except: stop_reason in [""]', '- Except: stop_reason in ["${turn_count}"]'),
+        ('определение с именем функции каталога `concat`', 'define retry_pause(n int>=0) -> int =>', 'define concat(a int) -> int =>\n  a\n\ndefine retry_pause(n int>=0) -> int =>'),
+        ('определение с именем вызова диапазона `range`', 'define retry_pause(n int>=0) -> int =>', 'define range(a int) -> int =>\n  a\n\ndefine retry_pause(n int>=0) -> int =>'),
+        ('настоящее множество `in […]` со вставкой в условии', '| turn_count += 1 | AgentTurn |', '| if stop_reason in ["a${turn_count}"] then { turn_count += 1 } | AgentTurn |'),
         ('ветка с текстовым образцом через `->`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; "ask" -> "ask";'),
         ('ветка со стражем через `->`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if has(action) -> true;'),
         ('трёхместная лямбда через `->`', '(m, _) => m * 2', '(a, b, c) -> a * 2'),
@@ -1107,6 +1154,8 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('диапазон и методы макросов в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += (1..число_ходов + 1).фильтр(x => x > 0).количество(x => истина) | ХОД_АГЕНТА |'),
         ('метод `словарь` на литерале списка и поле записи после точки', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += длина([1, 2].словарь(x => x, x => x)) + расход.токены | ХОД_АГЕНТА |'),
         ('литерал без вставки в `in […]`, одиночный знак `$`', '- Кроме: остановка in [""]', '- Кроме: остановка in ["", "$5"]'),
+        ('определение с именем, не совпадающим с функцией каталога', 'определение пауза_повтора(п число>=0) -> число =>', 'определение добавить_всё(а число) -> число =>\n  а\n\nопределение пауза_повтора(п число>=0) -> число =>'),
+        ('`для каждого … в [ … ]` со вставками в элементах', '| число_ходов += 1 | ХОД_АГЕНТА |', '| для каждого x в ["a${число_ходов}", "b"] { число_ходов += 1 } | ХОД_АГЕНТА |'),
         ('многострочный заголовок с `) -> число =>`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число =>'),
         ('`->` на следующей строке', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(п число>=0)\n  -> число =>'),
         ('пробел перед скобкой', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора (п число>=0) -> число =>'),
@@ -1124,6 +1173,8 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('вставки в действии и экранированный знак `\\${`', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${turn_count} of ${RETRIES}, \\${x}"; turn_count += 1 | AgentTurn |'),
         ('вложенный литерал со вставкой внутри вставки', '| turn_count += 1 | AgentTurn |', '| reply_text = "${if true then { "has ${turn_count}" } else { "none" }}" | AgentTurn |'),
         ('диапазон и методы макросов в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += (1..turn_count + 1).filter(x => x > 0).count(x => true) | AgentTurn |'),
+        ('определение с именем, не совпадающим с функцией каталога', 'define retry_pause(n int>=0) -> int =>', 'define concat_all(a int) -> int =>\n  a\n\ndefine retry_pause(n int>=0) -> int =>'),
+        ('`for each … in [ … ]` со вставками в элементах', '| turn_count += 1 | AgentTurn |', '| for each x in ["a${turn_count}", "b"] { turn_count += [x] } | AgentTurn |'),
         ('многострочный заголовок с `) -> int =>`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int =>'),
         ('`->` на следующей строке', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int =>'),
         ('пробел перед скобкой', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int =>'),
