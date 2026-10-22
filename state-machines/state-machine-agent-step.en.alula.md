@@ -1,11 +1,11 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: alula-2.21
-- format: 2.21
+- machine_version: alula-2.22
+- format: 2.22
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.21 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, functions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, functions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
+This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.22 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, functions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, functions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The first source is this Alula record; the old tables are in the archive and are not updated.** The former notation is the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md). The "Pause" fragment is [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-alula-samples.py](check-alula-samples.py).
 
@@ -14,29 +14,29 @@ This is an **illustration**: the "Agent step" machine in full, written in the Al
 ## Types
 
 ```
-enum CallerKind = Lens | CycleSession | ChatTurn | Gatekeeper
-enum ActionKind = Read "read" | Write "write" | Delete "delete" | Move "move" | Search "search"
-                | Execute "execute" | Network "network" | Think "think" | SwitchMode "switch_mode" | Other "other"
-enum ReplyCheck = Valid | Violated | Empty
-enum FailCode = NoResult "no_result" | ModelRefused "model_refused" | ConnectionLost "connection_lost"
-              | FormNotFixed "form_not_fixed" | Timeout "timeout" | StoppedByHuman "stopped_by_human"
-              | CeilingReached "ceiling_reached" | Cancelled "cancelled" | MaxTokens "max_tokens"
-              | MaxTurnRequests "max_turn_requests"
+enum CallerKind Lens | CycleSession | ChatTurn | Gatekeeper
+enum ActionKind Read = "read" | Write = "write" | Delete = "delete" | Move = "move" | Search = "search"
+                | Execute = "execute" | Network = "network" | Think = "think" | SwitchMode = "switch_mode" | Other = "other"
+enum ReplyCheck Valid | Violated | Empty
+enum FailCode NoResult = "no_result" | ModelRefused = "model_refused" | ConnectionLost = "connection_lost"
+              | FormNotFixed = "form_not_fixed" | Timeout = "timeout" | StoppedByHuman = "stopped_by_human"
+              | CeilingReached = "ceiling_reached" | Cancelled = "cancelled" | MaxTokens = "max_tokens"
+              | MaxTurnRequests = "max_turn_requests"
 
-type AgentModel { id text, provider text, variant ?text }
+type AgentModel { id str, provider str, variant ?str }
 type TokenUsage { input ?int, output ?int, reasoning ?int, cache_read ?int, cache_write ?int }
-type AgentProfile { family text, model text, effort ?text }
-type AgentLimits { silence_term ?int, token_budget ?int, cost_budget ?float, turn_limit ?int }
-type AgentRequest { kind CallerKind, profile AgentProfile, session text, dialog_kind text, context text,
-                    limits AgentLimits, trace text, step int }
-type TransportUsage { model AgentModel, tokens TokenUsage, cost ?float, context_used ?int, request_started int }
-type Usage { session text, result text, family text, model AgentModel, tokens TokenUsage, cost ?float,
-             created int, updated int, context_used ?int, trace text, step int }
-type AgentReply { text ?text, artifact ?text, usage Usage, request_started ?int }
-type PermissionRequest { action ActionKind, description text }
+type AgentProfile { family str, model str, effort ?str }
+type AgentLimits { silence_term ?int, token_budget ?int, cost_budget ?f64, turn_limit ?int }
+type AgentRequest { kind CallerKind, profile AgentProfile, session str, dialog_kind str, context str,
+                    limits AgentLimits, trace str, step int }
+type TransportUsage { model AgentModel, tokens TokenUsage, cost ?f64, context_used ?int, request_started int }
+type Usage { session str, result str, family str, model AgentModel, tokens TokenUsage, cost ?f64,
+             created int, updated int, context_used ?int, trace str, step int }
+type AgentReply { text ?str, artifact ?str, usage Usage, request_started ?int }
+type PermissionRequest { action ActionKind, description str }
 
 variant TurnResult {
-  Finished { text ?text, artifact ?text, transport_usage TransportUsage }
+  Finished { text ?str, artifact ?str, transport_usage TransportUsage }
   Truncated { transport_usage TransportUsage }
   TurnRequestLimit { transport_usage TransportUsage }
   ModelRefusal { transport_usage TransportUsage }
@@ -47,7 +47,7 @@ variant TurnResult {
 }
 ```
 
-The envelope types (request, response, refusal) are not declared: the executor builds them; the machine writes only `Response(value)` and `Refusal(code, text)` (section "Ends"). The source calls "float" non-negative; the format does not express a bound on a float, so the `?float` fields have no bound, as in the code. The values of `ActionKind` and `FailCode` (the texts in quotes) are the texts of the journal and of the wire; `CallerKind` and `ReplyCheck` have no values in the source, in the data they go by the JSON name of the element.
+The envelope types (request, response, refusal) are not declared: the executor builds them; the machine writes only `Response(value)` and `Refusal(code, text)` (section "Ends"). The source calls "float" non-negative; the format does not express a bound on a float, so the `?f64` fields have no bound, as in the code. The values of `ActionKind` and `FailCode` (the texts in quotes) are the texts of the journal and of the wire; `CallerKind` and `ReplyCheck` have no values in the source, in the data they go by the JSON name of the element.
 
 ## Constants
 
@@ -73,11 +73,11 @@ The sources call both values a project parameter but give no project key: the co
 |---|---|---|
 | kind | CallerKind | the caller kind |
 | profile | AgentProfile | the agent profile; at the caller — the column `profile` of its "Parties" |
-| session | text | the agent session |
-| dialog_kind | text | the dialog kind |
-| context | text | the turn context |
+| session | str | the agent session |
+| dialog_kind | str | the dialog kind |
+| context | str | the turn context |
 | limits | AgentLimits | the step limits |
-| trace | text | the trace of the caller |
+| trace | str | the trace of the caller |
 | step | int | the step number of the caller |
 
 The input fields are exactly the fields of `AgentRequest`: the callers name the party `machine agent_step(input AgentRequest, result AgentReply)`, and the fields of their request are the fields of this type (the format, section 1, "The input of a called machine"). The record `agent_request` as a whole is built by `initial` in "Data". The input has no invariant. The call request identifier (`call_request_id`) is not in the input: the executor supplies it.
@@ -96,8 +96,8 @@ The data of the "Pause" fragment (`previous`, `call_request_id`, `open_requests`
 | turn_count | int>=0 | 0 | yes | rows |
 | turn_before_retry | ?("first" \| "retry" \| "continue" \| "fix" \| "permission") | none | — | rows |
 | transport_usage | ?TransportUsage | none | — | rows |
-| reply_text | ?text | none | — | rows |
-| reply_artifact | ?text | none | — | rows |
+| reply_text | ?str | none | — | rows |
+| reply_artifact | ?str | none | — | rows |
 | permission_request | ?PermissionRequest | none | — | rows |
 | permission_decision | ?("allow" \| "deny") | none | — | rows |
 | started | ?int | none | — | rows |
@@ -115,7 +115,7 @@ The bound `turn_count <= turn limit` is not written: when the limit is below 1, 
 |---|---|---|---|---|---|
 | agent | agent | agent(result TurnResult) | — | — | agent_attempt |
 | gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | allow, deny | gatekeeper_attempt |
-| enhanced | enhanced | enhanced(result GateOutcome) | — | continue { human_word text, author text, source text }, halt | enhanced_attempt |
+| enhanced | enhanced | enhanced(result GateOutcome) | — | continue { human_word str, author str, source str }, halt | enhanced_attempt |
 
 - Request limit: 1
 
@@ -127,7 +127,7 @@ The agent profile lies inside `agent_request.profile` and goes to the party as p
 fn sum_ints(a ?int, b ?int) -> ?int =>
   if has(a) and has(b) then { (a ?? 0) + (b ?? 0) } else { a ?? b }
 
-fn sum_floats(a ?float, b ?float) -> ?float =>
+fn sum_floats(a ?f64, b ?f64) -> ?f64 =>
   if has(a) and has(b) then { (a ?? 0.0) + (b ?? 0.0) } else { a ?? b }
 
 fn add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
@@ -148,7 +148,7 @@ fn tokens_spent(tu ?TransportUsage) -> int =>
   then { let p = require(tu); (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0) }
   else { 0 }
 
-fn cost_spent(tu ?TransportUsage) -> float =>
+fn cost_spent(tu ?TransportUsage) -> f64 =>
   if has(tu) then { require(tu).cost ?? 0.0 } else { 0.0 }
 
 fn token_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
@@ -164,7 +164,7 @@ fn interactive(call_kind CallerKind) -> bool =>
   call_kind == CallerKind.CycleSession or call_kind == CallerKind.ChatTurn
 
 fn needs_elevated_attention(action ActionKind) -> bool =>
-  match action { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true;
+  match action { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true,
                  else => false }
 
 fn decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" {
@@ -175,13 +175,13 @@ fn decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "den
 fn retry_pause(n int>=0) -> int =>
   (1..n).fold(RETRY_PAUSE, (m, _) => m * 2)
 
-fn turn_term(req AgentRequest, request_turn text, retries int>=0) -> int {
+fn turn_term(req AgentRequest, request_turn str, retries int>=0) -> int {
   let extra = if request_turn == "retry" then { retry_pause(retries) } else { 0 };
   let term = req.limits.silence_term;
   if has(term) then { (term ?? 0) + extra } else { 0 }
 }
 
-fn collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage {
+fn collect_usage(req AgentRequest, stopped str, tu ?TransportUsage, began ?int, updated int) -> Usage {
   let step_result = if stopped == "" then { "reply" } else { stopped };
   Usage {
     session: req.session, result: step_result, family: req.profile.family,

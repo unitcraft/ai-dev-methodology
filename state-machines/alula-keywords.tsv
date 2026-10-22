@@ -102,8 +102,8 @@ decl	вариант	variant
 decl	функция	fn
 type	число	int
 type	число>=	int>=
-type	дробное	float
-type	текст	text
+type	дробное	f64
+type	текст	str
 type	булево	bool
 type	ид	id
 type	словарь	map
@@ -114,7 +114,7 @@ type	Сигнал	Signal
 type	СобытиеЖурнала	JournalEvent
 type	ИсходВорот	GateOutcome
 kind_param	сигнал	signal
-kind_param	текст	text
+kind_param	текст	str
 kind_param	[]машина	[]machine
 kind_param	поведение	behavior
 kind_param	примечание	note
@@ -138,9 +138,7 @@ action	вызвать	call
 action	передать	pass
 action	отменить_открытые	cancel_open
 action	кроме	except
-action	для	for
-action	каждого	each
-action	для каждого	for each
+action	для каждого	for
 action	в	in
 action	если	if
 action	то	then

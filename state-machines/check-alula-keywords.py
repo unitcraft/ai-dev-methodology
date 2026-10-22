@@ -10,7 +10,7 @@
      `kind` — из закрытого перечня (header, section, column, kind_state, key, kind_party, kind_param, event, destination, decl, type,
      expr, action, operator, readable, catalog, enum_value), каждый вид представлен; в пределах вида слова `ru` не повторяются и слова `en`
      не повторяются (в разных видах слово может повторяться); вид `kind_param` (виды параметров фрагмента, раздел 9, AL-63) — ровно
-     `сигнал`, `текст`, `[]машина`, `поведение`, `примечание` с английскими словами ровно `signal`, `text`, `[]machine`, `behavior`, `note`
+     `сигнал`, `текст`, `[]машина`, `поведение`, `примечание` с английскими словами ровно `signal`, `str`, `[]machine`, `behavior`, `note`
      (по парам), и из них в виде `type` стоит только `текст` (виды параметров — не типы данных);
   2. русский образец: структурные слова (имена шапки и ключи шапки, заголовки разделов `##`, строки-ключи `- Ключ:` и `Начальное состояние:`,
      заголовки столбцов таблиц, виды состояний в заголовках `###`) есть в таблице в колонке `ru` своего вида;
@@ -26,7 +26,7 @@
      лямбда, они пишутся через `=>`;
      а также тип `да/нет` (с 2.18 — `булево`, AL-66); после `то`/`then` условного действия или выражения и после
      `иначе`/`else` его ветки — не блок `{ … }` или пустой блок (AL-70, AL-71); `если` с блоком без `то` (без `то`
-     допустим только страж ветки `выбор`, до `=>`); `для каждого`/`for each` без блока `{ … }` после выражения
+     допустим только страж ветки `выбор`, до `=>`); `для каждого`/`for` (до 2.22 — `for each`) без блока `{ … }` после выражения
      коллекции, в том числе с двоеточием (AL-72); `пусть`/`let`, после которого до конца привязки (`;`, конец ячейки,
      конец группы, пустая строка) на глубине 0 стоит слово `в`/`in`, — прежние действие и выражение `пусть … в`
      (AL-73, AL-75); блоки проверяются только в местах кода (`code_segments`): блок кода целиком, ячейки столбцов кода
@@ -37,7 +37,7 @@
      в ячейке события (столбцы «Событие»/«событие», `Event`/`event`; `event_cells`) — `in {`, образец `ответ: Вар(` и
      сигнал с полями `сигнал(с(`; в участках кода и строках таблиц — пустая `${}` и незакрытая вставка в текстовом
      литерале, литерал со вставкой рядом со знаком набора литералов (`|`, в таблице `\\|`) или внутри `in […]`; литерал
-     читается с экранированием `\\` и вложенными литералами во вставке (`string_end`); `in` после `for each <имя>` —
+     читается с экранированием `\\` и вложенными литералами во вставке (`string_end`); `in` после `for <имя>` —
      слово цикла, а не множество (`loop_in`); типы выражений во вставке не проверяются (это проверка переводчика
      продукта); пространство вызовов (AL-81, `check_calls`): имя функции (как написано и английское имя по 1а,
      `auto_name`) и примитива (как написано и JSON-имя) не совпадает со словом функции каталога и с `range`, а имя
@@ -56,7 +56,23 @@
      `то`/`иначе`/`then`/`else`), с `:` на глубине 0 до первого `;` или закрывающей `}` и без `...` в начале — прежний
      литерал словаря, и пустые `{}` (AL-85, `old_dict`; литерал `{к: з}` сразу после имени формой не отличим от литерала
      записи `Тип { поле: выр }` — его ловит проверка типов переводчика продукта); `..` с пробелом перед `=` (`a.. =b`)
-     и `..==` (AL-86);
+     и `..==` (AL-86); прежняя запись до 2.22 (AL-87…AL-94, функция `check_v222`): в участках кода — `;` на глубине 0
+     между ветками `выбор`/`match` (ветки разделяет `,`; `;` внутри блока ветки `=> { … }` не в счёт) и `,` после последней
+     ветки (AL-87); в блоке кода — заголовок `перечисление`/`enum`, где сразу после имени стоит `=`, и элемент
+     перечисления, за которым текстовый литерал стоит без `=` (`Эл "значение"`; с 2.22 — `Эл = "значение"`, AL-89);
+     в ячейках кода таблиц, значениях строк-ключей кода и вложенном списке «При входе» — `//` вне текстовых литералов
+     (комментарий `//` — только в блоках кода и после заголовков `##`/`###`, AL-90; `strip_comment` снимает его в блоках
+     кода до всех проверок, `structural` — в заголовках; `//` внутри литерала, `"http://x"`, — текст); в участках кода —
+     числовой литерал по правилу D44 Новы, который упирается в букву, цифру или `_` имени (`1__0`, `1_`, `1_e5`, `1e`,
+     `1.5_`, `0x1F`; `number_errors`; `_1` — имя, а не число, и этой проверкой не ловится; строка подключения файла
+     функций с хешем не читается) (AL-91); в текстовых литералах участков кода и строк таблиц — escape вне закрытого
+     списка `\\"`, `\\\\`, `\\$`, `\\n`, `\\t`, `\\r`, `\\0`, `\\u{HEX}` (1–6 знаков, не суррогат и не больше 10FFFF; в
+     строке таблицы `\\|` — экранирование ячейки, AL-92; `string_end` с `esc`); в английском файле — цикл `for each` (с 2.22 —
+     `for x in xs`) и слова `text`/`float` в позиции типа (с 2.22 — `str`/`f64`, AL-94; позиции типа — тип поля в
+     фигурных скобках блока `## Types` и сигнала в столбце `signals`, параметр и тип результата в заголовке `fn`, ячейки
+     столбцов `type` и `result`, тип параметра в столбце `parameters`, параметры вида стороны в столбце `kind`; функции
+     каталога `text(x)`, `float(x)` и имена полей `text` не ловятся, `old_type_words`); голые имена элементов
+     перечисления и вариантов без полей (AL-88) скрипт не проверяет: их разрешает проверка типов переводчика продукта;
   4а. убранное событие (AL-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
   5. JSON-имена (спецификация, 1а, «JSON-имя», AL-53, AL-58…AL-60) у объявленных имён, которые выходят из машины, — заголовок
      состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
@@ -81,13 +97,17 @@
      круглых скобках, `in {…}`, знак `‥`; пустая и незакрытая вставка, вставка в наборе литералов и в `in […]`; объявление
      сигнала с полями и альтернатива `выбор` в круглых скобках, AL-82; слово `определение`/`define`, раздел
      `## Определения`, строка `определения:`, `=> {` после заголовка функции, литерал словаря и `{}` в фигурных скобках,
-     `.. =` и `..==`, AL-83…AL-86), JSON-имени
+     `.. =` и `..==`, AL-83…AL-86; `;` между ветками и `,` после последней ветки `выбор`, `=` после имени перечисления
+     и значение элемента без `=`, `//` в ячейке, числа `1__0`, `1_`, `1e`, `1_e5`, неизвестный escape, английские `for each`
+     и `text`/`float` в позиции типа, AL-87…AL-94), JSON-имени
      (лишняя строка `## Имена`,
      строка для необъявленного, внутреннего или читаемого имени, повтор имени в таблице, нелатинское JSON-имя, скобки
      в объявлении, имя без латинского JSON-имени, два состояния, два данных, два поля одной записи с одним JSON-именем,
      состояние с JSON-именем состояния фрагмента, смешанное слово) в копии образцов «Шага агента» и изменённая запись
      словаря дают ошибку, исправный образец — нет; одно JSON-имя в разных пространствах и смешение письменностей через `_`
-     ошибки не дают; в копии таблицы слов вид параметра фрагмента, перенесённый обратно в `type`, испорченное английское слово
+     ошибки не дают, так же как комментарий `//` в блоке кода и после заголовка, `"http://x"`, числа `1_000`, `1e-7`,
+     `1.5e3`, `2E5`, `1_000.5`, поле кортежа `к.0`, escape закрытого списка, голые имена элементов в `выбор` и `in […]`,
+     английские `text(x)` и поле `text`; в копии таблицы слов вид параметра фрагмента, перенесённый обратно в `type`, испорченное английское слово
      вида `kind_param` (`сигнал sgnl`) и таблица без вида `kind_param`
      дают ошибку, исправная таблица — нет.
 Пропускает: прозу, имена и значения (кроме проверки 5) и содержимое ячеек таблиц (кроме заголовков и проверок 4, 5).
@@ -103,7 +123,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TABLE = 'alula-keywords.tsv'
 GLOSSARY = 'state-machine-glossary.md'
 SPECS = [('state-machine-alula-spec.md', 'хеш словаря'), ('state-machine-alula-spec.en.md', 'glossary hash')]
-DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 и тем же в 2.17–2.21 (спецификация, 1а, AL-62)
+DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 и тем же в 2.17–2.22 (спецификация, 1а, AL-62)
 GLOSSARY_VERSION = 11  # версия словаря (для людей), при которой закреплён хеш; проверка сверяет хеш, а не номер
 NORMATIVE_TABLES = ['2.%d' % i for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 16)]  # разделы-таблицы словаря; 2.10 — записи
 SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-step.en.alula.md', 'en'),
@@ -114,7 +134,7 @@ KINDS = ['header', 'section', 'column', 'kind_state', 'key', 'kind_party', 'kind
 KIND_PARAM = ('сигнал', 'текст', '[]машина', 'поведение', 'примечание')
 KIND_PARAM_ALSO_TYPE = ('текст',)
 # пары «русское слово -> английское слово» вида `kind_param`: английская колонка проверяется так же строго, как русская
-KIND_PARAM_PAIRS = (('сигнал', 'signal'), ('текст', 'text'), ('[]машина', '[]machine'), ('поведение', 'behavior'),
+KIND_PARAM_PAIRS = (('сигнал', 'signal'), ('текст', 'str'), ('[]машина', '[]machine'), ('поведение', 'behavior'),
                     ('примечание', 'note'))
 FRAGMENT_STATE = 'Pause'  # JSON-имя состояния, которое приносит подключённый фрагмент «Пауза» (раздел 9)
 # данные контракта и фрагмента «Пауза» — читаемые имена таблицы слов: их JSON-имена (слово `en`) занимают пространство данных (AL-58)
@@ -189,7 +209,7 @@ def structural(text, lang='ru'):
         if m and n == 1:
             out.append((n, 'header', m.group(1)))
             continue
-        m = re.match(r'^## (.+?)\s*$', line)
+        m = re.match(r'^## (.+?)\s*$', strip_comment(line))  # `## Раздел     // комментарий` (AL-90)
         if m:
             in_header = False
             out.append((n, 'section', m.group(1)))
@@ -307,6 +327,17 @@ def mask_strings(line):
             continue
         i += 1
     return ''.join(out)
+
+
+def comment_at(line):
+    """Позиция `//` вне текстовых литералов или -1 (AL-90): в блоке кода и после заголовка `##`/`###` — начало комментария."""
+    return mask_strings(line).find('//')
+
+
+def strip_comment(line):
+    """Строка блока кода без комментария `//` до конца строки (AL-90); `//` внутри литерала (`"http://x"`) — текст."""
+    c = comment_at(line)
+    return line if c < 0 else line[:c].rstrip()
 
 
 def old_records(line, header=None):
@@ -441,14 +472,25 @@ def word_at(s, i, w):
     return not WORD_CH.match(before) and not WORD_CH.match(after)
 
 
-def string_end(s, i, errs=None):
+ESCAPE = re.compile(r'\\(?:["\\$ntr0]|u\{([0-9A-Fa-f]{1,6})\})')  # закрытый список escape (AL-92, D467 §2 Новы)
+
+
+def string_end(s, i, errs=None, esc=None, table=False):
     """Позиция после строкового литерала, который начинается кавычкой в позиции i: знак `\\` экранирует следующий знак,
     вставка `${ … }` (AL-80) читается до своей `}` с вложенными литералами; нет закрывающей кавычки — конец строки.
-    В `errs` (список) кладутся (позиция, метка): `EMPTY_INS` — пустая вставка `${}`, `OPEN_INS` — незакрытая вставка."""
+    В `errs` (список) кладутся (позиция, метка): `EMPTY_INS` — пустая вставка `${}`, `OPEN_INS` — незакрытая вставка.
+    В `esc` (список) кладутся позиции escape вне закрытого списка (AL-92): `\\"`, `\\\\`, `\\$`, `\\n`, `\\t`, `\\r`, `\\0`,
+    `\\u{HEX}` (1–6 знаков, не суррогат, не больше 10FFFF); в строке таблицы (`table`) `\\|` — экранирование ячейки."""
     j = i + 1
     while j < len(s):
         ch = s[j]
         if ch == '\\':
+            if esc is not None:
+                m = ESCAPE.match(s, j)
+                cp = int(m.group(1), 16) if m and m.group(1) else None
+                ok = m is not None and (cp is None or not (0xD800 <= cp <= 0xDFFF or cp > 0x10FFFF))
+                if not ok and not (table and s.startswith('\\|', j)):
+                    esc.append(j)
             j += 2
             continue
         if ch == '"':
@@ -457,7 +499,7 @@ def string_end(s, i, errs=None):
             depth, k = 1, j + 2
             while k < len(s) and depth:
                 if s[k] == '"':
-                    k = string_end(s, k, errs)
+                    k = string_end(s, k, errs, esc, table)
                     continue
                 depth += {'{': 1, '}': -1}.get(s[k], 0)
                 k += 1
@@ -538,7 +580,7 @@ def block_errors(seg):
     """Прежняя запись блоков (до 2.18) в участке кода: позиции и метки.
     (а) условное действие и выражение: после `то`/`then` и `иначе`/`else` — непустой блок `{ … }` (AL-70, AL-71);
     `если` без `то` допустим только как страж ветки `выбор` (до `=>`); блок без `то` — ошибка;
-    (б) `для каждого`/`for each`: после выражения коллекции — блок `{ … }`, без двоеточия (AL-72);
+    (б) `для каждого`/`for` (AL-94): после выражения коллекции — блок `{ … }`, без двоеточия (AL-72);
     (в) `пусть`/`let` со словом `в`/`in` до конца привязки (AL-73, AL-75).
     Слова внутри строковых литералов не читаются."""
     out = []
@@ -568,7 +610,7 @@ def block_errors(seg):
                 label, _ = branch_errors(seg, e0)
                 if label:
                     out.append((i, label))
-        for w_for, w_in in (('для каждого', 'в'), ('for each', 'in')):
+        for w_for, w_in in (('для каждого', 'в'), ('for', 'in')):
             if word_at(seg, i, w_for):
                 c = scan_top(seg, i + len(w_for), lambda s, j: s[j] in ':{;|' or s.startswith('\n\n', j))
                 if c < 0 or seg[c] != '{':
@@ -602,6 +644,8 @@ def check_operators(text, name):
             continue
         if not (in_code or line.startswith('|') or line.lstrip().startswith('- ')):
             continue
+        if in_code:
+            line = strip_comment(line)  # комментарий `//` блока кода (AL-90) не читается
         if any(ch in line for ch in UNICODE_OPS):
             errs.append('%s:%d: знак оператора не ASCII (%s)' % (name, n, ''.join(ch for ch in UNICODE_OPS if ch in line)))
         old_body, arrows = old_records(line, header if in_code else None)
@@ -627,7 +671,7 @@ def code_segments(text):
             if start is None:
                 start = n + 1
             else:
-                segs.append((start, '\n'.join(lines[start:n])))
+                segs.append((start, '\n'.join(strip_comment(l) for l in lines[start:n])))  # без комментариев `//` (AL-90)
                 start = None
             continue
         if start is not None:
@@ -702,11 +746,11 @@ def event_cells(text):
     return out
 
 
-LOOP_HEAD = re.compile(r'(?<!\w)for\s+each\s+\w+\s*$')  # `for each x` перед `in`: слово цикла, а не множество (AL-79)
+LOOP_HEAD = re.compile(r'(?<!\w)for\s+(?:each\s+)?\w+\s*$')  # `for x` перед `in` (до 2.22 — `for each x`): слово цикла, а не множество (AL-79, AL-94)
 
 
 def loop_in(seg, i):
-    """Слово `in` в позиции i — слово цикла `for each <имя> in` (английский файл; в русском у цикла слово `в`)."""
+    """Слово `in` в позиции i — слово цикла `for <имя> in` (английский файл; в русском у цикла слово `в`)."""
     return LOOP_HEAD.search(seg, 0, i) is not None
 
 
@@ -886,6 +930,7 @@ def check_v221(text, name, lang):
             continue
         if not in_code:
             continue
+        line = strip_comment(line)  # комментарий `//` (AL-90)
         m = OLD_DEF_HEAD.match(line)
         if m:
             errs.append('%s:%d: %s' % (name, n, V221_MSG['DEF'] % (word, line.split()[0])))
@@ -902,6 +947,225 @@ def check_v221(text, name, lang):
         found += [(m.start(), 'RANGE_EQ') for m in RANGE_SPACE.finditer(seg) if m.start() in outside]
         for pos, label in sorted(found):
             e = '%s:%d: %s' % (name, first + seg.count('\n', 0, pos) + 1, V221_MSG[label])
+            if e not in errs:
+                errs.append(e)
+    return errs
+
+
+MATCH_WORDS = ('выбор', 'match')
+ENUM_HEAD = re.compile(r'^\s*(?:перечисление|enum)\s')
+OLD_ENUM_HEAD = re.compile(r'^\s*(?:перечисление|enum)\s+[^\s=]+\s*=(?![=>])')  # `перечисление Имя = …` (до 2.22, AL-89)
+INCLUDE_ANY = re.compile(r'^\s*(?:функции|functions|определения|definitions):')  # строка подключения: хеш — не число
+FOR_EACH = re.compile(r'(?<!\w)for\s+each(?!\w)')  # английский цикл до 2.22 (с 2.22 — `for x in xs`, AL-94)
+OLD_TYPE_WORD = re.compile(r'(?<![\w.$])(text|float)(?![\w(])')  # английские слова типов до 2.22 (с 2.22 — `str`, `f64`)
+NEW_TYPE_WORD = {'text': 'str', 'float': 'f64'}
+TYPE_COLUMNS = {'type', 'result'}  # ячейка — тип целиком
+V222_MSG = {
+    'BRANCH_SEMI': 'ветки `выбор` разделяет `,`, а не `;` (AL-87; как D452 Новы)',
+    'BRANCH_TRAIL': 'после последней ветки `выбор` запятой нет (AL-87; как D452 Новы)',
+    'ENUM_EQ': 'перечисление объявляется без `=` после имени: `перечисление Имя Эл | Эл` (`enum Name El | El`, AL-89)',
+    'ENUM_VALUE': 'значение элемента перечисления пишется через `=`: `Эл = "значение"` (AL-89)',
+    'COMMENT': 'комментарий `//` — только в блоке кода и после заголовка `##`/`###`, не в ячейке таблицы и не в строке-ключе (AL-90)',
+    'NUM': 'числовой литерал: `_` — только между цифрами, после `e` — цифры, к литералу не примыкает буква (`1_000`, `1e-7`; AL-91)',
+    'ESC': 'escape в текстовом литерале — только `\\"`, `\\\\`, `\\$`, `\\n`, `\\t`, `\\r`, `\\0`, `\\u{HEX}` (AL-92)',
+    'FOR_EACH': 'английский цикл пишется `for x in xs { … }`, слова `each` нет (AL-94)',
+    'TYPE': 'английское слово типа `%s` с 2.22 — `%s` (AL-94)',
+}
+
+
+def branch_sep_errors(seg):
+    """Разделители веток `выбор`/`match` в участке кода (AL-87): `;` на глубине 0 внутри фигурных скобок `выбор` — ошибка
+    (`;` внутри блока ветки `=> { … }` глубже и не в счёт), `,` перед закрывающей `}` — ошибка (хвостовой запятой нет)."""
+    out = []
+    for i in outside_strings(seg):
+        if not any(word_at(seg, i, w) for w in MATCH_WORDS):
+            continue
+        b = scan_top(seg, i, lambda s, j: s[j] == '{')
+        if b < 0 or seg[b] != '{':
+            continue
+        x = block_close(seg, b)
+        pos = b + 1
+        while True:
+            c = scan_top(seg, pos, lambda s, j: s[j] == ';')
+            if c < 0 or c >= x:
+                break
+            out.append((c, 'BRANCH_SEMI'))
+            pos = c + 1
+        if seg[b + 1:x].rstrip().endswith(','):
+            out.append((b, 'BRANCH_TRAIL'))
+    return out
+
+
+def decimal_run_end(s, i):
+    """Конец десятичной цифры-цепочки с позиции i (D44 Новы): `_` входит, только если стоит между двумя цифрами."""
+    k = i
+    while k < len(s) and (s[k] in '0123456789' or (s[k] == '_' and k > i and k + 1 < len(s) and s[k + 1] in '0123456789')):
+        k += 1
+    return k
+
+
+def number_errors(seg):
+    """Числовые литералы участка кода (AL-91, D44 Новы, лексер `novac/src/lex/lex.nv`): целая часть `1_000`; дробная — `.`
+    и цифра сразу после точки (`1..п` — `1`, `..`, `п`; `1.` без цифры — не дробное); порядок `e`/`E`, знак, цифры; литерал,
+    к которому примыкает буква, цифра или `_` (`1__0`, `1_`, `1_e5`, `1e`, `1.5_`, `0x1F`), — ошибка. Цифры внутри имени
+    (`В3`) и поле кортежа после точки (`к.0`) не читаются; строковые литералы пропускаются."""
+    out, outside, i = [], set(outside_strings(seg)), 0
+    while i < len(seg):
+        if i not in outside or seg[i] not in '0123456789':
+            i += 1
+            continue
+        prev = seg[i - 1] if i else ' '
+        if WORD_CH.match(prev) or (prev == '.' and not (i >= 2 and seg[i - 2] == '.')):
+            while i < len(seg) and WORD_CH.match(seg[i]):  # цифры имени или поле кортежа `к.0`
+                i += 1
+            continue
+        j = decimal_run_end(seg, i)
+        if seg.startswith('.', j) and j + 1 < len(seg) and seg[j + 1] in '0123456789':
+            j = decimal_run_end(seg, j + 1)
+        if j < len(seg) and seg[j] in 'eE':
+            k = j + 1 + (1 if seg[j + 1:j + 2] in ('+', '-') and seg[j + 1:j + 2] != '' else 0)
+            if k < len(seg) and seg[k] in '0123456789':
+                j = decimal_run_end(seg, k)
+        if j < len(seg) and WORD_CH.match(seg[j]):
+            out.append((i, 'NUM'))
+            while j < len(seg) and WORD_CH.match(seg[j]):
+                j += 1
+        i = j
+    return out
+
+
+def field_types(body):
+    """Типы в списке объявлений `имя тип, имя тип` (поля, параметры): то, что стоит после первого пробела."""
+    out = []
+    for f in split_top(body):
+        parts = f.strip().split(None, 1)
+        if len(parts) == 2:
+            out.append(parts[1])
+    return out
+
+
+def old_type_words(text):
+    """Английские слова типов `text`/`float` в позиции типа (английский файл, AL-94): (номер строки, слово). Позиции: тип поля
+    в фигурных скобках блока `## Types`; параметры и тип результата заголовка `fn`; ячейки столбцов `type`, `result`; тип
+    параметра в столбце `parameters` (через `;`); параметры вида стороны в столбце `kind`; поля сигналов в столбце `signals`.
+    Функции каталога `text(x)`, `float(x)` и имена полей и данных `text` не ловятся."""
+    out, sec, in_code, header = [], None, False, None
+
+    def scan(n, s):
+        for m in OLD_TYPE_WORD.finditer(mask_strings(s)):
+            out.append((n, m.group(1)))
+
+    for n, line in enumerate(text.split('\n'), 1):
+        if line.startswith('```'):
+            in_code = not in_code
+            continue
+        if in_code:
+            line = mask_strings(strip_comment(line))
+            if sec == 'Types':
+                for body in re.findall(r'\{([^{}]*)\}', line):
+                    for t in field_types(body):
+                        scan(n, t)
+            m = DEF_NAME.match(line)
+            if m:
+                open_ = line.index('(', m.end() - 1)
+                close = block_close(line, open_)
+                for t in field_types(line[open_ + 1:close]):
+                    scan(n, t)
+                r = re.match(r'\s*->\s*(.*?)\s*(?:=>|\{|$)', line[close + 1:])
+                if r:
+                    scan(n, r.group(1))
+            continue
+        m = re.match(r'^## (\S+)', line)
+        if m:
+            sec, header = m.group(1), None
+            continue
+        if not line.startswith('|'):
+            header = None
+            continue
+        if re.match(r'^\|[-:| ]+\|\s*$', line):
+            continue
+        cells = [c.strip() for c in CELL_PIPE.split(line.strip())[1:-1]]
+        if header is None:
+            header = cells
+            continue
+        for col, cell in zip(header, cells):
+            if col in TYPE_COLUMNS:
+                scan(n, cell)
+            elif col == 'parameters':
+                for p in cell.split(';'):
+                    for t in field_types(p):
+                        scan(n, t)
+            elif col == 'kind':
+                for body in re.findall(r'\(([^()]*)\)', cell):
+                    for t in field_types(body):
+                        scan(n, t)
+            elif col == 'signals':
+                for body in re.findall(r'\{([^{}]*)\}', cell):
+                    for t in field_types(body):
+                        scan(n, t)
+    return out
+
+
+def check_v222(text, name, lang):
+    """Прежняя запись до 2.22 (AL-87…AL-94): `;` между ветками и `,` после последней ветки `выбор` (AL-87); `=` после имени
+    перечисления и значение элемента без `=` (AL-89); `//` вне блока кода (AL-90); числовой литерал, к которому примыкает
+    буква, цифра или `_` (AL-91); escape вне закрытого списка (AL-92); в английском файле — `for each` и слова типов
+    `text`/`float` (AL-94). Голые имена (AL-88) — проверка типов переводчика продукта, здесь не проверяются."""
+    found = []  # (номер строки с 0, позиция в участке, участок, метка)
+    lines = text.split('\n')
+    in_code, in_enum = False, False
+    for n, line in enumerate(lines):
+        if line.startswith('```'):
+            in_code, in_enum = not in_code, False
+            continue
+        if not in_code:
+            continue
+        line = strip_comment(line)
+        if ENUM_HEAD.match(line):
+            in_enum = True
+            if OLD_ENUM_HEAD.match(line):
+                found.append((n, 0, line, 'ENUM_EQ'))
+        elif not (in_enum and re.match(r'^\s*\|', line)):
+            in_enum = False
+        if in_enum:
+            i = 0
+            while i < len(line):
+                if line[i] == '"':
+                    before = line[:i].rstrip()
+                    if before and WORD_CH.match(before[-1]):
+                        found.append((n, i, line, 'ENUM_VALUE'))
+                    i = string_end(line, i)
+                    continue
+                i += 1
+    for first, seg in code_segments(text):
+        block = first > 0 and lines[first - 1].startswith('```')  # блок кода целиком; иначе ячейка, строка-ключ, элемент «При входе»
+        found += [(first, pos, seg, label) for pos, label in branch_sep_errors(seg)]
+        plain = '\n'.join('' if INCLUDE_ANY.match(l) else l for l in seg.split('\n'))
+        found += [(first, pos, seg, label) for pos, label in number_errors(plain)]
+        if not block and comment_at(seg) >= 0:
+            found.append((first, comment_at(seg), seg, 'COMMENT'))
+        if lang == 'en':
+            outside = set(outside_strings(seg))
+            found += [(first, m.start(), seg, 'FOR_EACH') for m in FOR_EACH.finditer(seg) if m.start() in outside]
+    lit = [(f, s, False) for f, s in code_segments(text) if not lines[f].startswith('|')]
+    lit += [(n, l, True) for n, l in enumerate(lines) if l.startswith('|') and not re.match(r'^\|[-:| ]+\|\s*$', l)]
+    for first, seg, table in lit:
+        i = 0
+        while i < len(seg):
+            if seg[i] == '"':
+                esc = []
+                i = string_end(seg, i, None, esc, table)
+                found += [(first, p, seg, 'ESC') for p in esc]
+                continue
+            i += 1
+    errs = []
+    for first, pos, seg, label in found:
+        e = '%s:%d: %s' % (name, first + seg.count('\n', 0, pos) + 1, V222_MSG[label])
+        if e not in errs:
+            errs.append(e)
+    if lang == 'en':
+        for n, w in old_type_words(text):
+            e = '%s:%d: %s' % (name, n, V222_MSG['TYPE'] % (w, NEW_TYPE_WORD[w]))
             if e not in errs:
                 errs.append(e)
     return errs
@@ -1017,6 +1281,7 @@ def declarations(text, lang, readable=()):
             in_code = not in_code
             continue
         if in_code:
+            line = strip_comment(line)  # комментарий `//` (AL-90)
             if sec == sec_types and line.strip():
                 st = line.strip()
                 if in_variant:
@@ -1070,12 +1335,14 @@ def declarations(text, lang, readable=()):
             if rest.startswith('{') and rest.endswith('}'):
                 fields(rest[1:-1], n, 'поля', (owner, nm))
             continue
-        m = re.match(r'^(?:перечисление|enum) (.+?) = (.*)$', d)
+        # `перечисление Имя Эл = "значение" | Эл` (AL-89); прежний `=` после имени и значение без `=` разбираются так же,
+        # ошибку даёт `check_v222`
+        m = re.match(r'^(?:перечисление|enum) (\S+(?: \([^()\s]+\))?)(?:\s*=(?!=))?\s*(.*)$', d)
         if m:
             nm, js, _ = split_name(m.group(1))
             owner = nm
             out.append((n, 'типа', True, nm, (nm,), js))
-            for el in split_top(re.sub(r'"[^"]*"', '', m.group(2)), '|'):
+            for el in split_top(re.sub(r'(?:=\s*)?"[^"]*"', '', m.group(2)), '|'):
                 en_, ej, _ = split_name(el)
                 out.append((n, 'элемента перечисления', True, en_, (nm, en_), ej))
             continue
@@ -1101,7 +1368,7 @@ def names_table(text, lang):
         if in_code:
             continue
         if line.startswith('## '):
-            sec, header = line[3:].strip(), None
+            sec, header = strip_comment(line)[3:].strip(), None  # `## Имена     // комментарий` (AL-90)
             continue
         if sec != title or not line.startswith('|') or re.match(r'^\|[-:| ]+\|\s*$', line):
             continue
@@ -1194,7 +1461,7 @@ def check_json_names(text, words, name, lang, gloss, contract=None):
 
 def check_sample(text, words, name, lang, gloss):
     contract = [en for ru, en in words['readable_pairs'] if ru in CONTRACT_DATA] if 'readable_pairs' in words else []
-    errs = check_operators(text, name) + check_v219(text, name, lang) + check_v220(text, name, lang) + check_v221(text, name, lang) + check_calls(text, words, name, lang, gloss) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
+    errs = check_operators(text, name) + check_v219(text, name, lang) + check_v220(text, name, lang) + check_v221(text, name, lang) + check_v222(text, name, lang) + check_calls(text, words, name, lang, gloss) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
     own = {k: v[0 if lang == 'ru' else 1] for k, v in words.items() if k in KINDS}
     other = {k: v[1 if lang == 'ru' else 0] for k, v in words.items() if k in KINDS}
     declared = re.search(r'^- language: (\w+)\s*$', text, re.M)
@@ -1242,9 +1509,9 @@ MUTATIONS = {
         ('объявление сигнала с одним полем в круглых скобках', '| разрешить, отказать |', '| разрешить(решение текст), отказать |'),
         ('объявление сигнала с полем-кортежем в круглых скобках', '| разрешить, отказать |', '| разрешить(пара (число, текст)), отказать |'),
         ('альтернатива `выбор` по варианту в круглых скобках (до 2.20)', 'выбор вид_действия { ВидДействия.Удаление |', 'выбор вид_действия { Удаление(вид) |'),
-        ('альтернатива `выбор` в круглых скобках перед `=>`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; Сеть(адрес: а) => ложь;'),
-        ('альтернатива `выбор` в круглых скобках со стражем', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; ВидДействия.Сеть(адрес) если истина => ложь;'),
-        ('альтернатива `выбор` в круглых скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен(текст) \\| Обрезан(текст) => 1; иначе => 0 } | ХОД_АГЕНТА |'),
+        ('альтернатива `выбор` в круглых скобках перед `=>`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина, Сеть(адрес: а) => ложь,'),
+        ('альтернатива `выбор` в круглых скобках со стражем', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина, ВидДействия.Сеть(адрес) если истина => ложь,'),
+        ('альтернатива `выбор` в круглых скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен(текст) \\| Обрезан(текст) => 1, иначе => 0 } | ХОД_АГЕНТА |'),
         ('пустая вставка `${}`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "ход ${}" | ХОД_АГЕНТА |'),
         ('незакрытая вставка', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "ход ${число_ходов" | ХОД_АГЕНТА |'),
         ('литерал со вставкой в наборе литералов', '| ход | "first" \\| "retry"', '| ход | "first${число_ходов}" \\| "retry"'),
@@ -1253,8 +1520,8 @@ MUTATIONS = {
         ('функция с именем функции каталога', 'функция пауза_повтора(п число>=0) -> число =>', 'функция склеить(а текст, б текст) -> текст =>\n  а + б\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('функция с именем примитива реестра образца', 'функция пауза_повтора(п число>=0) -> число =>', 'функция time_now(а число) -> число =>\n  а\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('настоящее множество `in […]` со вставкой в условии', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если остановка in ["a${число_ходов}"] то { число_ходов += 1 } | ХОД_АГЕНТА |'),
-        ('ветка с текстовым образцом через `->`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; "ask" -> "ask";'),
-        ('ветка со стражем через `->`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если есть(вид_действия) -> истина;'),
+        ('ветка с текстовым образцом через `->`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина, "ask" -> "ask",'),
+        ('ветка со стражем через `->`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима если есть(вид_действия) -> истина,'),
         ('трёхместная лямбда через `->`', '(н, _) => н * 2', '(а, б, в) -> а * 2'),
         ('лямбда через `->` без пробела', '(н, _) => н * 2', '(н, _)-> н * 2'),
         ('многострочный заголовок, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число ='),
@@ -1312,6 +1579,23 @@ MUTATIONS = {
         ('пустое тело-блок на двух строках', 'функция пауза_повтора(п число>=0) -> число =>', 'функция ноль() -> число {\n}\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('тело через `=` после литерала со знаком `=` в типе результата', 'функция пауза_повтора(п число>=0) -> число =>', 'функция ф() -> "a=b" | "c" = "c"\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('`=> {` после литерала со знаком `{` в типе результата', 'функция пауза_повтора(п число>=0) -> число =>', 'функция ф() -> "a{" | "c" => {\n  "c"\n}\n\nфункция пауза_повтора(п число>=0) -> число =>'),
+        ('`;` между ветками `выбор` (до 2.22)', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина;'),
+        ('`;` между ветками `выбор` в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| ход = выбор ход { "first" => "retry"; иначе => "first" } | ХОД_АГЕНТА |'),
+        ('`,` после последней ветки `выбор`', 'иначе => ложь }', 'иначе => ложь, }'),
+        ('`=` после имени перечисления (до 2.22)', 'перечисление ПроверкаОтвета Верна', 'перечисление ПроверкаОтвета = Верна'),
+        ('значение элемента перечисления без `=` (до 2.22)', 'Чтение = "read"', 'Чтение "read"'),
+        ('значение элемента без `=` в строке продолжения', '| Исполнение = "execute"', '| Исполнение "execute"'),
+        ('комментарий `//` в ячейке таблицы', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += 1 // ещё ход | ХОД_АГЕНТА |'),
+        ('комментарий `//` в строке-ключе', '- Кроме: остановка in [""]', '- Кроме: остановка in [""] // пусто не конец'),
+        ('число `1__0`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += 1__0 | ХОД_АГЕНТА |'),
+        ('число `1_`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += 1_ | ХОД_АГЕНТА |'),
+        ('число `1e` без порядка', '(1..п).свёртка(ПАУЗА_ПОВТОРА,', '(1e..п).свёртка(ПАУЗА_ПОВТОРА,'),
+        ('число `1_e5` в блоке кода', '(1..п).свёртка(ПАУЗА_ПОВТОРА,', '(1_e5..п).свёртка(ПАУЗА_ПОВТОРА,'),
+        ('шестнадцатеричное число `0x1F`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += 0x1F | ХОД_АГЕНТА |'),
+        ('неизвестный escape `\\q`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "a\\qb" | ХОД_АГЕНТА |'),
+        ('escape `\\x41` (не взят)', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "\\x41" | ХОД_АГЕНТА |'),
+        ('escape `\\u{D800}` (суррогат)', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "\\u{D800}" | ХОД_АГЕНТА |'),
+        ('неизвестный escape в блоке кода', 'если ост == "" то { "reply" }', 'если ост == "\\e" то { "reply" }'),
         ('начальное состояние', 'Начальное состояние: СТАРТ', 'Начальное состоянье: СТАРТ'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
     ],
@@ -1325,7 +1609,7 @@ MUTATIONS = {
         ('русская строка-ключ чтений', '- Reads: retry_count, turn', '- Читает: retry_count, turn'),
         ('знак оператора не ASCII', '(1..n).fold(RETRY_PAUSE, (m, _) => m * 2)', '(1..n).fold(RETRY_PAUSE, (m, _) ⇒ m * 2)'),
         ('тело функции через `=` (до 2.18)', 'fn retry_pause(n int>=0) -> int =>', 'fn retry_pause(n int>=0) -> int ='),
-        ('ветка `match` через `->` (до 2.18)', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode -> true;'),
+        ('ветка `match` через `->` (до 2.18)', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode -> true,'),
         ('лямбда через `->` (до 2.18)', '(m, _) => m * 2', '(m, _) -> m * 2'),
         ('однострочное тело через `=` (до 2.18)', '-> int =>\n  (1..n)', '-> int = (1..n)'),
         ('вызов `range(…)` (до 2.19)', '(1..n).fold(RETRY_PAUSE,', 'range(1, n).fold(RETRY_PAUSE,'),
@@ -1336,10 +1620,10 @@ MUTATIONS = {
         ('сигнал с полями в круглых скобках (до 2.19)', '| 1 | signal(allow) |', '| 1 | signal(allow(decision: d)) |'),
         ('`in {…}` в ячейке события (до 2.19)', 'failure(reason in [FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult])', 'failure(reason in {FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult})'),
         ('`in {…}` в `Except` (до 2.19)', '- Except: stop_reason in [""]', '- Except: stop_reason in {""}'),
-        ('объявление сигнала с полями в круглых скобках (до 2.20)', 'continue { human_word text, author text, source text }', 'continue(human_word text, author text, source text)'),
-        ('объявление сигнала с полем-кортежем в круглых скобках', '| allow, deny |', '| allow(pair (int, text)), deny |'),
+        ('объявление сигнала с полями в круглых скобках (до 2.20)', 'continue { human_word str, author str, source str }', 'continue(human_word str, author str, source str)'),
+        ('объявление сигнала с полем-кортежем в круглых скобках', '| allow, deny |', '| allow(pair (int, str)), deny |'),
         ('альтернатива `match` по варианту в круглых скобках (до 2.20)', 'match action { ActionKind.Delete |', 'match action { Delete(path) |'),
-        ('альтернатива `match` в круглых скобках со стражем', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; ActionKind.Network(address) if true => false;'),
+        ('альтернатива `match` в круглых скобках со стражем', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => true, ActionKind.Network(address) if true => false,'),
         ('пустая вставка `${}`', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${}" | AgentTurn |'),
         ('незакрытая вставка', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${turn_count" | AgentTurn |'),
         ('литерал со вставкой в наборе литералов', '| turn | "first" \\| "retry"', '| turn | "first${turn_count}" \\| "retry"'),
@@ -1348,8 +1632,8 @@ MUTATIONS = {
         ('функция с именем вызова диапазона `range`', 'fn retry_pause(n int>=0) -> int =>', 'fn range(a int) -> int =>\n  a\n\nfn retry_pause(n int>=0) -> int =>'),
         ('функция с именем примитива реестра образца', 'fn retry_pause(n int>=0) -> int =>', 'fn time_now(a int) -> int =>\n  a\n\nfn retry_pause(n int>=0) -> int =>'),
         ('настоящее множество `in […]` со вставкой в условии', '| turn_count += 1 | AgentTurn |', '| if stop_reason in ["a${turn_count}"] then { turn_count += 1 } | AgentTurn |'),
-        ('ветка с текстовым образцом через `->`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; "ask" -> "ask";'),
-        ('ветка со стражем через `->`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if has(action) -> true;'),
+        ('ветка с текстовым образцом через `->`', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => true, "ask" -> "ask",'),
+        ('ветка со стражем через `->`', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode if has(action) -> true,'),
         ('трёхместная лямбда через `->`', '(m, _) => m * 2', '(a, b, c) -> a * 2'),
         ('лямбда через `->` без пробела', '(m, _) => m * 2', '(m, _)-> m * 2'),
         ('многострочный заголовок, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int ='),
@@ -1360,13 +1644,13 @@ MUTATIONS = {
         ('условное действие в ячейке с веткой `else` в круглых скобках', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else (turn_count += 2) | AgentTurn |'),
         ('условное выражение без блока в `then` (до 2.18)', 'then { (a ?? 0) + (b ?? 0) } else { a ?? b }', 'then (a ?? 0) + (b ?? 0) else a ?? b'),
         ('условное выражение без блока в `else`', 'then { (a ?? 0) + (b ?? 0) } else { a ?? b }', 'then { (a ?? 0) + (b ?? 0) } else a ?? b'),
-        ('`for each` с двоеточием (до 2.18)', '| turn_count += 1 | AgentTurn |', '| for each x in [1]: turn_count += x | AgentTurn |'),
+        ('`for each` с двоеточием (до 2.18)', '| turn_count += 1 | AgentTurn |', '| for x in [1]: turn_count += x | AgentTurn |'),
         ('действие `let … in` (до 2.18)', '| turn_count += 1 | AgentTurn |', '| let x = 1 in (turn_count += x) | AgentTurn |'),
         ('выражение `let … in` в ветке (до 2.18)', 'then { let p = require(tu); (p.tokens.input', 'then { let p = require(tu) in (p.tokens.input'),
         ('выражение `let … in` в теле функции (до 2.18)', '  let term = req.limits.silence_term;', '  let term = req.limits.silence_term in'),
         ('выражение `let … in` в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += (let x = 1 in x) | AgentTurn |'),
-        ('`for each` без блока, тело в круглых скобках', '| turn_count += 1 | AgentTurn |', '| for each x in [1] (turn_count += x) | AgentTurn |'),
-        ('`for each` без блока', '| turn_count += 1 | AgentTurn |', '| for each x in [1] turn_count += x | AgentTurn |'),
+        ('`for each` без блока, тело в круглых скобках', '| turn_count += 1 | AgentTurn |', '| for x in [1] (turn_count += x) | AgentTurn |'),
+        ('`for each` без блока', '| turn_count += 1 | AgentTurn |', '| for x in [1] turn_count += x | AgentTurn |'),
         ('`if` с блоком без `then`', '| turn_count += 1 | AgentTurn |', '| if true { turn_count += 1 } | AgentTurn |'),
         ('пустая ветка `else { }`', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else { } | AgentTurn |'),
         ('убранное событие word', '| 1 | signal(allow) |', '| 1 | word(allow) |'),
@@ -1382,6 +1666,23 @@ MUTATIONS = {
         ('пустое тело-блок на двух строках', 'fn retry_pause(n int>=0) -> int =>', 'fn zero() -> int {\n}\n\nfn retry_pause(n int>=0) -> int =>'),
         ('тело через `=` после литерала со знаком `=` в типе результата', 'fn retry_pause(n int>=0) -> int =>', 'fn f() -> "a=b" | "c" = "c"\n\nfn retry_pause(n int>=0) -> int =>'),
         ('`=> {` после литерала со знаком `{` в типе результата', 'fn retry_pause(n int>=0) -> int =>', 'fn f() -> "a{" | "c" => {\n  "c"\n}\n\nfn retry_pause(n int>=0) -> int =>'),
+        ('`;` между ветками `match` (до 2.22)', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => true;'),
+        ('`,` после последней ветки `match`', 'else => false }', 'else => false, }'),
+        ('`=` после имени перечисления (до 2.22)', 'enum ReplyCheck Valid', 'enum ReplyCheck = Valid'),
+        ('значение элемента перечисления без `=` (до 2.22)', 'Read = "read"', 'Read "read"'),
+        ('комментарий `//` в ячейке таблицы', '| turn_count += 1 | AgentTurn |', '| turn_count += 1 // one more | AgentTurn |'),
+        ('число `1__0`', '| turn_count += 1 | AgentTurn |', '| turn_count += 1__0 | AgentTurn |'),
+        ('неизвестный escape `\\q`', '| turn_count += 1 | AgentTurn |', '| reply_text = "a\\qb" | AgentTurn |'),
+        ('цикл `for each` (до 2.22)', '| turn_count += 1 | AgentTurn |', '| for each x in [1] { turn_count += x } | AgentTurn |'),
+        ('тип `text` поля (до 2.22)', 'type AgentModel { id str,', 'type AgentModel { id text,'),
+        ('тип `?float` поля', 'cost_budget ?f64,', 'cost_budget ?float,'),
+        ('тип `text` в столбце `type`', '| session | str |', '| session | text |'),
+        ('тип `?text` в столбце `type` таблицы «Данных»', '| reply_text | ?str |', '| reply_text | ?text |'),
+        ('тип результата `float` функции', 'fn cost_spent(tu ?TransportUsage) -> f64 =>', 'fn cost_spent(tu ?TransportUsage) -> float =>'),
+        ('тип параметра `text` функции', 'request_turn str,', 'request_turn text,'),
+        ('тип поля сигнала `text`', 'continue { human_word str,', 'continue { human_word text,'),
+        ('тип `text` в столбце `result` примитива', '| time_now | — | int |', '| time_now | — | text |'),
+        ('тип `float` в виде стороны', 'agent(result TurnResult)', 'agent(result float)'),
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
         ('нет строки language', '- language: en\n', ''),
@@ -1401,7 +1702,7 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('включающий диапазон, литералы словаря и списка в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += длина(1..=число_ходов) + длина(["a": 1, "b": 2]) + длина([наибольшее(1, 2)]); для каждого x в 0..=1 { число_ходов += x } | ХОД_АГЕНТА |'),
         ('копия записи как всё тело — в скобках после `=>`', 'функция пауза_повтора(п число>=0) -> число =>', 'функция без_входа(т Токены) -> Токены =>\n  ({ ...т, вход: пусто })\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('копия записи в действии', '| число_ходов += 1 | ХОД_АГЕНТА |', '| расход = { ...обязательно(расход), стоимость: пусто } | ХОД_АГЕНТА |'),
-        ('ветка `выбор` с блоком после `=>`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => { пусть x = истина; x };'),
+        ('ветка `выбор` с блоком после `=>`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => { пусть x = истина; x },'),
         ('знак `=` в литерале типа результата', 'функция пауза_повтора(п число>=0) -> число =>', 'функция ф() -> "a=b" | "c" =>\n  "c"\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('знак `{` в литерале типа результата, тело-блок со следующей строки', 'функция пауза_повтора(п число>=0) -> число =>', 'функция ф() -> "a{" | "c"\n{\n  "c"\n}\n\nфункция пауза_повтора(п число>=0) -> число =>'),
         ('лямбда с блоком-выражением', '(н, _) => н * 2', '(н, _) => { пусть м = н; м * 2 }'),
@@ -1423,19 +1724,36 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('проза в столбце «примечание» со словами `если … то`, `для каждого …:`, `пусть … в`', '| вид | ВидВызывающего | вид вызывающего |',
          '| вид | ВидВызывающего | если есть, то сессия агента; для каждого хода: сессия; пусть свободно в цикле |'),
         ('слова в строковом литерале блока', '| число_ходов += 1 | ХОД_АГЕНТА |', '| { пусть s = "если a то b; для каждого x: y; пусть z в w"; число_ходов += 1 } | ХОД_АГЕНТА |'),
-        ('страж ветки `выбор` без `то`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если истина => истина;'),
-        ('альтернатива `выбор` по варианту с полями в фигурных скобках', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; Сеть { адрес, порт: п } если п > 0 => ложь; Удаление { путь } | Перенос { путь } => ложь;'),
-        ('альтернатива в фигурных скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен { текст } \\| Обрезан { текст } => 1; иначе => 0 } | ХОД_АГЕНТА |'),
+        ('страж ветки `выбор` без `то`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима если истина => истина,'),
+        ('альтернатива `выбор` по варианту с полями в фигурных скобках', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина, Сеть { адрес, порт: п } если п > 0 => ложь, Удаление { путь } | Перенос { путь } => ложь,'),
+        ('альтернатива в фигурных скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен { текст } \\| Обрезан { текст } => 1, иначе => 0 } | ХОД_АГЕНТА |'),
         ('объявление сигнала с одним полем в фигурных скобках', '| разрешить, отказать |', '| разрешить { решение текст }, отказать |'),
         ('объявление сигнала с полем-кортежем', '| разрешить, отказать |', '| разрешить { пара (число, текст) }, отказать |'),
-        ('квалифицированная альтернатива `Тип.Вар { … }`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; ИтогХода.Закончен { текст } => ложь;'),
+        ('квалифицированная альтернатива `Тип.Вар { … }`', 'ВидДействия.СменаРежима => истина,', 'ВидДействия.СменаРежима => истина, ИтогХода.Закончен { текст } => ложь,'),
+        ('комментарий `//` в конце строки блока кода со знаками `->`, `;`, `{к: з}` и `выбор`', 'функция пауза_повтора(п число>=0) -> число =>',
+         'функция пауза_повтора(п число>=0) -> число =>   // пауза: x -> y; {к: з}; выбор x { А => 1; Б => 2 }; "'),
+        ('строка-комментарий в блоке кода со старым словом объявления', 'функция пауза_повтора(п число>=0) -> число =>',
+         '// определение ф(x) = 1; перечисление Х = А "a"\nфункция пауза_повтора(п число>=0) -> число =>'),
+        ('комментарий после заголовка `##`', '\n## Функции\n', '\n## Функции     // чистые функции автора\n'),
+        ('комментарий после заголовка `###`', '### СТАРТ — операция\n', '### СТАРТ — операция     // строка 1\n'),
+        ('`//` внутри текстового литерала ячейки', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "http://x"; число_ходов += 1 | ХОД_АГЕНТА |'),
+        ('числа `1_000`, `1e-7`, `1.5e3`, `2E5`, `1_000.5`, диапазоны и поле кортежа `к.0`', '| число_ходов += 1 | ХОД_АГЕНТА |',
+         '| число_ходов += 1_000 + длина(1_000..2_000) + длина(0..=3) + число(1.5e3 + 2E5 + 1_000.5 + 1e-7 + 2.0E+3) + пара.0 | ХОД_АГЕНТА |'),
+        ('escape закрытого списка', '| число_ходов += 1 | ХОД_АГЕНТА |',
+         '| текст_ответа = "\\"a\\\\b\\n\\t\\r\\0\\u{1F600}\\${x} \\$5"; число_ходов += 1 | ХОД_АГЕНТА |'),
+        ('`\\|` внутри литерала в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "a\\|b"; число_ходов += 1 | ХОД_АГЕНТА |'),
+        ('голые имена элементов в `выбор`', 'выбор вид_действия { ВидДействия.Удаление | ВидДействия.Перенос', 'выбор вид_действия { Удаление | Перенос'),
+        ('голые имена элементов в `in […]`', 'сбой(причина in [КодСбоя.СоединениеОборвалось, КодСбоя.НетОтветаВСрок, КодСбоя.НетРезультата])',
+         'сбой(причина in [СоединениеОборвалось, НетОтветаВСрок, НетРезультата])'),
+        ('ветки `выбор` через `,` в ячейке, `;` внутри блока ветки', '| число_ходов += 1 | ХОД_АГЕНТА |',
+         '| ход = выбор ход { "first" => { пусть x = "retry"; x }, иначе => "first" }; число_ходов += 1 | ХОД_АГЕНТА |'),
     ],
     'en': [
         ('однострочное тело-блок с `let`, `>=` и `==`', '-> int =>\n  (1..n).fold(RETRY_PAUSE, (m, _) => m * 2)', '-> int { let k = n >= 0; if k == true then { (1..n).fold(RETRY_PAUSE, (m, _) => m * 2) } else { 0 } }'),
         ('включающий диапазон `..=`', '(1..n).fold(', '(1..=n).fold('),
-        ('включающий диапазон, литералы словаря и списка в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += length(1..=turn_count) + length(["a": 1, "b": 2]) + length([max(1, 2)]); for each x in 0..=1 { turn_count += x } | AgentTurn |'),
+        ('включающий диапазон, литералы словаря и списка в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += length(1..=turn_count) + length(["a": 1, "b": 2]) + length([max(1, 2)]); for x in 0..=1 { turn_count += x } | AgentTurn |'),
         ('копия записи как всё тело — в скобках после `=>`', 'fn retry_pause(n int>=0) -> int =>', 'fn without_input(t TokenUsage) -> TokenUsage =>\n  ({ ...t, input: none })\n\nfn retry_pause(n int>=0) -> int =>'),
-        ('ветка `match` с блоком после `=>`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => { let x = true; x };'),
+        ('ветка `match` с блоком после `=>`', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => { let x = true; x },'),
         ('знак `=` в литерале типа результата', 'fn retry_pause(n int>=0) -> int =>', 'fn f() -> "a=b" | "c" =>\n  "c"\n\nfn retry_pause(n int>=0) -> int =>'),
         ('знак `{` в литерале типа результата, тело-блок со следующей строки', 'fn retry_pause(n int>=0) -> int =>', 'fn f() -> "a{" | "c"\n{\n  "c"\n}\n\nfn retry_pause(n int>=0) -> int =>'),
         ('лямбда с блоком-выражением', '(m, _) => m * 2', '(m, _) => { let k = m; k * 2 }'),
@@ -1444,22 +1762,29 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('диапазон и методы макросов в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += (1..turn_count + 1).filter(x => x > 0).count(x => true) | AgentTurn |'),
         ('функция с именем, не совпадающим с функцией каталога', 'fn retry_pause(n int>=0) -> int =>', 'fn concat_all(a int) -> int =>\n  a\n\nfn retry_pause(n int>=0) -> int =>'),
         ('функция с именем, не совпадающим с примитивом', 'fn retry_pause(n int>=0) -> int =>', 'fn time_now_twice(a int) -> int =>\n  a\n\nfn retry_pause(n int>=0) -> int =>'),
-        ('`for each … in [ … ]` со вставками в элементах', '| turn_count += 1 | AgentTurn |', '| for each x in ["a${turn_count}", "b"] { turn_count += [x] } | AgentTurn |'),
+        ('`for each … in [ … ]` со вставками в элементах', '| turn_count += 1 | AgentTurn |', '| for x in ["a${turn_count}", "b"] { turn_count += [x] } | AgentTurn |'),
         ('многострочный заголовок с `) -> int =>`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int =>'),
         ('`->` на следующей строке', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int =>'),
         ('пробел перед скобкой', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int =>'),
         ('условное действие в ячейке с `else { … }`', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else { turn_count += 2; journal(x) } | AgentTurn |'),
         ('условное выражение с блоками в действии', '| turn_count += 1 | AgentTurn |', '| turn_count += if true then { 1 } else { 2 } | AgentTurn |'),
-        ('блок действий с `let` и `for each` с блоком', '| turn_count += 1 | AgentTurn |', '| { let x = 1; for each y in [x] { turn_count += y } } | AgentTurn |'),
+        ('блок действий с `let` и `for each` с блоком', '| turn_count += 1 | AgentTurn |', '| { let x = 1; for y in [x] { turn_count += y } } | AgentTurn |'),
         ('блок-выражение в действии', '| turn_count += 1 | AgentTurn |', '| turn_count += { let x = 1; x } | AgentTurn |'),
         ('проза в столбце `note` со словами `if … then`, `for each …:`, `let … in`', '| kind | CallerKind | the caller kind |',
          '| kind | CallerKind | the agent session if any, then reused; for each turn: a session; let free in the loop |'),
         ('слова в строковом литерале блока', '| turn_count += 1 | AgentTurn |', '| { let s = "if a then b; for each x: y; let z in w"; turn_count += 1 } | AgentTurn |'),
-        ('страж ветки `match` без `then`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if true => true;'),
-        ('альтернатива `match` по варианту с полями в фигурных скобках', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; Network { address, port: p } if p > 0 => false;'),
-        ('объявление сигнала с одним полем в фигурных скобках', '| allow, deny |', '| allow { decision text }, deny |'),
-        ('объявление сигнала с полем-кортежем', '| allow, deny |', '| allow { pair (int, text) }, deny |'),
-        ('квалифицированная альтернатива `Type.Var { … }`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; TurnResult.Finished { text } => false;'),
+        ('страж ветки `match` без `then`', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode if true => true,'),
+        ('альтернатива `match` по варианту с полями в фигурных скобках', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => true, Network { address, port: p } if p > 0 => false,'),
+        ('объявление сигнала с одним полем в фигурных скобках', '| allow, deny |', '| allow { decision str }, deny |'),
+        ('объявление сигнала с полем-кортежем', '| allow, deny |', '| allow { pair (int, str) }, deny |'),
+        ('квалифицированная альтернатива `Type.Var { … }`', 'ActionKind.SwitchMode => true,', 'ActionKind.SwitchMode => true, TurnResult.Finished { text } => false,'),
+        ('комментарий `//` в блоке кода', 'fn retry_pause(n int>=0) -> int =>', 'fn retry_pause(n int>=0) -> int =>   // pause: a -> b; {k: v}; text float'),
+        ('`//` внутри текстового литерала ячейки', '| turn_count += 1 | AgentTurn |', '| reply_text = "http://x"; turn_count += 1 | AgentTurn |'),
+        ('числа `1_000`, `1e-7`, `1.5e3`', '| turn_count += 1 | AgentTurn |', '| turn_count += 1_000 + int(1.5e3 + 1e-7) + pair.0 | AgentTurn |'),
+        ('escape закрытого списка', '| turn_count += 1 | AgentTurn |', '| reply_text = "\\"a\\\\b\\n\\u{41}"; turn_count += 1 | AgentTurn |'),
+        ('функции каталога `text(x)`, `float(x)` и поле `text`', '| turn_count += 1 | AgentTurn |',
+         '| reply_text = text(float(turn_count)) + text; turn_count += 1 | AgentTurn |'),
+        ('цикл `for x in` с телом', '| turn_count += 1 | AgentTurn |', '| for x in [1, 2] { turn_count += x } | AgentTurn |'),
     ],
 }
 

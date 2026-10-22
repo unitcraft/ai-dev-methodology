@@ -1,10 +1,10 @@
 # Машина: Совещание
 
 - machine: meeting
-- machine_version: alula-2.21
-- format: 2.21
+- machine_version: alula-2.22
+- format: 2.22
 
-Это **запись машины «Совещание агентов» целиком на Алуле**, версия формата 2.21 ([state-machine-alula-spec.md](state-machine-alula-spec.md); он единственное определение языка записи). Первоисточник — эта запись на Алуле; прежние таблицы лежат в архиве и не обновляются. Прежняя запись — таблицы состояний [archive/task-runner-meeting-states.md](archive/task-runner-meeting-states.md), код автомата [archive/task-runner-meeting-automaton.md](archive/task-runner-meeting-automaton.md) и псевдокод [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md). Фрагмент «Пауза» — [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), коды журнала — [state-machine-journal.md](state-machine-journal.md), имена — [state-machine-glossary.md](state-machine-glossary.md). Вложенная машина «Шаг агента» — [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md). Справка к записи — что не уложилось в формат, неоднозначности спецификации, соответствие источнику — [task-runner-meeting.alula-notes.md](task-runner-meeting.alula-notes.md).
+Это **запись машины «Совещание агентов» целиком на Алуле**, версия формата 2.22 ([state-machine-alula-spec.md](state-machine-alula-spec.md); он единственное определение языка записи). Первоисточник — эта запись на Алуле; прежние таблицы лежат в архиве и не обновляются. Прежняя запись — таблицы состояний [archive/task-runner-meeting-states.md](archive/task-runner-meeting-states.md), код автомата [archive/task-runner-meeting-automaton.md](archive/task-runner-meeting-automaton.md) и псевдокод [archive/task-runner-meeting-pseudocode.md](archive/task-runner-meeting-pseudocode.md). Фрагмент «Пауза» — [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), коды журнала — [state-machine-journal.md](state-machine-journal.md), имена — [state-machine-glossary.md](state-machine-glossary.md). Вложенная машина «Шаг агента» — [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md). Справка к записи — что не уложилось в формат, неоднозначности спецификации, соответствие источнику — [task-runner-meeting.alula-notes.md](task-runner-meeting.alula-notes.md).
 
 **Статус.** Эквивалентность этой записи автомату по журналу не проверялась: интерпретатор «Совещания» не гонялся, сценарии не сравнивались. Состояний 30 (развилок 9, операций 6, обращений 12, концов 3), из них ПАУЗА приносит подключение «Пауза»; в разделе «Состояния» объявлено 29. Строк переходов в разделе «Состояния» — 67, столько же в таблицах первоисточника (девять из них — строки `иначе` развилок, равные умолчанию: ЗАХОД, ОТКАЗ, ВСЕ_ЗАКРЫТЫ, ПОВТОР_ОБРАЩЕНИЯ, СВЕРКА, РАЗБОР, БЕЗ_ПРОБ, ИТОГ, ПОТОЛОК); строки ПАУЗА 1–4 и ОБЩ 1–6 приходят из фрагмента. Строк «Концов» 12: КОНЕЦ 1, ОШИБКА 1, ОСТАНОВЛЕНО 10 (шесть строк таблицы «конец → ответ» первоисточника, развёрнутые по значениям `остановка`).
 
@@ -13,13 +13,13 @@
 ## Типы
 
 ```
-перечисление Критичность = Критическая "critical" | Значимая "significant" | Желательная "desirable"
-перечисление Сверка = Подтверждено | ИскажениеКанала | НеПодтверждено
-перечисление ВидВызывающего = Линза | СессияЦикла | ХодЧата | Вратарь
-перечисление КодСбоя = НетРезультата "no_result" | ОтказМодели "model_refused" | СоединениеОборвалось "connection_lost"
-                     | ФормаНеИсправлена "form_not_fixed" | НетОтветаВСрок "timeout" | ОстановленоЧеловеком "stopped_by_human"
-                     | ПотолокЗаходов "ceiling_reached" | ОтмененоРодителем "cancelled" | ПредельТокенов "max_tokens"
-                     | ПредельЗапросовХода "max_turn_requests"
+перечисление Критичность Критическая = "critical" | Значимая = "significant" | Желательная = "desirable"
+перечисление Сверка Подтверждено | ИскажениеКанала | НеПодтверждено
+перечисление ВидВызывающего Линза | СессияЦикла | ХодЧата | Вратарь
+перечисление КодСбоя НетРезультата = "no_result" | ОтказМодели = "model_refused" | СоединениеОборвалось = "connection_lost"
+                     | ФормаНеИсправлена = "form_not_fixed" | НетОтветаВСрок = "timeout" | ОстановленоЧеловеком = "stopped_by_human"
+                     | ПотолокЗаходов = "ceiling_reached" | ОтмененоРодителем = "cancelled" | ПредельТокенов = "max_tokens"
+                     | ПредельЗапросовХода = "max_turn_requests"
 
 тип Линза { идентификатор текст, потери_подряд число>=0, пробы число>=0, попытка число>=0 }
 тип Находка { критичность Критичность, доказательство текст, повтор булево, вопрос булево }
@@ -178,7 +178,7 @@
 ## Подключения
 
 ```
-функции: арифметика_цикла версия 1 хеш 62231d0d7c15
+функции: арифметика_цикла версия 1 хеш 642e1f78f0f7
 Пауза(сигнал_остановки: остановить совещание, код_остановки: "pause_halt_meeting", вложенные: [шаг_агента],
       отмена_запросов: без_возврата_в_к_отправке, вход_заново: запросы_из_к_отправке,
       право_записи: "право записи на предложение: закрытое в окне проверки линз остаётся закрытым; кто хочет его править, выбирает «остановить совещание»")
