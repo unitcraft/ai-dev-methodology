@@ -13,7 +13,7 @@
   7. имена параметров в вызове совпадают с `{…}` шаблона и со столбцом «Параметры»;
   8. в вызовах `write_journal(` и `machine_error(` нет строкового литерала (русский текст журнала живёт только в таблице шаблонов).
 Сверка ячеек таблиц (`check_table_cells`: все отслеживаемые git файлы `*.md` репозитория):
-  9. вне блоков кода (ограждения ``` и ~~~) у каждой строки таблицы markdown (строки с `|` подряд, вторая — строка-разделитель)
+  9. вне блоков кода (ограждения ``` и ~~~; закрывает строка того же знака не короче открывающей) у каждой строки таблицы markdown (строки с `|` подряд, вторая — строка-разделитель)
      ячеек не больше, чем у строки заголовка; ячейки делятся по каждому знаку `|` без обратной косой черты перед ним — так делит
      GitHub, даже внутри обратных кавычек, а лишние ячейки молча отбрасывает (знак `|` в ячейке пишется `\\|`);
      самопроверка (`--selftest`): строка с `|` без экранирования внутри обратных кавычек даёт ошибку, с `\\|` — нет.
@@ -233,7 +233,7 @@ def check_journal():
 
 TABLE_SEP_RE = re.compile(r'^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$')
 PIPE_RE = re.compile(r'(?<!\\)\|')
-FENCE_RE = re.compile(r'^\s*(`{3,}|~{3,})')
+FENCE_RE = re.compile(r'^ {0,3}(`{3,}|~{3,})(.*)$')
 
 
 def row_cells(line):
@@ -254,10 +254,12 @@ def table_cell_errors(text, name):
     i = 0
     while i < len(lines):
         m = FENCE_RE.match(lines[i])
-        if m:
-            if fence is None:
-                fence = m.group(1)[0] * 3
-            elif lines[i].lstrip().startswith(fence):
+        if fence is None and m:
+            fence = m.group(1)  # закрывает ограждение того же знака не короче открывающего, без текста после
+            i += 1
+            continue
+        if fence is not None:
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and not m.group(2).strip():
                 fence = None
             i += 1
             continue
@@ -288,6 +290,9 @@ def selftest_table_cells():
     good = '| a | b |\n|---|---|\n| `x \\| y` | z |\n'
     bad = '| a | b |\n|---|---|\n| `x | y` | z |\n'
     fenced = '```\n' + bad + '```\n'
+    long_fence = '````\n```\n' + bad + '````\n'  # строка из трёх ``` не закрывает ограждение из четырёх
+    closed_early = '````\n```\n' + bad + '```\n'  # ограждение не закрыто: строки таблицы внутри
+    after = '````\n```\n````\n' + bad  # закрыто: таблица после ограждения проверяется
     errs = []
     if table_cell_errors(good, 'good'):
         errs.append('самопроверка ячеек: `\\|` в обратных кавычках дал ложную ошибку')
@@ -295,6 +300,10 @@ def selftest_table_cells():
         errs.append('самопроверка ячеек: `|` без экранирования в обратных кавычках не замечен')
     if table_cell_errors(fenced, 'fenced'):
         errs.append('самопроверка ячеек: строка в блоке кода дала ложную ошибку')
+    if table_cell_errors(long_fence, 'long') or table_cell_errors(closed_early, 'early'):
+        errs.append('самопроверка ячеек: ограждение из четырёх знаков закрыто строкой из трёх')
+    if not table_cell_errors(after, 'after'):
+        errs.append('самопроверка ячеек: таблица после закрытого ограждения не проверена')
     return errs
 
 
