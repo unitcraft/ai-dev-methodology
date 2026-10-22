@@ -104,7 +104,7 @@ type	число	int
 type	число>=	int>=
 type	дробное	float
 type	текст	text
-type	да/нет	bool
+type	булево	bool
 type	ид	id
 type	словарь	map
 type	полный словарь	full map
@@ -151,6 +151,7 @@ operator	>=	>=
 operator	<=	<=
 operator	!=	!=
 operator	->	->
+operator	=>	=>
 operator	...	...
 operator	in	in
 operator	??	??

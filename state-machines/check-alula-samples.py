@@ -261,7 +261,7 @@ def mutations(en_text):
         ('другой код журнала', sub('journal(model_refused)', 'journal(model_refusedd)')),
         ('лишнее действие', sub('turn_count += 1 | AgentTurn', 'turn_count += 1; turn_count += 1 | AgentTurn')),
         ('лишнее состояние', sub('### End — end', '### Extra — end\n- Reads: usage\n\n### End — end')),
-        ('лишнее определение', sub('define interactive(', 'define extra(x int) -> int = x\n\ndefine interactive(')),
+        ('лишнее определение', sub('define interactive(', 'define extra(x int) -> int => x\n\ndefine interactive(')),
         ('лишняя строка концов', sub('| Halted | 11 |', '| Halted | 12 | stop_reason == "x" | Refusal(FailCode.Cancelled, stop_reason) |\n| Halted | 11 |')),
         ('другая метка строки', sub('| 9 | failure(', '| 10 | failure(')),
         ('другое имя поля', sub('cache_write ?int', 'cache_writes ?int')),
