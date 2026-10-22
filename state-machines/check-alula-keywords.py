@@ -180,38 +180,62 @@ def structural(text, lang='ru'):
 
 
 UNICODE_OPS = '≥≤≠→⇒∈'
-DEF_HEAD = re.compile(r'^\s*(?:определение|define|definition)\s+[^\s(]+\(')  # начало заголовка определения
+DEF_HEAD = re.compile(r'^\s*(?:определение|define|definition)\s+[^\s(]+\s*\(')  # начало заголовка определения
 PARSE_ARROW = re.compile(r'(?:разбор|parse):\s*[\w.]+\s*(?:\([^()]*\))?\s*(->)')  # `разбор: примитив[("роль")] -> Тип`
 ASSIGN_EQ = re.compile(r'(?<![=<>!])=(?!=)')  # знак `=` вне `==`, `<=`, `>=`, `!=`; `=>` — тело (AL-67)
 
 
-def def_result_arrow(line):
-    """Позиция `->` типа результата в заголовке определения (`определение имя(…) -> Тип`) или None."""
-    m = DEF_HEAD.match(line)
-    if not m:
-        return None
-    depth, i = 1, m.end()
-    while i < len(line) and depth:
-        depth += {'(': 1, ')': -1}.get(line[i], 0)
-        i += 1
-    a = re.match(r'\s*->', line[i:]) if not depth else None
-    return i + a.end() - 2 if a else None
+class DefHeader:
+    """Заголовок определения в блоке кода, в том числе перенесённый на несколько строк (AL-67): пока скобка параметров
+    не закрыта, считается глубина скобок по строкам; стрелка `->` сразу после закрывающей скобки — на той же строке или
+    в начале следующей — тип результата; первый знак `=` после неё (не `==`, `<=`, `>=`, `!=`) обязан быть `=>`."""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.depth, self.seek = 0, None  # seek: None, 'arrow' (скобка закрыта, ждём `->`), 'eq' (ждём `=>`)
+
+    def line(self, line):
+        """Возвращает (позиция стрелки типа результата в строке или None, тело записано через `=`)."""
+        pos, arrow, old_body = 0, None, False
+        m = DEF_HEAD.match(line)
+        if m:
+            self.depth, self.seek, pos = 1, None, m.end()
+        if self.depth:
+            i = pos
+            while i < len(line) and self.depth:
+                self.depth += {'(': 1, ')': -1}.get(line[i], 0)
+                i += 1
+            if self.depth:
+                return None, False
+            self.seek, pos = 'arrow', i
+        if self.seek == 'arrow':
+            r = re.match(r'\s*->', line[pos:])
+            if r:
+                arrow, pos, self.seek = pos + r.end() - 2, pos + r.end(), 'eq'
+            elif line[pos:].strip():
+                self.reset()  # после параметров не `->`: не заголовок с типом результата
+        if self.seek == 'eq':
+            eq = ASSIGN_EQ.search(line, pos)
+            if eq:
+                old_body = line[eq.start() + 1:eq.start() + 2] != '>'
+                self.reset()
+        return arrow, old_body
 
 
-def old_records(line):
+def old_records(line, header=None):
     """Прежняя запись (до 2.18) в строке кода, таблицы или строке-ключе: (тело через `=`, лишние `->`).
-    `->` допустим только как тип результата — после списка параметров определения и в `разбор: … -> Тип`;
-    любой другой `->` — ветка `выбор` или лямбда (AL-68, AL-69). Тело определения: первый знак `=` после типа
-    результата должен быть `=>` (AL-67)."""
+    `->` допустим только как тип результата — после списка параметров определения (`header`, см. `DefHeader`)
+    и в `разбор: … -> Тип`; любой другой `->` — ветка `выбор` или лямбда (AL-68, AL-69)."""
     allowed = {m.start(1) for m in PARSE_ARROW.finditer(line)}
-    res = def_result_arrow(line)
-    old_body = False
+    res, old_body = (header or DefHeader()).line(line)
     if res is not None:
         allowed.add(res)
-        eq = ASSIGN_EQ.search(line, res + 2)
-        old_body = bool(eq) and line[eq.start() + 1:eq.start() + 2] != '>'
     arrows = [m.start() for m in re.finditer('->', line) if m.start() not in allowed]
     return old_body, arrows
+
+
 LATIN = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
 
 # Транслитерация (спецификация, 1а, AL-53): строчная буква кириллицы -> латиница; ъ и ь опускаются.
@@ -313,16 +337,17 @@ def auto_name(name, pascal, gloss):
 def check_operators(text, name):
     """Знаки операторов только ASCII в блоках кода, строках таблиц и строках-ключах (AL-42); прежняя запись тела
     определения, ветки `выбор` и лямбды (`=`, `->` до 2.18, AL-67…AL-69) и тип `да/нет` (AL-66) — ошибка."""
-    errs, in_code = [], False
+    errs, in_code, header = [], False, DefHeader()
     for n, line in enumerate(text.split('\n'), 1):
         if line.startswith('```'):
             in_code = not in_code
+            header.reset()
             continue
         if not (in_code or line.startswith('|') or line.lstrip().startswith('- ')):
             continue
         if any(ch in line for ch in UNICODE_OPS):
             errs.append('%s:%d: знак оператора не ASCII (%s)' % (name, n, ''.join(ch for ch in UNICODE_OPS if ch in line)))
-        old_body, arrows = old_records(line)
+        old_body, arrows = old_records(line, header if in_code else None)
         if old_body:
             errs.append('%s:%d: тело определения пишется после `=>`, а не `=` (AL-67)' % (name, n))
         if arrows:
@@ -616,6 +641,9 @@ MUTATIONS = {
         ('ветка со стражем через `->`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если есть(вид_действия) -> истина;'),
         ('трёхместная лямбда через `->`', '(н, _) => н * 2', '(а, б, в) -> а * 2'),
         ('лямбда через `->` без пробела', '(н, _) => н * 2', '(н, _)-> н * 2'),
+        ('многострочный заголовок, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число ='),
+        ('`->` на следующей строке, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(п число>=0)\n  -> число ='),
+        ('пробел перед скобкой, тело через `=`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора (п число>=0) -> число ='),
         ('лишняя строка `## Имена` у данного (словарь)', ROW_RU, ROW_RU + '| число_повторов | retry_count |\n'),
         ('лишняя строка `## Имена` у состояния (словарь)', ROW_RU, ROW_RU + '| СТАРТ | Start |\n'),
         ('лишняя строка `## Имена` у сигнала (словарь)', ROW_RU, ROW_RU + '| разрешить | allow |\n'),
@@ -658,6 +686,9 @@ MUTATIONS = {
         ('ветка со стражем через `->`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if has(action) -> true;'),
         ('трёхместная лямбда через `->`', '(m, _) => m * 2', '(a, b, c) -> a * 2'),
         ('лямбда через `->` без пробела', '(m, _) => m * 2', '(m, _)-> m * 2'),
+        ('многострочный заголовок, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int ='),
+        ('`->` на следующей строке, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int ='),
+        ('пробел перед скобкой, тело через `=`', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int ='),
         ('убранное событие word', '| 1 | signal(allow) |', '| 1 | word(allow) |'),
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
@@ -674,9 +705,15 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('одно JSON-имя в разных пространствах (поле записи и данное)', ROW_RU, ROW_RU + '| Токены.вход | retry_count |\n'),
         ('смешение письменностей через `_`', '| начато | ?число |', '| начато_at | ?число |'),
         ('однострочное тело через `=>` с `пусть`, `>=` и `==`', '-> число =>\n  свёртка(', '-> число => пусть к = п >= 0 в если к == истина то свёртка('),
+        ('многострочный заголовок с `) -> число =>`', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(\n  п число>=0\n) -> число =>'),
+        ('`->` на следующей строке', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора(п число>=0)\n  -> число =>'),
+        ('пробел перед скобкой', 'пауза_повтора(п число>=0) -> число =>', 'пауза_повтора (п число>=0) -> число =>'),
     ],
     'en': [
         ('однострочное тело через `=>` с `let`, `>=` и `==`', '-> int =>\n  fold(', '-> int => let k = n >= 0 in if k == true then fold('),
+        ('многострочный заголовок с `) -> int =>`', 'retry_pause(n int>=0) -> int =>', 'retry_pause(\n  n int>=0\n) -> int =>'),
+        ('`->` на следующей строке', 'retry_pause(n int>=0) -> int =>', 'retry_pause(n int>=0)\n  -> int =>'),
+        ('пробел перед скобкой', 'retry_pause(n int>=0) -> int =>', 'retry_pause (n int>=0) -> int =>'),
     ],
 }
 
