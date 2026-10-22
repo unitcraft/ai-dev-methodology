@@ -98,7 +98,6 @@ destination	то же	same
 destination	запуск заново	rerun
 decl	тип	type
 decl	перечисление	enum
-decl	вариант	variant
 decl	функция	fn
 type	число	int
 type	число>=	int>=
@@ -152,7 +151,7 @@ operator	=>	=>
 operator	...	...
 operator	..	..
 operator	..=	..=
-operator	in	in
+operator	в	in
 operator	??	??
 operator	_	_
 readable	вход	input

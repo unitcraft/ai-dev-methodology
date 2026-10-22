@@ -14,14 +14,30 @@ This is an **illustration**: the "Agent step" machine in full, written in the Al
 ## Types
 
 ```
-enum CallerKind Lens | CycleSession | ChatTurn | Gatekeeper
-enum ActionKind Read = "read" | Write = "write" | Delete = "delete" | Move = "move" | Search = "search"
-                | Execute = "execute" | Network = "network" | Think = "think" | SwitchMode = "switch_mode" | Other = "other"
-enum ReplyCheck Valid | Violated | Empty
-enum FailCode NoResult = "no_result" | ModelRefused = "model_refused" | ConnectionLost = "connection_lost"
-              | FormNotFixed = "form_not_fixed" | Timeout = "timeout" | StoppedByHuman = "stopped_by_human"
-              | CeilingReached = "ceiling_reached" | Cancelled = "cancelled" | MaxTokens = "max_tokens"
-              | MaxTurnRequests = "max_turn_requests"
+type CallerKind enum Lens | CycleSession | ChatTurn | Gatekeeper
+type ActionKind enum
+  | Read = "read"
+  | Write = "write"
+  | Delete = "delete"
+  | Move = "move"
+  | Search = "search"
+  | Execute = "execute"
+  | Network = "network"
+  | Think = "think"
+  | SwitchMode = "switch_mode"
+  | Other = "other"
+type ReplyCheck enum Valid | Violated | Empty
+type FailCode enum
+  | NoResult = "no_result"
+  | ModelRefused = "model_refused"
+  | ConnectionLost = "connection_lost"
+  | FormNotFixed = "form_not_fixed"
+  | Timeout = "timeout"
+  | StoppedByHuman = "stopped_by_human"
+  | CeilingReached = "ceiling_reached"
+  | Cancelled = "cancelled"
+  | MaxTokens = "max_tokens"
+  | MaxTurnRequests = "max_turn_requests"
 
 type AgentModel { id str, provider str, variant ?str }
 type TokenUsage { input ?int, output ?int, reasoning ?int, cache_read ?int, cache_write ?int }
@@ -35,16 +51,15 @@ type Usage { session str, result str, family str, model AgentModel, tokens Token
 type AgentReply { text ?str, artifact ?str, usage Usage, request_started ?int }
 type PermissionRequest { action ActionKind, description str }
 
-variant TurnResult {
-  Finished { text ?str, artifact ?str, transport_usage TransportUsage }
-  Truncated { transport_usage TransportUsage }
-  TurnRequestLimit { transport_usage TransportUsage }
-  ModelRefusal { transport_usage TransportUsage }
-  Stopped { transport_usage TransportUsage }
-  TransientError
-  PermanentError
-  NeedsPermission { permission_request PermissionRequest }
-}
+type TurnResult enum
+  | Finished { text ?str, artifact ?str, transport_usage TransportUsage }
+  | Truncated { transport_usage TransportUsage }
+  | TurnRequestLimit { transport_usage TransportUsage }
+  | ModelRefusal { transport_usage TransportUsage }
+  | Stopped { transport_usage TransportUsage }
+  | TransientError
+  | PermanentError
+  | NeedsPermission { permission_request PermissionRequest }
 ```
 
 The envelope types (request, response, refusal) are not declared: the executor builds them; the machine writes only `Response(value)` and `Refusal(code, text)` (section "Ends"). The source calls "float" non-negative; the format does not express a bound on a float, so the `?f64` fields have no bound, as in the code. The values of `ActionKind` and `FailCode` (the texts in quotes) are the texts of the journal and of the wire; `CallerKind` and `ReplyCheck` have no values in the source, in the data they go by the JSON name of the element.
