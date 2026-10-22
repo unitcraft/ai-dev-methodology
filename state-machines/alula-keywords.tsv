@@ -102,8 +102,8 @@ decl	вариант	variant
 decl	функция	fn
 type	число	int
 type	число>=	int>=
-type	дробное	f64
-type	текст	str
+type	вещественное	f64
+type	строка	str
 type	булево	bool
 type	ид	id
 type	словарь	map
@@ -114,7 +114,7 @@ type	Сигнал	Signal
 type	СобытиеЖурнала	JournalEvent
 type	ИсходВорот	GateOutcome
 kind_param	сигнал	signal
-kind_param	текст	str
+kind_param	строка	str
 kind_param	[]машина	[]machine
 kind_param	поведение	behavior
 kind_param	примечание	note
@@ -138,8 +138,8 @@ action	вызвать	call
 action	передать	pass
 action	отменить_открытые	cancel_open
 action	кроме	except
-action	для каждого	for
-action	в	in
+action	для	for
+action	из	in
 action	если	if
 action	то	then
 action	иначе	else
@@ -195,9 +195,9 @@ enum_value	irreversible	irreversible
 catalog	есть	has
 catalog	обязательно	require
 catalog	непустое	non_empty
-catalog	текст	text
+catalog	строка	text
 catalog	текст_записи	record_text
-catalog	дробное	float
+catalog	вещественное	float
 catalog	число	int
 catalog	длина	length
 catalog	склеить	concat
