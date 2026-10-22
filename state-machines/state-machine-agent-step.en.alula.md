@@ -122,7 +122,7 @@ The data of the "Pause" fragment (`previous`, `call_request_id`, `open_requests`
 | gatekeeper_attempt | int>=0 | 0 | yes | mechanics |
 | enhanced_attempt | int>=0 | 0 | yes | mechanics |
 
-The bound `turn_count <= turn limit` is not written: when the limit is below 1, Start sets 1, and the bound in the source is wrong for part of the values. The machine does not read `turn` to branch (the transport branches on it); `turn_before_retry` keeps the turn that is repeated after a transient error. `stop_reason` is written by the rows of the machine and by the "Pause" fragment (`pause_halt`, `cancel_request`). The name `transport_usage` serves both the data and the field of the `TurnResult` variants (the glossary calls the variant field `usage`, which would clash with the data `usage`).
+The bound `turn_count <= turn limit` is not written: when the limit is below 1, Start sets 1, and the bound in the source is wrong for part of the values. The machine does not read `turn` to branch (the transport branches on it); `turn_before_retry` keeps the turn that is repeated after a transient error. `stop_reason` is written by the rows of the machine and by the "Pause" fragment (`pause_halt`, `cancel_request`). The name `transport_usage` serves both the data and the field of the `TurnResult` forms (the glossary calls the form field `usage`, which would clash with the data `usage`).
 
 ## Parties
 
