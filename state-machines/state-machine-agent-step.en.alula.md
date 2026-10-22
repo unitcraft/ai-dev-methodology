@@ -125,10 +125,10 @@ The agent profile lies inside `agent_request.profile` and goes to the party as p
 
 ```
 define sum_ints(a ?int, b ?int) -> ?int =>
-  if has(a) and has(b) then (a ?? 0) + (b ?? 0) else a ?? b
+  if has(a) and has(b) then { (a ?? 0) + (b ?? 0) } else { a ?? b }
 
 define sum_floats(a ?float, b ?float) -> ?float =>
-  if has(a) and has(b) then (a ?? 0.0) + (b ?? 0.0) else a ?? b
+  if has(a) and has(b) then { (a ?? 0.0) + (b ?? 0.0) } else { a ?? b }
 
 define add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
   TokenUsage { input: sum_ints(a.input, b.input), output: sum_ints(a.output, b.output),
@@ -137,19 +137,19 @@ define add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
 
 define add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage =>
   if has(previous)
-  then (let p = require(previous) in
+  then { let p = require(previous) in
         TransportUsage { model: new.model, tokens: add_tokens(p.tokens, new.tokens),
                          cost: sum_floats(p.cost, new.cost),
-                         context_used: new.context_used, request_started: new.request_started })
-  else new
+                         context_used: new.context_used, request_started: new.request_started } }
+  else { new }
 
 define tokens_spent(tu ?TransportUsage) -> int =>
   if has(tu)
-  then (let p = require(tu) in (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0))
-  else 0
+  then { let p = require(tu) in (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0) }
+  else { 0 }
 
 define cost_spent(tu ?TransportUsage) -> float =>
-  if has(tu) then (require(tu).cost ?? 0.0) else 0.0
+  if has(tu) then { require(tu).cost ?? 0.0 } else { 0.0 }
 
 define token_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
   has(req.limits.token_budget) and tokens_spent(tu) >= (req.limits.token_budget ?? 0)
@@ -168,28 +168,28 @@ define needs_elevated_attention(action ActionKind) -> bool =>
                  else => false }
 
 define decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" =>
-  let by_table = (if needs_elevated_attention(action) then "ask" else PERMISSION_POLICY[action]) in
-  if by_table == "ask" and not interactive(call_kind) then "deny" else by_table
+  let by_table = (if needs_elevated_attention(action) then { "ask" } else { PERMISSION_POLICY[action] }) in
+  if by_table == "ask" and not interactive(call_kind) then { "deny" } else { by_table }
 
 define retry_pause(n int>=0) -> int =>
   fold(range(1, n), RETRY_PAUSE, (m, _) => m * 2)
 
 define turn_term(req AgentRequest, request_turn text, retries int>=0) -> int =>
-  let extra = (if request_turn == "retry" then retry_pause(retries) else 0) in
+  let extra = (if request_turn == "retry" then { retry_pause(retries) } else { 0 }) in
   let term = req.limits.silence_term in
-  if has(term) then (term ?? 0) + extra else 0
+  if has(term) then { (term ?? 0) + extra } else { 0 }
 
 define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage =>
-  let step_result = (if stopped == "" then "reply" else stopped) in
+  let step_result = (if stopped == "" then { "reply" } else { stopped }) in
   Usage {
     session: req.session, result: step_result, family: req.profile.family,
-    model: (if has(tu) then require(tu).model
-            else AgentModel { id: req.profile.model, provider: "", variant: req.profile.effort }),
-    tokens: (if has(tu) then require(tu).tokens
-             else TokenUsage { input: none, output: none, reasoning: none, cache_read: none, cache_write: none }),
-    cost: (if has(tu) then require(tu).cost else none),
+    model: (if has(tu) then { require(tu).model }
+            else { AgentModel { id: req.profile.model, provider: "", variant: req.profile.effort } }),
+    tokens: (if has(tu) then { require(tu).tokens }
+             else { TokenUsage { input: none, output: none, reasoning: none, cache_read: none, cache_write: none } }),
+    cost: (if has(tu) then { require(tu).cost } else { none }),
     created: began ?? updated, updated: updated,
-    context_used: (if has(tu) then require(tu).context_used else none),
+    context_used: (if has(tu) then { require(tu).context_used } else { none }),
     trace: req.trace, step: req.step }
 
 define usage_event(u Usage) -> JournalEvent =>
@@ -373,7 +373,7 @@ Errored is entered from the `else` rows of the forks (`machine_error("fork_no_ma
 
 | end | № | when | response |
 |---|---|---|---|
-| End | 1 | true | Response(AgentReply { text: reply_text, artifact: reply_artifact, usage: require(usage), request_started: if has(transport_usage) then require(transport_usage).request_started else none }) |
+| End | 1 | true | Response(AgentReply { text: reply_text, artifact: reply_artifact, usage: require(usage), request_started: if has(transport_usage) then { require(transport_usage).request_started } else { none } }) |
 | Errored | 1 | true | Refusal(FailCode.NoResult, "agent step defect: " + transition_note.code) |
 | Halted | 1 | stop_reason == "no_result" | Refusal(FailCode.NoResult, stop_reason) |
 | Halted | 2 | stop_reason == "model_refused" | Refusal(FailCode.ModelRefused, stop_reason) |
