@@ -40,7 +40,12 @@
      слово цикла, а не множество (`loop_in`); типы выражений во вставке не проверяются (это проверка переводчика
      продукта); пространство вызовов (AL-81, `check_calls`): имя определения (как написано и английское имя по 1а,
      `auto_name`) и примитива (как написано и JSON-имя) не совпадает со словом функции каталога и с `range`, а имя
-     определения — с именем примитива (AL-58);
+     определения — с именем примитива (AL-58); прежняя запись до 2.20 (AL-82, функция `check_v220`): в столбце
+     «сигналы»/`signals` таблицы «Сторон» — сигнал с полями в круглых скобках `засчитан(находки []Находка)` (с 2.20 —
+     `засчитан { находки []Находка }`; скобки JSON-имени `имя (X)` ловит проверка 5); в участках кода — альтернатива
+     `выбор`/`match` по варианту с полями в круглых скобках: имя варианта с заглавной (или `Тип.Вар`), за ним `(…)` и
+     `=>`, `|` или страж `если`/`if` (`Закончен(текст) =>`; с 2.20 — `Закончен { текст } =>`); вызовы функций
+     (`Ответ(…)`, `Отказ(…)`, `Пауза(…)`, функции каталога, определения) этими признаками не ловятся;
   4а. убранное событие (AL-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
   5. JSON-имена (спецификация, 1а, «JSON-имя», AL-53, AL-58…AL-60) у объявленных имён, которые выходят из машины, — заголовок
      состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
@@ -62,7 +67,8 @@
      и спецификация (русская и английская) называет тот же хеш;
   6. самопроверка мутацией (`--selftest`): порча структурного слова, знака оператора (в том числе прежняя запись тела
      определения, ветки `выбор` и лямбды; прежние `диапазон(…)`, макрос функцией, образец события и сигнал с полями в
-     круглых скобках, `in {…}`, знак `‥`; пустая и незакрытая вставка, вставка в наборе литералов и в `in […]`), JSON-имени
+     круглых скобках, `in {…}`, знак `‥`; пустая и незакрытая вставка, вставка в наборе литералов и в `in […]`; объявление
+     сигнала с полями и альтернатива `выбор` в круглых скобках, AL-82), JSON-имени
      (лишняя строка `## Имена`,
      строка для необъявленного, внутреннего или читаемого имени, повтор имени в таблице, нелатинское JSON-имя, скобки
      в объявлении, имя без латинского JSON-имени, два состояния, два данных, два поля одной записи с одним JSON-именем,
@@ -84,7 +90,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TABLE = 'alula-keywords.tsv'
 GLOSSARY = 'state-machine-glossary.md'
 SPECS = [('state-machine-alula-spec.md', 'хеш словаря'), ('state-machine-alula-spec.en.md', 'glossary hash')]
-DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 и тем же в 2.17, 2.18 и 2.19 (спецификация, 1а, AL-62)
+DICT_HASH = '60383c370415'  # хеш нормативной части словаря, закреплённый форматом 2.16 и тем же в 2.17–2.20 (спецификация, 1а, AL-62)
 GLOSSARY_VERSION = 11  # версия словаря (для людей), при которой закреплён хеш; проверка сверяет хеш, а не номер
 NORMATIVE_TABLES = ['2.%d' % i for i in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 16)]  # разделы-таблицы словаря; 2.10 — записи
 SAMPLES = [('state-machine-agent-step.alula.md', 'ru'), ('state-machine-agent-step.en.alula.md', 'en'),
@@ -712,6 +718,57 @@ def check_v219(text, name, lang):
     return errs
 
 
+# прежняя альтернатива `выбор` по варианту с полями `Вар(поле, …) =>` (до 2.20, AL-82): имя варианта с заглавной
+# (правило регистра, AL-64) или `Тип.Вар`, круглые скобки без вложенных, затем `=>`, `|` (в ячейке `\|`) или страж
+OLD_ALT = re.compile(r'(?<![\w.])((?:\w+\.)?[A-ZА-ЯЁ]\w*)\s*\([^()]*\)\s*(?:=>|\\?\||(?:если|if)(?!\w))')
+JSON_PARENS = re.compile(r' \([A-Za-z_][A-Za-z0-9_]*\)')  # скобки JSON-имени `имя (X)` (AL-60; их ловит проверка 5)
+V220_MSG = {
+    'SIG': 'сигнал с полями объявляется в фигурных скобках: `%s { поле Тип, … }`, а не `%s(…)` (AL-82)',
+    'ALT': 'альтернатива `выбор` по варианту с полями пишется в фигурных скобках: `%s { поле, поле: имя } =>`, а не `%s(…)` (AL-82)',
+}
+
+
+def check_v220(text, name, lang):
+    """Прежняя запись до 2.20 (AL-82): объявление сигнала с полями в круглых скобках в столбце «сигналы» таблицы
+    «Сторон» и альтернатива `выбор` по варианту с полями в круглых скобках в участках кода (`code_segments`)."""
+    parties = 'Стороны' if lang == 'ru' else 'Parties'
+    col = 'сигналы' if lang == 'ru' else 'signals'
+    errs, sec, in_code, header = [], None, False, None
+    for n, line in enumerate(text.split('\n'), 1):
+        if line.startswith('```'):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        m = re.match(r'^## (\S+)', line)
+        if m:
+            sec, header = m.group(1), None
+            continue
+        if not line.startswith('|'):
+            header = None
+            continue
+        if re.match(r'^\|[-:| ]+\|\s*$', line):
+            continue
+        cells = [c.strip() for c in CELL_PIPE.split(line.strip())[1:-1]]
+        if header is None:
+            header = cells
+            continue
+        if sec != parties or col not in header or len(cells) <= header.index(col):
+            continue
+        for sig in split_top(cells[header.index(col)]):
+            if '(' in JSON_PARENS.sub('', sig):
+                nm = sig.split('(')[0].strip()
+                errs.append('%s:%d: %s' % (name, n, V220_MSG['SIG'] % (nm, nm)))
+    for first, seg in code_segments(text):
+        outside = set(outside_strings(seg))
+        for m in OLD_ALT.finditer(seg):
+            if m.start() in outside:
+                e = '%s:%d: %s' % (name, first + seg.count('\n', 0, m.start()) + 1, V220_MSG['ALT'] % (m.group(1), m.group(1)))
+                if e not in errs:
+                    errs.append(e)
+    return errs
+
+
 DEF_NAME = re.compile(r'^\s*(?:определение|define|definition)\s+([^\s(]+)\s*\(')
 
 
@@ -790,12 +847,13 @@ def split_name(decl):
 
 
 def split_signal(sig):
-    """Разбор сигнала стороны `имя[(поля)]`: имя — всё до первой скобки, может быть из нескольких слов (`остановить совещание`);
+    """Разбор сигнала стороны `имя[ { поля }]`: имя — всё до первой скобки, может быть из нескольких слов (`остановить
+    совещание`); прежние поля в круглых скобках `имя(поля)` (до 2.20, AL-82) разбираются так же, ошибку даёт `check_v220`;
     скобки `имя (X)` убраны (AL-60)."""
     m = re.match(r'^(.+?) \(([A-Za-z_][A-Za-z0-9_]*)\)(.*)$', sig)
     if m:
         return m.group(1).strip(), m.group(2), m.group(3).strip()
-    nm = sig.split('(')[0].strip()
+    nm = re.split(r'[({]', sig)[0].strip()
     return nm, None, sig[len(nm):].strip()
 
 
@@ -864,7 +922,7 @@ def declarations(text, lang, readable=()):
             for sig in split_top(cells[header.index(signals_col)]):
                 nm, js, rest = split_signal(sig)
                 out.append((n, 'сигнала', False, nm, (party, nm), js))
-                if rest.startswith('(') and rest.endswith(')'):
+                if (rest.startswith('{') and rest.endswith('}')) or (rest.startswith('(') and rest.endswith(')')):
                     fields(rest[1:-1], n, 'поля сигнала', (party, nm))
     owner = None
     for n, d, member in decls:
@@ -998,7 +1056,7 @@ def check_json_names(text, words, name, lang, gloss, contract=None):
 
 def check_sample(text, words, name, lang, gloss):
     contract = [en for ru, en in words['readable_pairs'] if ru in CONTRACT_DATA] if 'readable_pairs' in words else []
-    errs = check_operators(text, name) + check_v219(text, name, lang) + check_calls(text, words, name, lang, gloss) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
+    errs = check_operators(text, name) + check_v219(text, name, lang) + check_v220(text, name, lang) + check_calls(text, words, name, lang, gloss) + check_removed(text, name) + check_json_names(text, words, name, lang, gloss, contract)
     own = {k: v[0 if lang == 'ru' else 1] for k, v in words.items() if k in KINDS}
     other = {k: v[1 if lang == 'ru' else 0] for k, v in words.items() if k in KINDS}
     declared = re.search(r'^- language: (\w+)\s*$', text, re.M)
@@ -1042,6 +1100,12 @@ MUTATIONS = {
         ('сигнал с полями в круглых скобках (до 2.19)', '| 1 | сигнал(разрешить) |', '| 1 | сигнал(разрешить(решение: р)) |'),
         ('`in {…}` в ячейке события (до 2.19)', 'сбой(причина in [КодСбоя.СоединениеОборвалось, КодСбоя.НетОтветаВСрок, КодСбоя.НетРезультата])', 'сбой(причина in {КодСбоя.СоединениеОборвалось, КодСбоя.НетОтветаВСрок, КодСбоя.НетРезультата})'),
         ('`in {…}` в `Кроме` (до 2.19)', '- Кроме: остановка in [""]', '- Кроме: остановка in {""}'),
+        ('объявление сигнала с полями в круглых скобках (до 2.20)', 'продолжить { слово_человека текст, автор текст, источник текст }', 'продолжить(слово_человека текст, автор текст, источник текст)'),
+        ('объявление сигнала с одним полем в круглых скобках', '| разрешить, отказать |', '| разрешить(решение текст), отказать |'),
+        ('альтернатива `выбор` по варианту в круглых скобках (до 2.20)', 'выбор вид_действия { ВидДействия.Удаление |', 'выбор вид_действия { Удаление(вид) |'),
+        ('альтернатива `выбор` в круглых скобках перед `=>`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; Сеть(адрес: а) => ложь;'),
+        ('альтернатива `выбор` в круглых скобках со стражем', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; ВидДействия.Сеть(адрес) если истина => ложь;'),
+        ('альтернатива `выбор` в круглых скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен(текст) \\| Обрезан(текст) => 1; иначе => 0 } | ХОД_АГЕНТА |'),
         ('пустая вставка `${}`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "ход ${}" | ХОД_АГЕНТА |'),
         ('незакрытая вставка', '| число_ходов += 1 | ХОД_АГЕНТА |', '| текст_ответа = "ход ${число_ходов" | ХОД_АГЕНТА |'),
         ('литерал со вставкой в наборе литералов', '| ход | "first" \\| "retry"', '| ход | "first${число_ходов}" \\| "retry"'),
@@ -1119,6 +1183,9 @@ MUTATIONS = {
         ('сигнал с полями в круглых скобках (до 2.19)', '| 1 | signal(allow) |', '| 1 | signal(allow(decision: d)) |'),
         ('`in {…}` в ячейке события (до 2.19)', 'failure(reason in [FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult])', 'failure(reason in {FailCode.ConnectionLost, FailCode.Timeout, FailCode.NoResult})'),
         ('`in {…}` в `Except` (до 2.19)', '- Except: stop_reason in [""]', '- Except: stop_reason in {""}'),
+        ('объявление сигнала с полями в круглых скобках (до 2.20)', 'continue { human_word text, author text, source text }', 'continue(human_word text, author text, source text)'),
+        ('альтернатива `match` по варианту в круглых скобках (до 2.20)', 'match action { ActionKind.Delete |', 'match action { Delete(path) |'),
+        ('альтернатива `match` в круглых скобках со стражем', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; ActionKind.Network(address) if true => false;'),
         ('пустая вставка `${}`', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${}" | AgentTurn |'),
         ('незакрытая вставка', '| turn_count += 1 | AgentTurn |', '| reply_text = "turn ${turn_count" | AgentTurn |'),
         ('литерал со вставкой в наборе литералов', '| turn | "first" \\| "retry"', '| turn | "first${turn_count}" \\| "retry"'),
@@ -1183,6 +1250,9 @@ CLEAN = {  # порча, которая ошибки давать не долж�
          '| вид | ВидВызывающего | если есть, то сессия агента; для каждого хода: сессия; пусть свободно в цикле |'),
         ('слова в строковом литерале блока', '| число_ходов += 1 | ХОД_АГЕНТА |', '| { пусть s = "если a то b; для каждого x: y; пусть z в w"; число_ходов += 1 } | ХОД_АГЕНТА |'),
         ('страж ветки `выбор` без `то`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если истина => истина;'),
+        ('альтернатива `выбор` по варианту с полями в фигурных скобках', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима => истина; Сеть { адрес, порт: п } если п > 0 => ложь; Удаление { путь } | Перенос { путь } => ложь;'),
+        ('альтернатива в фигурных скобках в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += выбор ход_до_повтора { Закончен { текст } \\| Обрезан { текст } => 1; иначе => 0 } | ХОД_АГЕНТА |'),
+        ('объявление сигнала с одним полем в фигурных скобках', '| разрешить, отказать |', '| разрешить { решение текст }, отказать |'),
     ],
     'en': [
         ('однострочное тело через `=>` с `let`, `>=` и `==`', '-> int =>\n  (1..n).fold(RETRY_PAUSE, (m, _) => m * 2)', '-> int => { let k = n >= 0; if k == true then { (1..n).fold(RETRY_PAUSE, (m, _) => m * 2) } else { 0 } }'),
@@ -1203,6 +1273,8 @@ CLEAN = {  # порча, которая ошибки давать не долж�
          '| kind | CallerKind | the agent session if any, then reused; for each turn: a session; let free in the loop |'),
         ('слова в строковом литерале блока', '| turn_count += 1 | AgentTurn |', '| { let s = "if a then b; for each x: y; let z in w"; turn_count += 1 } | AgentTurn |'),
         ('страж ветки `match` без `then`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if true => true;'),
+        ('альтернатива `match` по варианту с полями в фигурных скобках', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode => true; Network { address, port: p } if p > 0 => false;'),
+        ('объявление сигнала с одним полем в фигурных скобках', '| allow, deny |', '| allow { decision text }, deny |'),
     ],
 }
 

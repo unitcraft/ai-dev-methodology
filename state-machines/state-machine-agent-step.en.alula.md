@@ -1,11 +1,11 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: alula-2.19
-- format: 2.19
+- machine_version: alula-2.20
+- format: 2.20
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.19 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
+This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.20 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The first source is this Alula record; the old tables are in the archive and are not updated.** The former notation is the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md). The "Pause" fragment is [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-alula-samples.py](check-alula-samples.py).
 
@@ -115,7 +115,7 @@ The bound `turn_count <= turn limit` is not written: when the limit is below 1, 
 |---|---|---|---|---|---|
 | agent | agent | agent(result TurnResult) | — | — | agent_attempt |
 | gatekeeper | gatekeeper | human or agent by setting elevated_attention_executor(result GateOutcome) | — | allow, deny | gatekeeper_attempt |
-| enhanced | enhanced | enhanced(result GateOutcome) | — | continue(human_word text, author text, source text), halt | enhanced_attempt |
+| enhanced | enhanced | enhanced(result GateOutcome) | — | continue { human_word text, author text, source text }, halt | enhanced_attempt |
 
 - Request limit: 1
 
