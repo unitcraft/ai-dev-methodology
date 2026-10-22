@@ -24,11 +24,13 @@
      пишется после `=>`; `==`, `<=`, `>=`, `!=` знаком `=` не считаются); любой знак `->`, кроме типа результата после списка
      параметров определения и в `разбор: примитив[("роль")] -> Тип` (`parse:`), — ветка `выбор` или лямбда, они пишутся через `=>`;
      а также тип `да/нет` (с 2.18 — `булево`, AL-66); после `то`/`then` условного действия или выражения и после
-     `иначе`/`else` его ветки — не блок `{ … }` (AL-70, AL-71; блок кода — целиком, с переносами строк; `если` без `то`
-     на своей глубине — страж ветки `выбор` — не проверяется); `для каждого`/`for each` с двоеточием перед телом (AL-72);
-     `пусть`/`let`, после которого до конца привязки (`;`, конец ячейки, конец группы, пустая строка) на глубине 0 стоит
-     слово `в`/`in`, — прежние действие `пусть … в действия` и выражение `пусть … в выр` (AL-73, AL-75; блок кода
-     проверяется целиком, `в` у `для каждого x в xs` после `;` привязки не мешает);
+     `иначе`/`else` его ветки — не блок `{ … }` или пустой блок (AL-70, AL-71); `если` с блоком без `то` (без `то`
+     допустим только страж ветки `выбор`, до `=>`); `для каждого`/`for each` без блока `{ … }` после выражения
+     коллекции, в том числе с двоеточием (AL-72); `пусть`/`let`, после которого до конца привязки (`;`, конец ячейки,
+     конец группы, пустая строка) на глубине 0 стоит слово `в`/`in`, — прежние действие и выражение `пусть … в`
+     (AL-73, AL-75); блоки проверяются только в местах кода (`code_segments`): блок кода целиком, ячейки столбцов кода
+     (`CODE_COLUMNS`; не «примечание»/`note`, не имена и типы), значения строк-ключей кода и вложенный список «При входе»;
+     слова внутри строковых литералов не читаются;
   4а. убранное событие (AL-38): в строках таблиц нет события `слово(…)` (`word(…)`) — только `сигнал(…)`;
   5. JSON-имена (спецификация, 1а, «JSON-имя», AL-53, AL-58…AL-60) у объявленных имён, которые выходят из машины, — заголовок
      состояния `###`, первый столбец таблиц `## Вход`, `## Данные`, `## Примитивы` (кроме пути поля `имя[*].поле` и данных
@@ -339,38 +341,16 @@ def auto_name(name, pascal, gloss):
     return '_'.join(translit(w.lower()) for w in words)
 
 
-ACTION_COLUMNS = {'действия', 'actions'}  # столбцы действий: таблица состояния и «При приёме»
-ACTION_KEYS = re.compile(r'^- (?:При входе|При приёме|On entry|On accept):\s*(.*)$')
-COND_START = re.compile(r'^(?:если|if)\s')
 CELL_PIPE = re.compile(r'(?<!\\)\|')
-
-
-def top_word(s, words, start=0):
-    """Позиция первого слова из `words` (с пробелами вокруг) вне скобок ()[]{} начиная с `start`, или -1."""
-    depth = 0
-    for i in range(start, len(s)):
-        ch = s[i]
-        if ch in '([{':
-            depth += 1
-        elif ch in ')]}':
-            depth -= 1
-        elif depth == 0 and ch == ' ':
-            for w in words:
-                if s.startswith(' %s ' % w, i):
-                    return i + 1
-    return -1
-
-
-def closing(s, i):
-    """Позиция скобки, закрывающей открывающую `s[i]`."""
-    depth = 0
-    for j in range(i, len(s)):
-        depth += {'(': 1, '[': 1, '{': 1, ')': -1, ']': -1, '}': -1}.get(s[j], 0)
-        if depth == 0:
-            return j
-    return len(s)
-
-
+# столбцы таблиц, где стоит код (выражения и действия); прочие столбцы (имена, типы, «примечание»/`note`, «Куда»,
+# «читает», «пишет», сигналы) — не код, проверка блоков их не читает
+CODE_COLUMNS = {'значение', 'value', 'по умолчанию', 'default', 'начальное', 'initial', 'не убывает', 'non_decreasing',
+                'профиль', 'profile', 'условие', 'condition', 'действия', 'actions', 'выражение', 'expression',
+                'когда', 'when', 'ответ', 'response'}
+# строки-ключи, значение которых — код; «При входе» без значения открывает вложенный список действий
+CODE_KEYS = re.compile(r'^- (?:При входе|On entry|Инвариант|Invariant|Предел запросов|Request limit|Срок тишины|Idle term|'
+                       r'Кроме|Except):\s*(.*)$')
+ENTRY_KEY = re.compile(r'^- (?:При входе|On entry):\s*$')
 WORD_CH = re.compile(r'\w')
 
 
@@ -407,38 +387,83 @@ def scan_top(s, i, stop):
     return -1
 
 
+def outside_strings(s):
+    """Позиции вне строковых литералов `"…"`."""
+    out, inside = [], False
+    for i, ch in enumerate(s):
+        if ch == '"':
+            inside = not inside
+            continue
+        if not inside:
+            out.append(i)
+    return out
+
+
+def block_close(s, j):
+    """Позиция `}`, закрывающей `{` в позиции j (строки пропускаются)."""
+    depth, x = 0, j
+    while x < len(s):
+        if s[x] == '"':
+            k = s.find('"', x + 1)
+            x = (k if k >= 0 else len(s)) + 1
+            continue
+        depth += {'{': 1, '(': 1, '[': 1, '}': -1, ')': -1, ']': -1}.get(s[x], 0)
+        if depth == 0:
+            return x
+        x += 1
+    return len(s)
+
+
+def branch_errors(seg, k):
+    """Ветка с позиции k (после `то`/`иначе`): блок `{ … }`, не пустой. Возвращает (метка ошибки или None, конец)."""
+    rest = seg[k:].lstrip()
+    if not rest.startswith('{'):
+        return 'AL-71', k
+    j = k + len(seg[k:]) - len(rest)
+    x = block_close(seg, j)
+    if not seg[j + 1:x].strip():
+        return 'EMPTY', x
+    return None, x
+
+
 def block_errors(seg):
-    """Прежняя запись блоков (до 2.18) в участке кода, строке таблицы или строке списка: позиции и метки.
-    (а) после `то`/`then` условного действия или выражения и после `иначе`/`else` его ветки нет блока `{ … }`
-    (AL-70, AL-71); `если` без `то` на своей глубине (страж ветки `выбор`) не проверяется;
-    (б) `для каждого`/`for each` с двоеточием перед телом вместо блока (AL-72)."""
+    """Прежняя запись блоков (до 2.18) в участке кода: позиции и метки.
+    (а) условное действие и выражение: после `то`/`then` и `иначе`/`else` — непустой блок `{ … }` (AL-70, AL-71);
+    `если` без `то` допустим только как страж ветки `выбор` (до `=>`); блок без `то` — ошибка;
+    (б) `для каждого`/`for each`: после выражения коллекции — блок `{ … }`, без двоеточия (AL-72);
+    (в) `пусть`/`let` со словом `в`/`in` до конца привязки (AL-73, AL-75).
+    Слова внутри строковых литералов не читаются."""
     out = []
-    for i in range(len(seg)):
+    for i in outside_strings(seg):
         for w_if, w_then, w_else in (('если', 'то', 'иначе'), ('if', 'then', 'else')):
             if not word_at(seg, i, w_if):
                 continue
-            t = scan_top(seg, i + len(w_if), lambda s, j: word_at(s, j, w_then))
-            if t < 0:
+            k = i + len(w_if)
+            t = scan_top(seg, k, lambda s, j: word_at(s, j, w_then) or s[j] in ';|' or s.startswith('=>', j)
+                         or s.startswith('\n\n', j))
+            if t < 0 or not word_at(seg, t, w_then):
+                # страж ветки `выбор` кончается `=>`; без `то` блок `{` на глубине 0 — ошибка
+                if t >= 0 and seg.startswith('=>', t):
+                    continue
+                b = scan_top(seg, k, lambda s, j: s[j] in '{;|' or s.startswith('\n\n', j))
+                if b >= 0 and seg[b] == '{':
+                    out.append((i, 'NO_THEN'))
                 continue
-            k = t + len(w_then)
-            rest = seg[k:].lstrip()
-            if not rest.startswith('{'):
-                out.append((i, 'AL-71'))
-                continue
-            j = k + len(seg[k:]) - len(rest)
-            depth, x = 0, j
-            while x < len(seg):
-                depth += {'{': 1, '(': 1, '[': 1, '}': -1, ')': -1, ']': -1}.get(seg[x], 0)
-                if depth == 0:
-                    break
-                x += 1
+            label, x = branch_errors(seg, t + len(w_then))
+            if label:
+                out.append((i, label))
+                if label == 'AL-71':
+                    continue
             tail = seg[x + 1:].lstrip()
-            if tail.startswith(w_else) and word_at(tail, 0, w_else) and not tail[len(w_else):].lstrip().startswith(('{', '=>')):
-                out.append((i, 'AL-71'))
-        for w_for in ('для каждого', 'for each'):
+            if word_at(tail, 0, w_else) and not tail[len(w_else):].lstrip().startswith('=>'):
+                e0 = x + 1 + (len(seg[x + 1:]) - len(tail)) + len(w_else)
+                label, _ = branch_errors(seg, e0)
+                if label:
+                    out.append((i, label))
+        for w_for, w_in in (('для каждого', 'в'), ('for each', 'in')):
             if word_at(seg, i, w_for):
-                c = scan_top(seg, i + len(w_for), lambda s, j: s[j] in ':{;|\n')
-                if c >= 0 and seg[c] == ':':
+                c = scan_top(seg, i + len(w_for), lambda s, j: s[j] in ':{;|' or s.startswith('\n\n', j))
+                if c < 0 or seg[c] != '{':
                     out.append((i, 'AL-72'))
         for w_let, w_in in (('пусть', 'в'), ('let', 'in')):
             if word_at(seg, i, w_let):
@@ -452,38 +477,21 @@ def block_errors(seg):
 
 
 BLOCK_MSG = {'AL-71': 'ветки `если` пишутся блоками: `то { … } иначе { … }` (AL-70, AL-71)',
+             'NO_THEN': 'у `если` с блоком нет `то`: `если выр то { … }`; `если` без `то` — только страж ветки `выбор` (AL-70)',
+             'EMPTY': 'ветка `если` не пустая: блок `{ }` без содержимого не пишется, ненужную ветку `иначе` опускают (AL-70)',
              'AL-72': 'тело `для каждого` пишется блоком: `для каждого x в xs { … }`, без двоеточия (AL-72)',
              'AL-75': 'у `пусть` нет слова `в`: привязка — `пусть имя = выр;` в блоке `{ …; выр }` или `{ …; действия }` (AL-73, AL-75)'}
-
-
-def actions_of(line, cols):
-    """Действия строки вне блока кода: ячейки столбцов действий таблицы, вложенный элемент списка «При входе»,
-    значение строки-ключа «При входе»/«При приёме»."""
-    if line.startswith('|'):
-        cells = [c.strip() for c in CELL_PIPE.split(line.strip())[1:-1]]
-        return [a for i in cols if i < len(cells) for a in split_top(cells[i].replace('\\|', '|'), ';')]
-    m = ACTION_KEYS.match(line)
-    if m:
-        return split_top(m.group(1), ';')
-    if re.match(r'^\s+- ', line):
-        return split_top(line.strip()[2:], ';')
-    return []
 
 
 def check_operators(text, name):
     """Знаки операторов только ASCII в блоках кода, строках таблиц и строках-ключах (AL-42); прежняя запись тела
     определения, ветки `выбор` и лямбды (`=`, `->` до 2.18, AL-67…AL-69) и тип `да/нет` (AL-66) — ошибка."""
     errs, in_code, header = [], False, DefHeader()
-    cols, prev_table = [], False
     for n, line in enumerate(text.split('\n'), 1):
         if line.startswith('```'):
             in_code = not in_code
             header.reset()
             continue
-        is_table = not in_code and line.startswith('|')
-        if is_table and not prev_table:
-            cols = [i for i, c in enumerate(CELL_PIPE.split(line.strip())[1:-1]) if c.strip().lower() in ACTION_COLUMNS]
-        prev_table = is_table
         if not (in_code or line.startswith('|') or line.lstrip().startswith('- ')):
             continue
         if any(ch in line for ch in UNICODE_OPS):
@@ -499,11 +507,13 @@ def check_operators(text, name):
     return errs
 
 
-def segment_errors(text, name):
-    """Проверка блоков `{ … }` (AL-70…AL-72) по участкам: блок кода целиком (заголовки и ветки переносятся на
-    несколько строк), строка таблицы, строка списка."""
+def code_segments(text):
+    """Участки кода для проверки блоков: (номер первой строки с 0, текст). Блок кода — целиком (заголовки и ветки
+    переносятся на несколько строк); в таблице — ячейки столбцов кода (`CODE_COLUMNS`) по заголовку таблицы;
+    значение строки-ключа кода (`CODE_KEYS`) и элементы вложенного списка «При входе». Проза — столбцы
+    «примечание»/`note`, имена, типы, абзацы и прочие строки списка — не читается."""
     lines = text.split('\n')
-    segs, start = [], None
+    segs, start, cols, prev_table, entry = [], None, [], False, False
     for n, line in enumerate(lines):
         if line.startswith('```'):
             if start is None:
@@ -512,10 +522,32 @@ def segment_errors(text, name):
                 segs.append((start, '\n'.join(lines[start:n])))
                 start = None
             continue
-        if start is None and (line.startswith('|') or line.lstrip().startswith('- ')):
-            segs.append((n, line))
+        if start is not None:
+            continue
+        is_table = line.startswith('|')
+        if is_table:
+            cells = [c.strip() for c in CELL_PIPE.split(line.strip())[1:-1]]
+            if not prev_table:
+                cols = [i for i, c in enumerate(cells) if c.lower() in CODE_COLUMNS]
+            elif not re.match(r'^\|[-:| ]+\|$', line):
+                segs += [(n, cells[i]) for i in cols if i < len(cells)]
+        prev_table = is_table
+        m = CODE_KEYS.match(line)
+        if m:
+            segs.append((n, m.group(1)))
+        if ENTRY_KEY.match(line):
+            entry = True
+        elif entry and re.match(r'^\s+- ', line):
+            segs.append((n, line.strip()[2:]))
+        elif line.strip():
+            entry = False
+    return segs
+
+
+def segment_errors(text, name):
+    """Проверка блоков `{ … }` (AL-70…AL-75) по участкам кода (`code_segments`)."""
     errs = []
-    for first, seg in segs:
+    for first, seg in code_segments(text):
         for pos, label in block_errors(seg):
             e = '%s:%d: %s' % (name, first + seg.count('\n', 0, pos) + 1, BLOCK_MSG[label])
             if e not in errs:
@@ -822,6 +854,10 @@ MUTATIONS = {
         ('выражение `пусть … в` в ветке (до 2.18)', 'то { пусть п = обязательно(р); (п.токены.вход', 'то { пусть п = обязательно(р) в (п.токены.вход'),
         ('выражение `пусть … в` в теле определения (до 2.18)', '  пусть срок = з.пределы.срок_тишины;', '  пусть срок = з.пределы.срок_тишины в'),
         ('выражение `пусть … в` в ячейке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += (пусть x = 1 в x) | ХОД_АГЕНТА |'),
+        ('`для каждого` без блока, тело в круглых скобках', '| число_ходов += 1 | ХОД_АГЕНТА |', '| для каждого x в [1] (число_ходов += x) | ХОД_АГЕНТА |'),
+        ('`для каждого` без блока', '| число_ходов += 1 | ХОД_АГЕНТА |', '| для каждого x в [1] число_ходов += x | ХОД_АГЕНТА |'),
+        ('`если` с блоком без `то`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если истина { число_ходов += 1 } | ХОД_АГЕНТА |'),
+        ('пустая ветка `иначе { }`', '| число_ходов += 1 | ХОД_АГЕНТА |', '| если истина то { число_ходов += 1 } иначе { } | ХОД_АГЕНТА |'),
         ('лишняя строка `## Имена` у данного (словарь)', ROW_RU, ROW_RU + '| число_повторов | retry_count |\n'),
         ('лишняя строка `## Имена` у состояния (словарь)', ROW_RU, ROW_RU + '| СТАРТ | Start |\n'),
         ('лишняя строка `## Имена` у сигнала (словарь)', ROW_RU, ROW_RU + '| разрешить | allow |\n'),
@@ -877,6 +913,10 @@ MUTATIONS = {
         ('выражение `let … in` в ветке (до 2.18)', 'then { let p = require(tu); (p.tokens.input', 'then { let p = require(tu) in (p.tokens.input'),
         ('выражение `let … in` в теле определения (до 2.18)', '  let term = req.limits.silence_term;', '  let term = req.limits.silence_term in'),
         ('выражение `let … in` в ячейке', '| turn_count += 1 | AgentTurn |', '| turn_count += (let x = 1 in x) | AgentTurn |'),
+        ('`for each` без блока, тело в круглых скобках', '| turn_count += 1 | AgentTurn |', '| for each x in [1] (turn_count += x) | AgentTurn |'),
+        ('`for each` без блока', '| turn_count += 1 | AgentTurn |', '| for each x in [1] turn_count += x | AgentTurn |'),
+        ('`if` с блоком без `then`', '| turn_count += 1 | AgentTurn |', '| if true { turn_count += 1 } | AgentTurn |'),
+        ('пустая ветка `else { }`', '| turn_count += 1 | AgentTurn |', '| if true then { turn_count += 1 } else { } | AgentTurn |'),
         ('убранное событие word', '| 1 | signal(allow) |', '| 1 | word(allow) |'),
         ('начальное состояние', 'Initial state: Start', 'Initial stat: Start'),
         ('ключ шапки', '- machine_version:', '- machine_ver:'),
@@ -901,6 +941,10 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('условное выражение с блоками в действии', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += если истина то { 1 } иначе { 2 } | ХОД_АГЕНТА |'),
         ('блок действий с `пусть` и `для каждого` с блоком', '| число_ходов += 1 | ХОД_АГЕНТА |', '| { пусть x = 1; для каждого y в [x] { число_ходов += y } } | ХОД_АГЕНТА |'),
         ('блок-выражение в действии и литерал записи в ветке', '| число_ходов += 1 | ХОД_АГЕНТА |', '| число_ходов += { пусть x = 1; x }; запрос_разрешения = если истина то { ЗапросРазрешения { вид_действия: ВидДействия.Сеть } } иначе { пусто } | ХОД_АГЕНТА |'),
+        ('проза в столбце «примечание» со словами `если … то`, `для каждого …:`, `пусть … в`', '| вид | ВидВызывающего | вид вызывающего |',
+         '| вид | ВидВызывающего | если есть, то сессия агента; для каждого хода: сессия; пусть свободно в цикле |'),
+        ('слова в строковом литерале блока', '| число_ходов += 1 | ХОД_АГЕНТА |', '| { пусть s = "если a то b; для каждого x: y; пусть z в w"; число_ходов += 1 } | ХОД_АГЕНТА |'),
+        ('страж ветки `выбор` без `то`', 'ВидДействия.СменаРежима => истина;', 'ВидДействия.СменаРежима если истина => истина;'),
     ],
     'en': [
         ('однострочное тело через `=>` с `let`, `>=` и `==`', '-> int =>\n  fold(range(1, n), RETRY_PAUSE, (m, _) => m * 2)',
@@ -912,6 +956,10 @@ CLEAN = {  # порча, которая ошибки давать не долж�
         ('условное выражение с блоками в действии', '| turn_count += 1 | AgentTurn |', '| turn_count += if true then { 1 } else { 2 } | AgentTurn |'),
         ('блок действий с `let` и `for each` с блоком', '| turn_count += 1 | AgentTurn |', '| { let x = 1; for each y in [x] { turn_count += y } } | AgentTurn |'),
         ('блок-выражение в действии', '| turn_count += 1 | AgentTurn |', '| turn_count += { let x = 1; x } | AgentTurn |'),
+        ('проза в столбце `note` со словами `if … then`, `for each …:`, `let … in`', '| kind | CallerKind | the caller kind |',
+         '| kind | CallerKind | the agent session if any, then reused; for each turn: a session; let free in the loop |'),
+        ('слова в строковом литерале блока', '| turn_count += 1 | AgentTurn |', '| { let s = "if a then b; for each x: y; let z in w"; turn_count += 1 } | AgentTurn |'),
+        ('страж ветки `match` без `then`', 'ActionKind.SwitchMode => true;', 'ActionKind.SwitchMode if true => true;'),
     ],
 }
 
