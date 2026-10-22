@@ -12,13 +12,18 @@
   6. каждый код из `journal_event("…", …)` есть в таблице шаблонов `state-machine-journal.md`, и наоборот; машины строки таблицы — ровно те, где код пишется;
   7. имена параметров в вызове совпадают с `{…}` шаблона и со столбцом «Параметры»;
   8. в вызовах `write_journal(` и `machine_error(` нет строкового литерала (русский текст журнала живёт только в таблице шаблонов).
+Сверка ячеек таблиц (`check_table_cells`: все отслеживаемые git файлы `*.md` репозитория):
+  9. вне блоков кода (ограждения ``` и ~~~) у каждой строки таблицы markdown (строки с `|` подряд, вторая — строка-разделитель)
+     ячеек не больше, чем у строки заголовка; ячейки делятся по каждому знаку `|` без обратной косой черты перед ним — так делит
+     GitHub, даже внутри обратных кавычек, а лишние ячейки молча отбрасывает (знак `|` в ячейке пишется `\\|`);
+     самопроверка (`--selftest`): строка с `|` без экранирования внутри обратных кавычек даёт ошибку, с `\\|` — нет.
 Чего не проверяет: данные событий, условия развилок, тела функций, значения параметров.
 Где файлы: таблицы и автоматы машин и движок — прежние описания в `state-machines/archive/` (не обновляются: машины записываются
 на Алуле; владелец, 2026-10-22: «в методике оставь только Алулу в итоге, остальное в архив»); скрипт читает их из архива;
 словарь и журнал — в `state-machines/`.
-Запуск: из корня репозитория `python state-machines/check-tables.py`; код возврата 1 при расхождениях.
+Запуск: из корня репозитория `python state-machines/check-tables.py` (`--selftest` — с самопроверкой); код возврата 1 при расхождениях.
 """
-import io, os, re, sys
+import io, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MACHINES = {  # файл состояний -> (файл автомата, сокращение «Где» в словаре)
@@ -226,6 +231,73 @@ def check_journal():
     return errs, len(table)
 
 
+TABLE_SEP_RE = re.compile(r'^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$')
+PIPE_RE = re.compile(r'(?<!\\)\|')
+FENCE_RE = re.compile(r'^\s*(`{3,}|~{3,})')
+
+
+def row_cells(line):
+    """Число ячеек строки таблицы: деление по каждому `|` без `\\` перед ним, как у GitHub (и внутри обратных кавычек)."""
+    s = line.strip()
+    parts = PIPE_RE.split(s)
+    if s.startswith('|'):
+        parts = parts[1:]
+    if s.endswith('|') and not s.endswith('\\|'):
+        parts = parts[:-1]
+    return len(parts)
+
+
+def table_cell_errors(text, name):
+    """Строки таблиц вне блоков кода, где ячеек больше, чем у заголовка (лишние ячейки GitHub отбрасывает)."""
+    errs, fence = [], None
+    lines = [l.rstrip('\r') for l in text.split('\n')]
+    i = 0
+    while i < len(lines):
+        m = FENCE_RE.match(lines[i])
+        if m:
+            if fence is None:
+                fence = m.group(1)[0] * 3
+            elif lines[i].lstrip().startswith(fence):
+                fence = None
+            i += 1
+            continue
+        if fence is None and lines[i].lstrip().startswith('|') and i + 1 < len(lines) and TABLE_SEP_RE.match(lines[i + 1]):
+            head, j = row_cells(lines[i]), i + 2
+            while j < len(lines) and lines[j].lstrip().startswith('|'):
+                n = row_cells(lines[j])
+                if n > head:
+                    errs.append('%s:%d: ячеек %d, у заголовка %d: знак `|` в ячейке пишется `\\|`' % (name, j + 1, n, head))
+                j += 1
+            i = j
+            continue
+        i += 1
+    return errs
+
+
+def check_table_cells():
+    root = os.path.dirname(HERE)
+    out = subprocess.run(['git', '-C', root, 'ls-files', '-z', '*.md'], capture_output=True, check=True).stdout
+    files = [f for f in out.decode('utf-8').split('\0') if f]
+    errs = []
+    for f in files:
+        errs += table_cell_errors(io.open(os.path.join(root, f), encoding='utf-8').read(), f)
+    return errs, len(files)
+
+
+def selftest_table_cells():
+    good = '| a | b |\n|---|---|\n| `x \\| y` | z |\n'
+    bad = '| a | b |\n|---|---|\n| `x | y` | z |\n'
+    fenced = '```\n' + bad + '```\n'
+    errs = []
+    if table_cell_errors(good, 'good'):
+        errs.append('самопроверка ячеек: `\\|` в обратных кавычках дал ложную ошибку')
+    if not table_cell_errors(bad, 'bad'):
+        errs.append('самопроверка ячеек: `|` без экранирования в обратных кавычках не замечен')
+    if table_cell_errors(fenced, 'fenced'):
+        errs.append('самопроверка ячеек: строка в блоке кода дала ложную ошибку')
+    return errs
+
+
 def main():
     bad = 0
     for sf, (af, machine) in MACHINES.items():
@@ -236,6 +308,13 @@ def main():
         bad += len(errs)
     errs, n = check_journal()
     print('%s: %d кодов событий, расхождений %d' % (JOURNAL_FILE, n, len(errs)))
+    for e in errs:
+        print('  - ' + e)
+    bad += len(errs)
+    errs, n = check_table_cells()
+    if '--selftest' in sys.argv:
+        errs += selftest_table_cells()
+    print('ячейки таблиц: файлов *.md %d, расхождений %d' % (n, len(errs)))
     for e in errs:
         print('  - ' + e)
     bad += len(errs)
