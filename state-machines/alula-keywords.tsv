@@ -125,7 +125,6 @@ expr	и	and
 expr	или	or
 expr	не	not
 expr	пусть	let
-expr	в	in
 expr	выбор	match
 expr	истина	true
 expr	ложь	false

@@ -137,7 +137,7 @@ define add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
 
 define add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage =>
   if has(previous)
-  then { let p = require(previous) in
+  then { let p = require(previous);
         TransportUsage { model: new.model, tokens: add_tokens(p.tokens, new.tokens),
                          cost: sum_floats(p.cost, new.cost),
                          context_used: new.context_used, request_started: new.request_started } }
@@ -145,7 +145,7 @@ define add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage
 
 define tokens_spent(tu ?TransportUsage) -> int =>
   if has(tu)
-  then { let p = require(tu) in (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0) }
+  then { let p = require(tu); (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0) }
   else { 0 }
 
 define cost_spent(tu ?TransportUsage) -> float =>
@@ -167,20 +167,22 @@ define needs_elevated_attention(action ActionKind) -> bool =>
   match action { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true;
                  else => false }
 
-define decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" =>
-  let by_table = (if needs_elevated_attention(action) then { "ask" } else { PERMISSION_POLICY[action] }) in
+define decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" => {
+  let by_table = if needs_elevated_attention(action) then { "ask" } else { PERMISSION_POLICY[action] };
   if by_table == "ask" and not interactive(call_kind) then { "deny" } else { by_table }
+}
 
 define retry_pause(n int>=0) -> int =>
   fold(range(1, n), RETRY_PAUSE, (m, _) => m * 2)
 
-define turn_term(req AgentRequest, request_turn text, retries int>=0) -> int =>
-  let extra = (if request_turn == "retry" then { retry_pause(retries) } else { 0 }) in
-  let term = req.limits.silence_term in
+define turn_term(req AgentRequest, request_turn text, retries int>=0) -> int => {
+  let extra = if request_turn == "retry" then { retry_pause(retries) } else { 0 };
+  let term = req.limits.silence_term;
   if has(term) then { (term ?? 0) + extra } else { 0 }
+}
 
-define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage =>
-  let step_result = (if stopped == "" then { "reply" } else { stopped }) in
+define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage => {
+  let step_result = if stopped == "" then { "reply" } else { stopped };
   Usage {
     session: req.session, result: step_result, family: req.profile.family,
     model: (if has(tu) then { require(tu).model }
@@ -191,6 +193,7 @@ define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?
     created: began ?? updated, updated: updated,
     context_used: (if has(tu) then { require(tu).context_used } else { none }),
     trace: req.trace, step: req.step }
+}
 
 define usage_event(u Usage) -> JournalEvent =>
   journal_event("agent_usage", session: u.session, result: u.result, model: u.model.id,
