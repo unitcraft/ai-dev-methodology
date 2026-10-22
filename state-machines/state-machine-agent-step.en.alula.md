@@ -1,11 +1,11 @@
 # Machine: Agent step
 
 - machine: agent_step
-- machine_version: alula-2.20
-- format: 2.20
+- machine_version: alula-2.21
+- format: 2.21
 - language: en
 
-This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.20 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, definitions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, definitions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
+This is an **illustration**: the "Agent step" machine in full, written in the Alula format, format version 2.21 ([state-machine-alula-spec.md](state-machine-alula-spec.md); it is the only definition of the notation). It is the English-language twin of [state-machine-agent-step.alula.md](state-machine-agent-step.alula.md): the same machine, row for row, with the English keywords of the [word table](alula-keywords.tsv) (spec, section 1a); the JSON tree `machine/2` is the same for both files up to the internal names (constants, parameters, functions, party names, bindings). The file lets a reader open and see a real machine: types, data, parties, functions, all 37 transition rows, the ends with the "end to response" table, the attached "Pause" fragment; what the fragment brings (parameters, common events COMMON 1-6, the Pause state with events PAUSE 1-4) is described in section 9 of the specification.
 
 **Status.** The equivalence of this notation to the automaton by journal has not been checked: the "Agent step" interpreter was not run, scenarios were not compared. **The first source is this Alula record; the old tables are in the archive and are not updated.** The former notation is the state tables [archive/state-machine-agent-step-states.md](archive/state-machine-agent-step-states.md) and the automaton code [archive/state-machine-agent-step-automaton.md](archive/state-machine-agent-step-automaton.md). The "Pause" fragment is [archive/state-machine-pause-states.md](archive/state-machine-pause-states.md), the journal codes are [state-machine-journal.md](state-machine-journal.md), the names are [state-machine-glossary.md](state-machine-glossary.md). The equivalence of this file with the Russian sample is checked by [check-alula-samples.py](check-alula-samples.py).
 
@@ -63,7 +63,7 @@ The envelope types (request, response, refusal) are not declared: the executor b
 | name | type | default | project_override |
 |---|---|---|---|
 | RETRY_PAUSE | int>=0 | 2000 | — |
-| PERMISSION_POLICY | full map[ActionKind, "allow" \| "deny" \| "ask"] | {ActionKind.Read: "ask", ActionKind.Write: "ask", ActionKind.Delete: "ask", ActionKind.Move: "ask", ActionKind.Search: "ask", ActionKind.Execute: "ask", ActionKind.Network: "ask", ActionKind.Think: "ask", ActionKind.SwitchMode: "ask", ActionKind.Other: "ask"} | — |
+| PERMISSION_POLICY | full map[ActionKind, "allow" \| "deny" \| "ask"] | [ActionKind.Read: "ask", ActionKind.Write: "ask", ActionKind.Delete: "ask", ActionKind.Move: "ask", ActionKind.Search: "ask", ActionKind.Execute: "ask", ActionKind.Network: "ask", ActionKind.Think: "ask", ActionKind.SwitchMode: "ask", ActionKind.Other: "ask"] | — |
 
 The sources call both values a project parameter but give no project key: the column holds `—`. The value of `RETRY_PAUSE` was accepted by the owner in the source, it is not a stub. The values of `PERMISSION_POLICY` are `"allow"`, `"deny"`, `"ask"`: the set of literals stands in the type argument of the map.
 
@@ -121,21 +121,21 @@ The bound `turn_count <= turn limit` is not written: when the limit is below 1, 
 
 The agent profile lies inside `agent_request.profile` and goes to the party as part of that field; the request of the code has no separate field `profile`, so the column holds `—`. The gatekeeper is a human by default, an agent by the project setting `elevated_attention_executor`; the enhanced party is the party of the Pause state (a human by default, an enhanced gatekeeper by the owner's permission).
 
-## Definitions
+## Functions
 
 ```
-define sum_ints(a ?int, b ?int) -> ?int =>
+fn sum_ints(a ?int, b ?int) -> ?int =>
   if has(a) and has(b) then { (a ?? 0) + (b ?? 0) } else { a ?? b }
 
-define sum_floats(a ?float, b ?float) -> ?float =>
+fn sum_floats(a ?float, b ?float) -> ?float =>
   if has(a) and has(b) then { (a ?? 0.0) + (b ?? 0.0) } else { a ?? b }
 
-define add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
+fn add_tokens(a TokenUsage, b TokenUsage) -> TokenUsage =>
   TokenUsage { input: sum_ints(a.input, b.input), output: sum_ints(a.output, b.output),
                reasoning: sum_ints(a.reasoning, b.reasoning),
                cache_read: sum_ints(a.cache_read, b.cache_read), cache_write: sum_ints(a.cache_write, b.cache_write) }
 
-define add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage =>
+fn add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage =>
   if has(previous)
   then { let p = require(previous);
         TransportUsage { model: new.model, tokens: add_tokens(p.tokens, new.tokens),
@@ -143,45 +143,45 @@ define add_usage(previous ?TransportUsage, new TransportUsage) -> TransportUsage
                          context_used: new.context_used, request_started: new.request_started } }
   else { new }
 
-define tokens_spent(tu ?TransportUsage) -> int =>
+fn tokens_spent(tu ?TransportUsage) -> int =>
   if has(tu)
   then { let p = require(tu); (p.tokens.input ?? 0) + (p.tokens.output ?? 0) + (p.tokens.reasoning ?? 0) }
   else { 0 }
 
-define cost_spent(tu ?TransportUsage) -> float =>
+fn cost_spent(tu ?TransportUsage) -> float =>
   if has(tu) then { require(tu).cost ?? 0.0 } else { 0.0 }
 
-define token_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
+fn token_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
   has(req.limits.token_budget) and tokens_spent(tu) >= (req.limits.token_budget ?? 0)
 
-define cost_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
+fn cost_limit_reached(req AgentRequest, tu ?TransportUsage) -> bool =>
   has(req.limits.cost_budget) and cost_spent(tu) >= (req.limits.cost_budget ?? 0.0)
 
-define turn_limit_reached(req AgentRequest, turns int>=0) -> bool =>
+fn turn_limit_reached(req AgentRequest, turns int>=0) -> bool =>
   turns >= (req.limits.turn_limit ?? TURN_LIMIT)
 
-define interactive(call_kind CallerKind) -> bool =>
+fn interactive(call_kind CallerKind) -> bool =>
   call_kind == CallerKind.CycleSession or call_kind == CallerKind.ChatTurn
 
-define needs_elevated_attention(action ActionKind) -> bool =>
+fn needs_elevated_attention(action ActionKind) -> bool =>
   match action { ActionKind.Delete | ActionKind.Move | ActionKind.Execute | ActionKind.Network | ActionKind.SwitchMode => true;
                  else => false }
 
-define decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" => {
+fn decision_by_policy(action ActionKind, call_kind CallerKind) -> "allow" | "deny" | "ask" {
   let by_table = if needs_elevated_attention(action) then { "ask" } else { PERMISSION_POLICY[action] };
   if by_table == "ask" and not interactive(call_kind) then { "deny" } else { by_table }
 }
 
-define retry_pause(n int>=0) -> int =>
+fn retry_pause(n int>=0) -> int =>
   (1..n).fold(RETRY_PAUSE, (m, _) => m * 2)
 
-define turn_term(req AgentRequest, request_turn text, retries int>=0) -> int => {
+fn turn_term(req AgentRequest, request_turn text, retries int>=0) -> int {
   let extra = if request_turn == "retry" then { retry_pause(retries) } else { 0 };
   let term = req.limits.silence_term;
   if has(term) then { (term ?? 0) + extra } else { 0 }
 }
 
-define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage => {
+fn collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?int, updated int) -> Usage {
   let step_result = if stopped == "" then { "reply" } else { stopped };
   Usage {
     session: req.session, result: step_result, family: req.profile.family,
@@ -195,13 +195,13 @@ define collect_usage(req AgentRequest, stopped text, tu ?TransportUsage, began ?
     trace: req.trace, step: req.step }
 }
 
-define usage_event(u Usage) -> JournalEvent =>
+fn usage_event(u Usage) -> JournalEvent =>
   journal_event("agent_usage", session: u.session, result: u.result, model: u.model.id,
                 input: text(u.tokens.input), output: text(u.tokens.output), reasoning: text(u.tokens.reasoning),
                 cache_read: text(u.tokens.cache_read), cache_write: text(u.tokens.cache_write), cost: text(u.cost))
 ```
 
-Correspondence to the automaton code: the names of the definitions are the names of the code (`sum_ints`, `sum_floats`, `add_tokens`, `add_usage`, `tokens_spent`, `cost_spent`, `token_limit_reached`, `cost_limit_reached`, `turn_limit_reached`, `interactive`, `needs_elevated_attention`, `decision_by_policy`, `retry_pause`, `turn_term`, `usage_event`, `collect_usage`); `project_policy` is the parameter `PERMISSION_POLICY`; `action_kind_word` is `text(ActionKind)` (the values are in the enum), `number_word` and `float_word` are `text(x)` (none is `none`). `record_end_usage` and `journal_machine_data` are not functions but actions in the "On entry" of the ends; `reply_validation`, `close_agent_turn`, `time_now` are primitives (section "Primitives").
+Correspondence to the automaton code: the names of the functions are the names of the code (`sum_ints`, `sum_floats`, `add_tokens`, `add_usage`, `tokens_spent`, `cost_spent`, `token_limit_reached`, `cost_limit_reached`, `turn_limit_reached`, `interactive`, `needs_elevated_attention`, `decision_by_policy`, `retry_pause`, `turn_term`, `usage_event`, `collect_usage`); `project_policy` is the parameter `PERMISSION_POLICY`; `action_kind_word` is `text(ActionKind)` (the values are in the enum), `number_word` and `float_word` are `text(x)` (none is `none`). `record_end_usage` and `journal_machine_data` are not functions but actions in the "On entry" of the ends; `reply_validation`, `close_agent_turn`, `time_now` are primitives (section "Primitives").
 
 ## Includes
 

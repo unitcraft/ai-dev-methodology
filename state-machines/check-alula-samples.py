@@ -7,7 +7,7 @@
 Что проверяет (структура, не смысл выражений):
   1. разделы `##` идут в одном порядке (раздел `## Имена` не сравнивается: он есть только там, где автоматическое имя неверно, AL-60),
      заголовки соответствуют по таблице слов `alula-keywords.tsv`; в каждой таблице раздела одинаковое
-     число строк (типы — число объявлений и строк в блоке кода; определения — число и порядок объявлений `определение`/`define`);
+     число строк (типы — число объявлений и строк в блоке кода; функции — число и порядок объявлений `функция`/`fn`);
   2. состояния: одинаковые виды и порядок; JSON-имя состояния совпадает (строка `## Имена` или автоматическое имя, 1а); число строк переходов у каждого состояния,
      метки `№`, значения «куда» (русские имена состояний переведены в латинские по заголовкам, слова «куда» — по таблице слов),
      число действий (разделитель `;`) и коды журнала `журнал(код, …)`/`journal(code, …)` в каждой строке;
@@ -19,7 +19,7 @@
      автоматическое (спецификация, 1а, AL-53, AL-60: словарь, затем транслитерация; функция `json_names` из `check-alula-keywords.py`),
      у английского — само имя; списки по порядку объявления равны (дерево `machine/2` одно).
 Самопроверка (`--selftest`): порча английского образца (другое «куда», удалённая строка, другой код журнала, лишнее действие,
-лишнее состояние, лишнее определение, лишняя строка концов, другая метка строки, другое имя поля) и русского (снятая строка
+лишнее состояние, лишняя функция, лишняя строка концов, другая метка строки, другое имя поля) и русского (снятая строка
 `## Имена` у поля и у настройки вратаря, строка с другим JSON-именем у состояния) даёт расхождение, неискажённая пара — нет.
 Чего не проверяет: тела выражений и имена внутри выражений (структурные слова и таблицу `## Имена` проверяет `check-alula-keywords.py`); строки фрагмента «Пауза»
 (образцы его не раскрывают, раздел 9 спецификации); значения-строки (тексты отказов, сообщения, текстовые литералы) — автор пишет их
@@ -168,8 +168,8 @@ def summarize(text, lang, words, gloss):
         key = sec_key(title)
         info = {'key': key, 'tables': [len(t[1]) for t in tables(lines)], 'code': [len(b) for b in code_blocks(lines)]}
         S['sections'].append(info)
-        if key == 'Definitions':
-            info['defs'] = [m for b in code_blocks(lines) for m in re.findall(r'^(?:определение|define) ', '\n'.join(b), re.M)]
+        if key == 'Functions':
+            info['defs'] = [m for b in code_blocks(lines) for m in re.findall(r'^(?:функция|fn) ', '\n'.join(b), re.M)]
             info['defs'] = len(info['defs'])
         if key == 'Types':
             blk = '\n'.join('\n'.join(b) for b in code_blocks(lines))
@@ -261,7 +261,7 @@ def mutations(en_text):
         ('другой код журнала', sub('journal(model_refused)', 'journal(model_refusedd)')),
         ('лишнее действие', sub('turn_count += 1 | AgentTurn', 'turn_count += 1; turn_count += 1 | AgentTurn')),
         ('лишнее состояние', sub('### End — end', '### Extra — end\n- Reads: usage\n\n### End — end')),
-        ('лишнее определение', sub('define interactive(', 'define extra(x int) -> int => x\n\ndefine interactive(')),
+        ('лишняя функция', sub('fn interactive(', 'fn extra(x int) -> int => x\n\nfn interactive(')),
         ('лишняя строка концов', sub('| Halted | 11 |', '| Halted | 12 | stop_reason == "x" | Refusal(FailCode.Cancelled, stop_reason) |\n| Halted | 11 |')),
         ('другая метка строки', sub('| 9 | failure(', '| 10 | failure(')),
         ('другое имя поля', sub('cache_write ?int', 'cache_writes ?int')),
@@ -304,7 +304,7 @@ def main():
     st = [s for s in ru['sections'] if 'states' in s][0]['states']
     ends = [s for s in ru['sections'] if 'ends' in s][0]['ends']
     defs = [s for s in ru['sections'] if 'defs' in s][0]['defs']
-    print('образцы: состояний %d, строк переходов %d, строк концов %d, определений %d, кодов журнала %d, JSON-имён %d; расхождений: %d' % (
+    print('образцы: состояний %d, строк переходов %d, строк концов %d, функций %d, кодов журнала %d, JSON-имён %d; расхождений: %d' % (
         len(st), sum(len(x[2]) for x in st), len(ends), defs, len(ru['codes']), len(ru['names']), len(errs)))
     return 1 if errs else 0
 
