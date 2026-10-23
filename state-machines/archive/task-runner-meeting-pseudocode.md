@@ -1,6 +1,6 @@
 # Совещание агентов: псевдокод
 
-> **Архив (2026-10-22).** Файл не обновляется: машина записана на Алуле — [task-runner-meeting.alula.md](../task-runner-meeting.alula.md) (заметки к записи — [task-runner-meeting.alula-notes.md](../task-runner-meeting.alula-notes.md)). Решение владельца методики (2026-10-22): «в методике оставь только Алулу в итоге, остальное в архив».
+> **Архив (2026-10-22).** Файл не обновляется: машина записана на Алуле — [nova-alula: spec/samples/meeting-definitions.alula.md](https://github.com/nv-lang/nova-alula/blob/main/spec/samples/meeting-definitions.alula.md) (заметки к записи — [nova-alula: spec/samples/meeting-notes.md](https://github.com/nv-lang/nova-alula/blob/main/spec/samples/meeting-notes.md)). Решение владельца методики (2026-10-22): «в методике оставь только Алулу в итоге, остальное в архив».
 
 Вынесено из [task-runner.md](../../task-runner.md), «Совещание агентов»: там правила режима, здесь `meeting` и `check_meeting`; `loop_review` — [task-runner-pseudocode.md](task-runner-pseudocode.md). Схема опытного режима, раннером не выполняется. Та же схема состояниями — [task-runner-meeting-states.md](task-runner-meeting-states.md).
 

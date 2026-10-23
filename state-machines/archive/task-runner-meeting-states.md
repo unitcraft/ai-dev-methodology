@@ -1,6 +1,6 @@
 # Совещание агентов: стейт-машина
 
-> **Архив (2026-10-22).** Файл не обновляется: машина записана на Алуле — [task-runner-meeting.alula.md](../task-runner-meeting.alula.md) (заметки к записи — [task-runner-meeting.alula-notes.md](../task-runner-meeting.alula-notes.md)). Решение владельца методики (2026-10-22): «в методике оставь только Алулу в итоге, остальное в архив».
+> **Архив (2026-10-22).** Файл не обновляется: машина записана на Алуле — [nova-alula: spec/samples/meeting-definitions.alula.md](https://github.com/nv-lang/nova-alula/blob/main/spec/samples/meeting-definitions.alula.md) (заметки к записи — [nova-alula: spec/samples/meeting-notes.md](https://github.com/nv-lang/nova-alula/blob/main/spec/samples/meeting-notes.md)). Решение владельца методики (2026-10-22): «в методике оставь только Алулу в итоге, остальное в архив».
 
 Производная запись этого автомата исполняемым псевдокодом — [task-runner-meeting-automaton.md](task-runner-meeting-automaton.md); при расхождении верен этот файл.
 
