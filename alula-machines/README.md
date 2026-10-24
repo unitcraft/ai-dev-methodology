@@ -16,7 +16,7 @@
 | несортированное | `_unsorted/scenarios/` — 6 сценариев машины `dialog_steps` (продукт потребителя, не методика); решить, оставить ли их здесь, при добавлении `agent_step` |
 | отступления | `<папка машины>/deviations.md`: [session-start](session-start/deviations.md), [cycle-check](cycle-check/deviations.md), [task-runner](task-runner/deviations.md) |
 
-Всего сценариев 514 = 63 + 102 + 260 + 83 + 6. Каждый сценарий лежит по значению ключа `machine`,.
+Всего сценариев 514 = 63 + 102 + 260 + 83 + 6. Каждый сценарий лежит по значению ключа `machine`.
 
 Имена машин и сторон — [state-machine-glossary.md](../state-machines/state-machine-glossary.md), раздел 2.1; [task-runner.md](../task-runner.md), «Алгоритм».
 
