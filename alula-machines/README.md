@@ -10,13 +10,13 @@
 |---|---|
 | «Запуск сессии» (`session_start`) | [session-start/session_start.alula.md](session-start/session_start.alula.md), сценарии — `session-start/scenarios/` (63) |
 | «Проверка цикла» (`cycle_check`) | [cycle-check/cycle_check.alula.md](cycle-check/cycle_check.alula.md), сценарии — `cycle-check/scenarios/` (102) |
-| «Раннер задачи» (`task_runner`) | [task-runner/task_runner.alula.md](task-runner/task_runner.alula.md), сценарии — `task-runner/scenarios/` (255) |
-| «Шаг агента» (`agent_step`) | таблицы пока нет — будет добавлена отдельным шагом вместе с образцами; сценарии уже лежат в `agent-step/scenarios/` (88: 83 самого `agent_step` и 5 вложенных `runner-flow-nested-*` раннера, которые запускают вложенный `agent_step`). Без таблицы `agent_step` эти сценарии не пройдут |
+| «Раннер задачи» (`task_runner`) | [task-runner/task_runner.alula.md](task-runner/task_runner.alula.md), сценарии — `task-runner/scenarios/` (260, из них 5 вложенных `runner-flow-nested-*` требуют таблицы `agent_step`) |
+| «Шаг агента» (`agent_step`) | таблицы пока нет — будет добавлена отдельным шагом вместе с образцами; сценарии уже лежат в `agent-step/scenarios/` (83 самого `agent_step`). Без таблицы `agent_step` эти сценарии не пройдут |
 | реестр примитивов и журнал | [registry/registry.md](registry/registry.md), [registry/journal.md](registry/journal.md) |
 | несортированное | `_unsorted/scenarios/` — 6 сценариев машины `dialog_steps` (продукт потребителя, не методика); решить, оставить ли их здесь, при добавлении `agent_step` |
 | отступления | `<папка машины>/deviations.md`: [session-start](session-start/deviations.md), [cycle-check](cycle-check/deviations.md), [task-runner](task-runner/deviations.md) |
 
-Всего сценариев 514 = 63 + 102 + 255 + 88 + 6. Каждый сценарий лежит по значению ключа `machine`, кроме пяти вложенных пар раннера (см. выше).
+Всего сценариев 514 = 63 + 102 + 260 + 83 + 6. Каждый сценарий лежит по значению ключа `machine`,.
 
 Имена машин и сторон — [state-machine-glossary.md](../state-machines/state-machine-glossary.md), раздел 2.1; [task-runner.md](../task-runner.md), «Алгоритм».
 
