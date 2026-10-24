@@ -1,27 +1,34 @@
 # Машины методики на Алуле
 
-Папка для исполняемой записи алгоритмов методики — таблиц машин на Алуле. Пока здесь лежат только списки отступлений таблиц от прозы (`deviations.md`); сами таблицы будут перенесены сюда после правок реализации.
+Исполняемая запись алгоритмов методики — таблицы машин на Алуле, их сценарии, реестр примитивов и списки отступлений таблиц от прозы.
 
-## Что здесь будет лежать
+**Откуда.** Файлы перенесены байт-в-байт из репозитория потребителя, коммит `53c958ba8b5101363c676a8c1dcf37dd50006624` (каталог `machines/methodology/`), после задачи 162 потребителя. Пакет — [nova-alula](https://github.com/nv-lang/nova-alula) v0.4.0 (коммит `62cb32a`). Деревья `*.alula.json` в методику не переносятся: их строит `alula compile` из таблиц.
 
-| Что | Где | Что это |
-|---|---|---|
-| таблицы машин | `<папка машины>/<машина>.alula.md` (папка — имя через дефис: `session-start/session_start.alula.md`) | запись алгоритма методики на Алуле: «Запуск сессии» (`session_start`), «Проверка цикла» (`cycle_check`), «Раннер задачи» (`task_runner`) |
-| сценарии | в папке машины, рядом с таблицей | сценарии `alula test`: последовательности событий и ожидаемые переходы, ответы и строки журнала |
-| реестр | в этой папке (имя файла задаётся при переносе) | список машин: имя машины (поле `machine` приветствия `hello`), версия, файл таблицы; по нему вызывающая машина находит вложенную |
-| отступления | `<папка машины>/deviations.md` | где таблица осознанно отступает от прозы методики и почему это допустимо |
+## Что лежит
 
-Сейчас есть только отступления:
+| Что | Где |
+|---|---|
+| «Запуск сессии» (`session_start`) | [session-start/session_start.alula.md](session-start/session_start.alula.md), сценарии — `session-start/scenarios/` (63) |
+| «Проверка цикла» (`cycle_check`) | [cycle-check/cycle_check.alula.md](cycle-check/cycle_check.alula.md), сценарии — `cycle-check/scenarios/` (102) |
+| «Раннер задачи» (`task_runner`) | [task-runner/task_runner.alula.md](task-runner/task_runner.alula.md), сценарии — `task-runner/scenarios/` (255) |
+| «Шаг агента» (`agent_step`) | таблицы пока нет — будет добавлена отдельным шагом вместе с образцами; сценарии уже лежат в `agent-step/scenarios/` (88: 83 самого `agent_step` и 5 вложенных `runner-flow-nested-*` раннера, которые запускают вложенный `agent_step`). Без таблицы `agent_step` эти сценарии не пройдут |
+| реестр примитивов и журнал | [registry/registry.md](registry/registry.md), [registry/journal.md](registry/journal.md) |
+| несортированное | `_unsorted/scenarios/` — 6 сценариев машины `dialog_steps` (продукт потребителя, не методика); решить, оставить ли их здесь, при добавлении `agent_step` |
+| отступления | `<папка машины>/deviations.md`: [session-start](session-start/deviations.md), [cycle-check](cycle-check/deviations.md), [task-runner](task-runner/deviations.md) |
 
-- [session-start/deviations.md](session-start/deviations.md) — «Запуск сессии», машина `session_start` (сторона вызывающих — `session_launch`);
-- [cycle-check/deviations.md](cycle-check/deviations.md) — «Проверка цикла», машина `cycle_check` (сторона вызывающего — `loop_review`);
-- [task-runner/deviations.md](task-runner/deviations.md) — «Раннер задачи», машина `task_runner`.
+Всего сценариев 514 = 63 + 102 + 255 + 88 + 6. Каждый сценарий лежит по значению ключа `machine`, кроме пяти вложенных пар раннера (см. выше).
 
 Имена машин и сторон — [state-machine-glossary.md](../state-machines/state-machine-glossary.md), раздел 2.1; [task-runner.md](../task-runner.md), «Алгоритм».
 
 ## Как проверять
 
-Таблицы и сценарии проверяет программа `alula` из пакета [nova-alula](https://github.com/nv-lang/nova-alula) закреплённой версии: `alula test <папка>` прогоняет все сценарии папки. Версия пакета закрепляется вместе с переносом таблиц; сверка, по которой составлены `deviations.md`, шла по тегу `v0.3.2`.
+Сценарии прогоняет программа `alula` из пакета nova-alula **закреплённой версии v0.4.0** (метка `v0.4.0` репозитория пакета; программу собирают из этой метки):
+
+```
+alula test alula-machines
+```
+
+Реестр `registry/registry.md` программа берёт флагом `--registry alula-machines/registry/registry.md`, если не находит его рядом с машинами. Новую версию пакета берут только вместе со сверкой таблиц с прозой.
 
 ## Кто владеет
 
