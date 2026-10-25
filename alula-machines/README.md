@@ -8,12 +8,12 @@
 
 | Что | Где |
 |---|---|
-| «Запуск сессии» (`session_start`) | [session-start/session_start.alula.md](session-start/session_start.alula.md), сценарии — `session-start/scenarios/` (63) |
-| «Проверка цикла» (`cycle_check`) | [cycle-check/cycle_check.alula.md](cycle-check/cycle_check.alula.md), сценарии — `cycle-check/scenarios/` (102) |
-| «Раннер задачи» (`task_runner`) | [task-runner/task_runner.alula.md](task-runner/task_runner.alula.md), сценарии — `task-runner/scenarios/` (260, из них 5 вложенных `runner-flow-nested-*` требуют таблицы `agent_step`) |
-| «Шаг агента» (`agent_step`) | таблицы пока нет — будет добавлена отдельным шагом вместе с образцами; сценарии уже лежат в `agent-step/scenarios/` (83 самого `agent_step`). Без таблицы `agent_step` эти сценарии не пройдут |
-| реестр примитивов и журнал | [registry/registry.md](registry/registry.md), [registry/journal.md](registry/journal.md) |
-| несортированное | `_unsorted/scenarios/` — 6 сценариев машины `dialog_steps` (продукт потребителя, не методика); решить, оставить ли их здесь, при добавлении `agent_step` |
+| «Запуск сессии» (`session_start`) | [session_start.alula.md](session_start.alula.md), сценарии — `session-start/scenarios/` (63) |
+| «Проверка цикла» (`cycle_check`) | [cycle_check.alula.md](cycle_check.alula.md), сценарии — `cycle-check/scenarios/` (102) |
+| «Раннер задачи» (`task_runner`) | [task_runner.alula.md](task_runner.alula.md), сценарии — `task-runner/scenarios/` (260, из них 5 вложенных `runner-flow-nested-*` требуют таблицы `agent_step`) |
+| «Шаг агента» (`agent_step`) | [agent_step.alula.md](agent_step.alula.md) (рабочая версия потребителя: образец «Шага агента» и два проектных ключа в разделе имён; образец без ключей — `spec/samples/agent-step.alula.md` пакета), сценарии — `agent-step/scenarios/` (83) |
+| реестр примитивов и журнал | [registry.md](registry.md), [journal.md](journal.md) |
+| несортированное | `_unsorted/scenarios/` — 6 сценариев машины `dialog_steps` (продукт потребителя, не методика; таблицы здесь нет, поэтому они красные) |
 | отступления | `<папка машины>/deviations.md`: [session-start](session-start/deviations.md), [cycle-check](cycle-check/deviations.md), [task-runner](task-runner/deviations.md) |
 
 Всего сценариев 514 = 63 + 102 + 260 + 83 + 6. Каждый сценарий лежит по значению ключа `machine`.
@@ -28,7 +28,7 @@
 alula test alula-machines
 ```
 
-Реестр `registry/registry.md` программа берёт флагом `--registry alula-machines/registry/registry.md`, если не находит его рядом с машинами. Новую версию пакета берут только вместе со сверкой таблиц с прозой.
+Таблицы машин лежат **в корне этой папки**, потому что `alula test <папка>` ищет таблицы только в самой папке запуска (без рекурсии), а сценарии — рекурсивно в подпапках (проба вложенных машин на v0.4.0, 2026-10-25). Реестр и журнал методики передаются флагами: `alula test alula-machines --registry alula-machines/registry.md --journal alula-machines/journal.md`. Вложенные машины ищутся в той же папке: поэтому `agent_step` лежит рядом с `session_start` и `task_runner`. Известный дефект пакета v0.4.0: отсутствие вложенной машины даёт панику всего прогона, а не провал сценария (запись у потребителя, I-16); `_unsorted/` содержит сценарии без таблицы и в общий прогон не входит.
 
 ## Кто владеет
 
