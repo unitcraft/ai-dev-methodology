@@ -1,6 +1,6 @@
 # Реестр методики: примитивы шага агента, совещания, запуска сессии и раннера задачи
 
-Данные методики (58 внешних функций и типы их подписей), которые она регистрирует у языка. Переходно лежит в продукте (задача 158; к методике уйдёт задачей 159). Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера).
+Данные методики (69 внешних функций и типы их подписей), которые она регистрирует у языка. Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера). Контракт доверенного ввода и доказательств — [task-runner.md](../task-runner.md), «Смена маршрута»; проверка происхождения не заменяется значениями тестового хозяина.
 
 Форма — раздел 7 спецификации Алулы: имена — JSON-имена реестра хозяина; типы — как пишет дерево `machine/2` (`int>=0`, `?text`, `[]Finding`, `"a" \| "b"`); `\|` внутри ячейки — знак `|`; списки «читает» и «пишет» разделены `;`; `—` — пусто. Файл читает `parse_registry_table` пакета `alula` (`alula.machine_table`), программа `alula` берёт его рядом с машинами (`registry.md`) или флагом `--registry`.
 
@@ -8,6 +8,18 @@
 
 | name | parameters | result | class | reads | writes |
 |---|---|---|---|---|---|
+| verify_owner_route_decision | task_dir: text; reference: text | ?RouteDecision | volatile | objects: trusted saved owner decisions | — |
+| route_gate_subject | task_dir: text; state: text | text | volatile | objects: current gate subject and artifact versions | — |
+| record_route_gate | task_dir: text; gate: text; epoch: int>=0; subject: text; state: text | — | acting | — | objects: trusted gate openings |
+| verify_route_gate_decision | task_dir: text; gate: text; epoch: int>=0; reference: text; subject: text | ?GateDecision | volatile | objects: trusted gate openings and saved decisions | — |
+| specification_kind | — | "full" \| "brief" | volatile | objects: saved origin of the current specification | — |
+| review_history | stage: Stage | []ReviewHistoryEntry | volatile | objects: ordered immutable review records with artifact versions | — |
+| review_context | stage: Stage | text | volatile | objects: current goal, boundaries and versioned inputs of the stage | — |
+| delivery_revision | — | text | volatile | objects: current delivery artifact version | — |
+| create_draft_brief_copy | — | — | acting | objects: brief | objects: draft copy without approval |
+| small_route_conditions | task_dir: text | ?SmallRouteConditions | volatile | objects: scope estimate, reversibility and preview availability | — |
+| small_route_evidence | task_dir: text | ?SmallRouteEvidence | volatile | objects: versioned brief, test, guard and preview evidence | — |
+| worktree_revision | repo_dir: text | text | volatile | objects: content revision of the full working tree | — |
 | party_profile | party: text | AgentProfile | volatile | project setting: role profiles | — |
 | role_context | context: RoleContext | text | volatile | project objects | — |
 | call_trace | — | text | volatile | envelope of the call | — |
@@ -71,6 +83,11 @@
 
 | type | kind | members |
 |---|---|---|
+| RouteDecision | record | task: text; reference: text; route: "full" \| "fast" \| "small"; basis: text; word: text; date: text; source: text |
+| GateDecision | record | task: text; reference: text; gate: text; epoch: int>=0; subject: text; word: text; text: text; factory_word: text; factory_word_date: text; date: text; author: text; source: text; actor: "owner" \| "delegate"; viewed_at: ?int>=0 |
+| ReviewHistoryEntry | record | number: int>=1; hash: text; context: text; clean: bool; probes: int>=0; independent: bool; evidence: text |
+| SmallRouteConditions | record | estimate_ms: int>=0; total_ms: int>=0; work_ms: int>=0; overhead_ms: int>=0; reversible: bool; external_effects: bool; preview: "test" \| "local" \| "none"; scope_word: text; started: int>=0 |
+| SmallRouteEvidence | record | task: text; hash: text; brief: text; tests: text; guards: text; preview: text; visible: bool; independent_diff: text; tests_passed: bool; guards_passed: bool; preview_available: bool; diff_independent: bool; diff_ms: int>=0 |
 | Finding | record | severity: Severity; evidence: text; repeat: bool; question: bool |
 | Summary | record | critical: int>=0; probes: int>=0 |
 | AgentProfile | record | family: text; model: text; effort: ?text |

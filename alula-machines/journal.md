@@ -4,6 +4,14 @@
 
 | Машина | Код события | Русский шаблон | Параметры |
 |---|---|---|---|
+| раннер | `route_changed` | маршрут {previous} заменён на {route}: решение {reference}, источник {source} | `previous`, `route`, `reference`, `source` |
+| раннер | `route_change_rejected` | смена маршрута отклонена: {reason}, решение {reference} | `reason`, `reference` |
+| раннер | `route_gate_rejected` | ответ ворот отклонён: {reason}, решение {reference} | `reason`, `reference` |
+| раннер | `route_gate_opened` | открыты ворота {gate}, эпоха {epoch}, состояние {state}, предмет {subject} | `gate`, `epoch`, `subject`, `state` |
+| раннер | `route_gate_applied` | применено решение {reference}: {word}, ворота {gate}, эпоха {epoch} | `gate`, `epoch`, `reference`, `word` |
+| раннер | `route_issue_decided` | исход {source}: решение {reference}, действие {outcome} | `reference`, `source`, `outcome` |
+| раннер | `route_credit_snapshot` | сохранён зачёт стадий маршрута {route}, эпоха {epoch} | `route`, `epoch` |
+| раннер | `small_preview_late` | просмотр {reference} подготовлен позже цели малого маршрута | `reference` |
 | шаг агента | `turn_requests_exhausted` | агент исчерпал предел запросов хода | — |
 | шаг агента | `model_refused` | модель отказалась отвечать | — |
 | шаг агента | `turn_cancelled` | ход агента отменён | — |
