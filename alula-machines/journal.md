@@ -11,6 +11,9 @@
 | раннер | `route_gate_applied` | применено решение {reference}: {word}, ворота {gate}, эпоха {epoch} | `gate`, `epoch`, `reference`, `word` |
 | раннер | `route_issue_decided` | исход {source}: решение {reference}, действие {outcome} | `reference`, `source`, `outcome` |
 | раннер | `route_credit_snapshot` | сохранён зачёт стадий маршрута {route}, эпоха {epoch} | `route`, `epoch` |
+| раннер | `small_route_time_metrics` | метрики малого маршрута: оценка {estimate_ms} мс, сумма по объёму {scope_total_ms} мс, работа {actual_work_ms} мс, обвязка {overhead_ms} мс | `estimate_ms`, `scope_total_ms`, `actual_work_ms`, `overhead_ms` |
+| раннер | `small_route_conditions_missing` | условия малого маршрута не предоставлены; проверка допуска остановлена по отсутствию доказательств | — |
+| раннер | `small_diff_review_time_metrics` | независимый просмотр diff занял {elapsed_ms} мс; значение диагностическое | `elapsed_ms` |
 | раннер | `small_preview_late` | просмотр {reference} подготовлен позже цели малого маршрута | `reference` |
 | шаг агента | `turn_requests_exhausted` | агент исчерпал предел запросов хода | — |
 | шаг агента | `model_refused` | модель отказалась отвечать | — |

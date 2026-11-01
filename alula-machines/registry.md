@@ -86,7 +86,7 @@
 | RouteDecision | record | task: text; reference: text; route: "full" \| "fast" \| "small"; basis: text; word: text; date: text; source: text |
 | GateDecision | record | task: text; reference: text; gate: text; epoch: int>=0; subject: text; word: text; text: text; factory_word: text; factory_word_date: text; date: text; author: text; source: text; actor: "owner" \| "delegate"; viewed_at: ?int>=0 |
 | ReviewHistoryEntry | record | number: int>=1; hash: text; context: text; clean: bool; probes: int>=0; independent: bool; evidence: text |
-| SmallRouteConditions | record | estimate_ms: int>=0; total_ms: int>=0; work_ms: int>=0; overhead_ms: int>=0; reversible: bool; external_effects: bool; preview: "test" \| "local" \| "none"; scope_word: text; started: int>=0 |
+| SmallRouteConditions | record | estimate_ms: ?int>=0; total_ms: ?int>=0; work_ms: ?int>=0; overhead_ms: ?int>=0; reversible: bool; external_effects: bool; preview: "test" \| "local" \| "none"; scope_word: text; started: int>=0 |
 | SmallRouteEvidence | record | task: text; hash: text; brief: text; tests: text; guards: text; preview: text; visible: bool; independent_diff: text; tests_passed: bool; guards_passed: bool; preview_available: bool; diff_independent: bool; diff_ms: int>=0 |
 | Finding | record | severity: Severity; evidence: text; repeat: bool; question: bool |
 | Summary | record | critical: int>=0; probes: int>=0 |
@@ -152,7 +152,7 @@
 | RouteFeatures | record | goal: text; sources: ?int; parts: ?int; risk: Risk; irreversible: Rating; cause_known: Rating; touches_norm: Rating; helper_proposal: text |
 | RouteThresholds | record | max_sources: int>=0; max_parts: int>=0; allowed_risk: Risk |
 | RouteSettings | record | ceiling: int>=0; clean_needed: int>=0; probes_min: int>=0; delivery_short: bool; relaxations: []text |
-| ProjectSettings | record | thresholds: RouteThresholds; full: RouteSettings; fast: RouteSettings |
+| ProjectSettings | record | thresholds: RouteThresholds; fast_proposal_allowed: bool; full: RouteSettings; fast: RouteSettings |
 | PreparationResult | record | outcome: PreparationStatus; cycle: full {Stage: Cycle} |
 | Severity | variant | Critical; Significant; Desirable |
 | Check | variant | Confirmed; ChannelDistortion; NotConfirmed |
