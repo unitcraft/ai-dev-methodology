@@ -9,17 +9,35 @@
 ## Типы
 
 ```alula
-тип Работа = Вар { id строка, ревизия число, вид ВидРаботы, состояние Состояние }
+тип Работа { id строка, ревизия число, вид ВидРаботы, состояние Состояние }
 тип ВидРаботы перечисление Task | Epic
-тип Состояние перечисление Queued | Ready | Running | Paused | BlockedDependency | DeliveryPending | WaitingOwner | Completed | Failed
+тип Состояние перечисление
+  | Queued
+  | Ready
+  | Running
+  | Paused
+  | BlockedDependency
+  | DeliveryPending
+  | WaitingOwner
+  | Completed
+  | Failed
 
-тип Артефакт = Вар { producer строка, stage строка, version строка, acceptance_ref строка }
-тип Pin = Вар { consumer строка, producer строка, stage строка, version строка, acceptance_ref строка }
-тип Ребро = Вар { parent строка, child строка }
-тип Зависимость = Вар { consumer строка, producer строка, pin Pin }
+тип Артефакт { producer строка, stage строка, version строка, acceptance_ref строка }
+тип Pin { consumer строка, producer строка, stage строка, version строка, acceptance_ref строка }
+тип Ребро { parent строка, child строка }
+тип Зависимость { consumer строка, producer строка, pin Pin }
 
-тип KindСобытия перечисление ChildChanged | ArtifactAccepted | PinReconciled | OwnerIntentRecorded | DeliveryConfirmed | OwnerDecisionReceived | RestartRecovered
+тип KindСобытия перечисление
+  | ChildChanged
+  | ArtifactAccepted
+  | PinReconciled
+  | OwnerIntentRecorded
+  | DeliveryConfirmed
+  | OwnerDecisionReceived
+  | RestartRecovered
 тип OwnerDecision перечисление Accept | Return | Reject
+тип ИсходДоставки перечисление Confirmed | Unknown
+тип Receipt { intent_id строка, исход ИсходДоставки }
 тип Событие { id строка, target_id строка, expected_revision число, kind KindСобытия, payload_ref строка, actor строка, proof_ref строка }
 тип OwnerIntent { intent_id строка, epic_id строка, revision число, result_ref строка, question строка, deadline число, idempotency_key строка }
 ```
@@ -32,20 +50,28 @@
 | contains | `[]Ребро` | Рекурсивное включение; общий граф вместе с зависимостями ацикличен |
 | depends | `[]Зависимость` | Связь потребителя с производителем и конкретным принятым pin |
 | журнал | `[]Событие` | Упорядоченный, дописываемый журнал с id события и ожидаемой ревизией |
-| intent | `?OwnerIntentRecorded` | Единственное восстанавливаемое намерение текущей сдачи; до доставки не означает `WaitingOwner` |
-| решение | `?OwnerDecisionReceived` | Применяется лишь при корректных intent id, ревизии и доверенном proof |
+| intent | `?OwnerIntent` | Единственное восстанавливаемое намерение текущей сдачи; до доставки не означает `WaitingOwner` |
+| решение | `?OwnerDecision` | Применяется лишь при корректных intent id, ревизии и доверенном proof |
 | blockers | `[]строка` | Независимые pause/stop, stale, owner, safety и unknown-effect блокировки; снимаются адресно |
 
 ## Стороны и граница эффектов
 
 | Сторона | Тип | Может | Не может |
 |---|---|---|---|
-| хозяин | `machine хозяин(вход Вход, итог Итог)` | Проверить ревизию/guards, записать событие, пересверить pin, собрать итог детей | Сам удостоверить волю владельца или объявить внешний эффект состоявшимся без receipt |
+| хозяин | `machine хозяин` | Проверить ревизию/guards, записать событие, пересверить pin, собрать итог детей | Сам удостоверить волю владельца или объявить внешний эффект состоявшимся без receipt |
 | исполнитель ребёнка | `agent(итог РезультатРебёнка)` | Предложить результат и ссылки на доказательства | Изменить родительский журнал, pin или owner gate |
 | доверенный источник владельца | `human` | Передать коррелированное решение и proof | Решить иной intent/revision |
-| адаптер доставки | `effect(итог Receipt)` | Выполнить intent доставки и сообщить receipt/unknown | Создать новое намерение при рестарте или превратить unknown в success |
+| адаптер доставки | `функция доставить(итог OwnerIntent) -> Receipt` | Выполнить intent доставки и сообщить receipt/unknown | Создать новое намерение при рестарте или превратить unknown в success |
 
 **Контраст:** локальный переход — проверка входа и атомарная запись состояния/события хозяином. Эффектная граница начинается только после сохранения intent; доставка, подтверждение и неизвестный исход принадлежат host/адаптеру. Эта модель не выполняет эффект и не обещает exactly-once.
+
+## Внешние функции
+
+Вида `effect` у сторон нет; внешний эффект доставки выполняет host через функцию ниже (класс действующая: внешнее действие, результат не гарантирован, исход бывает неизвестен).
+
+| Функция | Сигнатура | Класс |
+|---|---|---|
+| доставить | доставить(итог OwnerIntent) -> Receipt | действующая |
 
 ## Допустимые события и исходы
 
