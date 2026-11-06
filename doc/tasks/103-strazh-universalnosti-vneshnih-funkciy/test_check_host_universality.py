@@ -97,6 +97,33 @@ class NegativeProbeTest(unittest.TestCase):
             ["stop_agent_group | — | — | acting | — | —"], reason_column=True, reasons=["—"]))
         self.assertEqual(1, len(findings))
 
+    def test_reason_naming_other_function_is_red_with_primitives(self):
+        """Уточнение критерия: декларация, называющая другие функции реестра, сама
+        признаёт разложение — красный с перечнем этих примитивов."""
+        _, findings = guard.check_registry(table(
+            ["read_file | path: text | text | volatile | — | —",
+             "proposal_with_fingerprint | — | text | volatile | — | —"],
+            reason_column=True,
+            reasons=["—", "читает файл read_file и считает отпечаток"]))
+        self.assertEqual(1, len(findings))
+        self.assertEqual("proposal_with_fingerprint", findings[0].name)
+        self.assertIn("раскладывается на примитивы: read_file", findings[0].reason)
+
+    def test_reason_mentioning_undeclared_name_is_green(self):
+        """Имя не из реестра — не разложение на существующие примитивы."""
+        _, findings = guard.check_registry(table(
+            ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"],
+            reason_column=True,
+            reasons=["доверие теряется при разложении на чтение read_dir и сверку"]))
+        self.assertEqual([], findings)
+
+    def test_reason_naming_itself_is_green(self):
+        _, findings = guard.check_registry(table(
+            ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"],
+            reason_column=True,
+            reasons=["verify_owner_route_decision не раскладывается без потери доверия"]))
+        self.assertEqual([], findings)
+
 
 class SelftestTest(unittest.TestCase):
     """Самотест стража."""
