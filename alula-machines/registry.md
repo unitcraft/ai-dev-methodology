@@ -1,6 +1,6 @@
 # Реестр методики: примитивы шага агента, совещания, запуска сессии и раннера задачи
 
-Данные методики (69 внешних функций и типы их подписей), которые она регистрирует у языка. Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера). Контракт доверенного ввода и доказательств — [task-runner.md](../task-runner.md), «Смена маршрута»; проверка происхождения не заменяется значениями тестового хозяина.
+Данные методики (71 инструмент и типы их подписей), которые она регистрирует у языка; в языке записи машин инструмент называется «внешняя функция» (раздел 7 спецификации языка). Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера). Наборы `session` и `runner` включают основной набор целиком; в их таблицах записаны только свои типы и типы, заменяющие одноимённые типы основного набора (у `session` — `Finding`, `Severity`, `Summary`), повторы не пишутся. Контракт доверенного ввода и доказательств — [task-runner.md](../task-runner.md), «Смена маршрута»; проверка происхождения не заменяется значениями тестового хозяина.
 
 Форма — раздел 7 спецификации Алулы: имена — JSON-имена реестра хозяина; типы — как пишет дерево `machine/2` (`int>=0`, `?text`, `[]Finding`, `"a" \| "b"`); `\|` внутри ячейки — знак `|`; списки «читает» и «пишет» разделены `;`; `—` — пусто. Файл читает `parse_registry_table` пакета `alula` (`alula.machine_table`), программа `alula` берёт его рядом с машинами (`registry.md`) или флагом `--registry`.
 
@@ -111,23 +111,9 @@
 
 | type | kind | members |
 |---|---|---|
-| AgentProfile | record | family: text; model: text; effort: ?text |
-| AgentModel | record | id: text; provider: text; variant: ?text |
-| TokenUsage | record | input: ?int; output: ?int; reasoning: ?int; cache_read: ?int; cache_write: ?int |
-| Usage | record | session: text; result: text; family: text; model: AgentModel; tokens: TokenUsage; cost: ?float; created: int; updated: int; context_used: ?int; trace: text; step: int |
-| AgentReply | record | text: ?text; artifact: ?text; usage: Usage; request_started: ?int |
-| Claim | record | kind: text; statement: text; source: text; excerpt: ?text; check: Check |
-| LensResult | record | findings: []Finding; probes: int>=0 |
-| JournalEvent | record | code: text; params: [](text, text) |
 | Finding | record | severity: Severity; level: Level; evidence: text |
 | Summary | record | essential: int>=0; probes: int>=0 |
 | SessionParsing | record | result: SessionResult; summary: ?Summary; findings: ?[]Finding |
-| Check | variant | Confirmed; ChannelDistortion; NotConfirmed |
-| ReplyCheck | variant | Valid; Violated; Empty |
-| WitnessAnswer | variant | Answered(claim: Claim); NotMeasured(claim: text) |
-| EditResult | variant | Done(proposal: text); Question(proposal: text, question: text) |
-| RoleResult | variant | WitnessOutcome(answers: []WitnessAnswer); LensOutcome(result: LensResult); EditOutcome(result: EditResult) |
-| RoleContext | variant | WitnessContext(author_question: ?text, findings: ?[]Finding, proposal: text); LensContext(proposal: text, witness_answers: ?[]WitnessAnswer); FixContext(proposal: text, gate3_findings: []Finding, author_guidance: ?text); QuestionContext(author_question: text, proposal: text, gate3_findings: []Finding, human_answer: text) |
 | Severity | variant | Essential; Superficial |
 | Level | variant | Implementation; Plan; Requirements; OutOfScope; Delivery |
 | SessionResult | variant | Done; Revision; Plan; Requirements; Question |
@@ -137,16 +123,6 @@
 
 | type | kind | members |
 |---|---|---|
-| Finding | record | severity: Severity; evidence: text; repeat: bool; question: bool |
-| Summary | record | critical: int>=0; probes: int>=0 |
-| AgentProfile | record | family: text; model: text; effort: ?text |
-| AgentModel | record | id: text; provider: text; variant: ?text |
-| TokenUsage | record | input: ?int; output: ?int; reasoning: ?int; cache_read: ?int; cache_write: ?int |
-| Usage | record | session: text; result: text; family: text; model: AgentModel; tokens: TokenUsage; cost: ?float; created: int; updated: int; context_used: ?int; trace: text; step: int |
-| AgentReply | record | text: ?text; artifact: ?text; usage: Usage; request_started: ?int |
-| Claim | record | kind: text; statement: text; source: text; excerpt: ?text; check: Check |
-| LensResult | record | findings: []Finding; probes: int>=0 |
-| JournalEvent | record | code: text; params: [](text, text) |
 | Cycle | record | number: int>=1; origin: int>=1; streak: int>=0; no_probes: int>=0 |
 | Approval | record | date: text; who: text; hash: text |
 | TaskDocumentState | record | exists: bool; status: DocumentStatus; stop_word: StopWord; hash: text |
@@ -155,13 +131,6 @@
 | RouteSettings | record | ceiling: int>=0; clean_needed: int>=0; probes_min: int>=0; delivery_short: bool; relaxations: []text |
 | ProjectSettings | record | thresholds: RouteThresholds; fast_proposal_allowed: bool; full: RouteSettings; fast: RouteSettings |
 | PreparationResult | record | outcome: PreparationStatus; cycle: full {Stage: Cycle} |
-| Severity | variant | Critical; Significant; Desirable |
-| Check | variant | Confirmed; ChannelDistortion; NotConfirmed |
-| ReplyCheck | variant | Valid; Violated; Empty |
-| WitnessAnswer | variant | Answered(claim: Claim); NotMeasured(claim: text) |
-| EditResult | variant | Done(proposal: text); Question(proposal: text, question: text) |
-| RoleResult | variant | WitnessOutcome(answers: []WitnessAnswer); LensOutcome(result: LensResult); EditOutcome(result: EditResult) |
-| RoleContext | variant | WitnessContext(author_question: ?text, findings: ?[]Finding, proposal: text); LensContext(proposal: text, witness_answers: ?[]WitnessAnswer); FixContext(proposal: text, gate3_findings: []Finding, author_guidance: ?text); QuestionContext(author_question: text, proposal: text, gate3_findings: []Finding, human_answer: text) |
 | Stage | variant | Analysis; Plan; Implementation; Delivery; Meeting |
 | TaskDocument | variant | Specification; Plan; ImplementationReport |
 | DocumentStatus | variant | Draft; Approved; InProgress; Done; Unparsed |
