@@ -16,8 +16,11 @@
   1. собирает все объявленные внешние функции — строки таблицы раздела «## Primitives»
      реестра хозяина (`alula-machines/registry.md`; столбцы — раздел 7 спецификации Алулы);
   2. функция из списка универсальных примитивов (УНИВЕРСАЛЬНЫЕ ниже) — зелёная;
-     иначе она предметная и зелёная только с непустой причиной в столбце `reason`
-     (столбец объявляется в таблице «Primitives»; пустая ячейка и `—` — причины нет);
+     иначе она предметная и зелёная только с непустой причиной: из столбца `reason`
+     таблицы «Primitives» или из отдельной таблицы раздела «## Reasons» (заголовок
+     `| tool | reason |`; столбец в таблице «Primitives» не бывает — загрузчик реестра
+     `parse_registry_table` читает строку примитива ровно из шести ячеек, задача 110);
+     пустая ячейка и `—` — причины нет;
   3. красный на каждую предметную функцию без записанной причины: имя функции и причина
      находки; красный и тогда, когда записанная причина сама называет другие функции
      реестра (слово целиком), — декларация признаёт разложение: в находке перечисляются
@@ -48,6 +51,7 @@ UNIVERSAL_PRIMITIVES = frozenset({
 
 DEFAULT_REGISTRY = os.path.join("alula-machines", "registry.md")
 REASON_COLUMN = "reason"
+REASONS_SECTION = "## Reasons"
 EMPTY_CELL = "—"
 
 REASON_MISSING = "предметная функция без записанной причины нераскладываемости"
@@ -99,6 +103,32 @@ def parse_primitives(text):
     return out
 
 
+def parse_reasons(text):
+    """Таблица раздела «## Reasons»: {имя инструмента: причина}.
+
+    Отдельная таблица — потому что строка примитива читается загрузчиком реестра
+    ровно из шести ячеек и седьмого столбца в «Primitives» не бывает (задача 110).
+    Заголовок таблицы — с первой ячейкой «tool» (не «name»: иначе это таблица
+    примитивов). Раздела или таблицы нет — пустой словарь: причины необязательны.
+    """
+    m = re.search(r"^## Reasons\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    if not m:
+        return {}
+    rows = [ln for ln in m.group(1).splitlines() if ln.strip().startswith("|")]
+    if len(rows) < 2:
+        return {}
+    header = split_row(rows[0])
+    if len(header) < 2 or header[1] != REASON_COLUMN:
+        raise ValueError("в таблице «## Reasons» второй столбец — «reason»")
+    out = {}
+    for ln in rows[2:]:
+        cells = split_row(ln)
+        if len(cells) < 2:
+            continue
+        out[cells[0].strip("`")] = cells[1]
+    return out
+
+
 def referenced_functions(reason, names, own):
     """Имена других функций реестра, названные в записанной причине (слово целиком).
 
@@ -114,6 +144,7 @@ def referenced_functions(reason, names, own):
 def check_registry(text):
     """Сверка реестра с правилом 14б. Возвращает (числа, находки)."""
     rows = parse_primitives(text)
+    reasons = parse_reasons(text)
     names = set(row.get("name", "").strip("`") for row in rows)
     universal, justified = 0, 0
     findings = []
@@ -123,6 +154,8 @@ def check_registry(text):
             universal += 1
             continue
         reason = row.get(REASON_COLUMN, "").strip()
+        if not reason or reason == EMPTY_CELL:
+            reason = reasons.get(name, "").strip()
         if not reason or reason == EMPTY_CELL:
             findings.append(Finding(name, REASON_MISSING))
             continue
@@ -177,6 +210,14 @@ def selftest(out):
     counts, findings = check_registry(table_reason)
     expect("предметная с записанной причиной зелёная", counts["justified"] == 1 and not findings)
 
+    table_reasons_section = (
+        table_reason +
+        "## Reasons\n\n| tool | reason |\n|---|---|\n"
+        "| verify_owner_route_decision | решение владельца не раскладывается на примитивы без потери доверия |\n")
+    counts, findings = check_registry(table_reasons_section)
+    expect("причина из отдельной таблицы «## Reasons» зелёная",
+           counts["justified"] == 1 and not findings)
+
     table_bare = table_universal.replace(
         "| read_file | path: text | text | volatile | — | — |",
         "| stop_agent_group | — | — | acting | — | — |")
@@ -190,6 +231,12 @@ def selftest(out):
         "решение владельца не раскладывается на примитивы без потери доверия", EMPTY_CELL)
     counts, findings = check_registry(table_dash)
     expect("причина «—» — причины нет", len(findings) == 1)
+
+    table_bare_with_reasons = (
+        table_bare +
+        "## Reasons\n\n| tool | reason |\n|---|---|\n| stop_agent_group | — |\n")
+    counts, findings = check_registry(table_bare_with_reasons)
+    expect("причина «—» в таблице «## Reasons» — причины нет", len(findings) == 1)
 
     table_decomposed = (
         "## Primitives\n\n| name | parameters | result | class | reads | writes | reason |\n"

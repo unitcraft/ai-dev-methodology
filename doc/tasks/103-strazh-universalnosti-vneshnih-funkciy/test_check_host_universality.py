@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Пробы стража универсальности внешних функций (задача 103).
+"""Пробы стража универсальности внешних функций (задача 103; причины отдельной
+таблицей «## Reasons» — задача 110).
 
-Позитивные: универсальная функция и предметная с записанной причиной — зелёные.
+Позитивные: универсальная функция и предметная с записанной причиной — зелёные
+(причина — столбец `reason` таблицы «Primitives» или таблица «## Reasons»).
 Негативные: предметная без столбца причины, с пустой причиной и с «—» — красные,
 в находке имя функции и причина. Характеризация: действующий реестр методики
-(`alula-machines/registry.md`) норме не следует (задача 102), страж на нём красный
-по всем объявленным функциям. Запуск из папки задачи: `python -m unittest -v test_check_host_universality`.
+(`alula-machines/registry.md`) после задачи 110 норме 14б следует: у каждого из 71
+предметного инструмента записана причина нераскладываемости, страж на нём зелёный.
+Запуск из папки задачи: `python -m unittest -v test_check_host_universality`.
 """
 import io
 import os
@@ -45,11 +48,21 @@ class CollectTest(unittest.TestCase):
         with io.open(REGISTRY, encoding="utf-8") as f:
             text = f.read()
         rows = guard.parse_primitives(text)
-        self.assertEqual(70, len(rows))
+        self.assertEqual(71, len(rows))
         names = [r["name"] for r in rows]
         self.assertIn("verify_owner_route_decision", names)
         self.assertIn("show_human", names)
         self.assertEqual(len(set(names)), len(names))
+
+    def test_reasons_collected_for_every_declared_function(self):
+        with io.open(REGISTRY, encoding="utf-8") as f:
+            text = f.read()
+        rows = guard.parse_primitives(text)
+        reasons = guard.parse_reasons(text)
+        for row in rows:
+            reason = reasons.get(row["name"], "")
+            self.assertTrue(reason and reason != guard.EMPTY_CELL,
+                            "у {0} нет причины в таблице «## Reasons»".format(row["name"]))
 
     def test_registry_without_primitives_section_is_red(self):
         with self.assertRaises(ValueError):
@@ -70,6 +83,16 @@ class PositiveProbeTest(unittest.TestCase):
             ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"],
             reason_column=True,
             reasons=["решение владельца не раскладывается на примитивы без потери доверия"]))
+        self.assertEqual(1, counts["justified"])
+        self.assertEqual([], findings)
+    def test_domain_function_with_reason_in_reasons_section_is_green(self):
+        """Задача 110: причина в отдельной таблице раздела «## Reasons» — зелёная."""
+        text = table(
+            ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"])
+        text += ("## Reasons\n\n| tool | reason |\n|---|---|\n"
+                 "| verify_owner_route_decision | решение владельца не раскладывается "
+                 "на примитивы без потери доверия |\n")
+        counts, findings = guard.check_registry(text)
         self.assertEqual(1, counts["justified"])
         self.assertEqual([], findings)
 
@@ -136,18 +159,19 @@ class SelftestTest(unittest.TestCase):
 
 
 class CurrentRegistryTest(unittest.TestCase):
-    """Характеризация: действующий реестр норме 14б не следует (строка реестра норм
-    задачи 102), поэтому прогон по нему красный ожидаемо. Когда реестр пересмотрят,
-    эта проба переворачивается."""
+    """Характеризация после задачи 110: действующий реестр норме 14б следует —
+    у каждого из 71 предметного инструмента записана причина нераскладываемости
+    в таблице «## Reasons», страж на нём зелёный (бывшая красная проба задачи 103
+    перевёрнута этой правкой)."""
 
-    def test_current_registry_is_red_with_all_names(self):
+    def test_current_registry_is_green_with_all_reasons(self):
         p = subprocess.run([sys.executable, GUARD, "--registry", REGISTRY],
                            capture_output=True, text=True, encoding="utf-8", cwd=REPO)
-        self.assertEqual(1, p.returncode, p.stdout + p.stderr)
-        self.assertIn("внешних функций 70", p.stdout)
-        self.assertIn("предметных без причины 70", p.stdout)
-        self.assertIn("ИТОГ: КРАСНЫЙ", p.stdout)
-        self.assertIn("stop_agent_group", p.stdout)
+        self.assertEqual(0, p.returncode, p.stdout + p.stderr)
+        self.assertIn("внешних функций 71", p.stdout)
+        self.assertIn("предметных с причиной 71", p.stdout)
+        self.assertIn("предметных без причины 0", p.stdout)
+        self.assertIn("ИТОГ: зелёный", p.stdout)
 
 
 if __name__ == "__main__":
