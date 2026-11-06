@@ -65,6 +65,7 @@
 | customer_letter | — | ?text | volatile | objects: letter to the customer | — |
 | round_letters | round: int>=0 | ?text | volatile | objects: letters of the rounds | — |
 | secrets_report | — | ?text | volatile | objects: last file of the implementation review | — |
+| acceptance_criteria | — | []text | volatile | objects: acceptance criteria of the brief task/message.md | — |
 | tree_diff | — | text | volatile | objects: working tree | — |
 | commit_message | — | text | volatile | objects: history of the working tree | — |
 | commit_text | — | text | volatile | objects: commit.txt | — |
