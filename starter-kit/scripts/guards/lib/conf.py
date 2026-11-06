@@ -168,13 +168,23 @@ SPEC = {
     "TEST_CHECK": (True, None, _regex, "образец проверки в тексте теста (нужен, если TEST_FILES не off)"),
     "TEST_COMMENT": (True, None, lambda v: None if v == "none" else _regex(v),
                      "образец комментария, вырезаемого перед поиском проверок, или none (нужен, если TEST_FILES не off)"),
+    "MACHINE_FILES": (True, None, lambda v: _regex(v, True),
+                      "образец пути файла машины для стража тонкости хозяина или off"),
+    "MACHINE_EFFECT": (True, None, _regex,
+                       "образец прямого вызова эффекта в коде машины (нужен, если MACHINE_FILES не off)"),
+    "HOST_FILES": (True, None, _regex,
+                   "образец пути файла хозяина машин (нужен, если MACHINE_FILES не off)"),
+    "MACHINE_IMPORT": (True, None, _regex,
+                       "образец строки импорта машины в коде хозяина (нужен, если MACHINE_FILES не off)"),
     "RATCHET_GUARD": (True, None, _ratchet_guards,
                       "страж check-* под храповиком долга, имя файла (ключ повторяется) или off"),
     "RATCHET_BASELINE": (False, "scripts/guards/ratchet.txt", _path, "файл базы храповика долга от корня репозитория"),
 }
 LISTS = ("TASK_DOC_RULE", "RATCHET_GUARD")
 # ключ нужен, только если другой ключ не выключен
-CONDITIONAL = {"TEST_CHECK": ("TEST_FILES", "off"), "TEST_COMMENT": ("TEST_FILES", "off")}
+CONDITIONAL = {"TEST_CHECK": ("TEST_FILES", "off"), "TEST_COMMENT": ("TEST_FILES", "off"),
+               "MACHINE_EFFECT": ("MACHINE_FILES", "off"), "HOST_FILES": ("MACHINE_FILES", "off"),
+               "MACHINE_IMPORT": ("MACHINE_FILES", "off")}
 
 
 def default_path():
