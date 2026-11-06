@@ -48,10 +48,11 @@ class CollectTest(unittest.TestCase):
         with io.open(REGISTRY, encoding="utf-8") as f:
             text = f.read()
         rows = guard.parse_primitives(text)
-        self.assertEqual(71, len(rows))
+        self.assertEqual(87, len(rows))
         names = [r["name"] for r in rows]
         self.assertIn("verify_owner_route_decision", names)
         self.assertIn("show_human", names)
+        self.assertIn("issue_token", names)
         self.assertEqual(len(set(names)), len(names))
 
     def test_reasons_collected_for_every_declared_function(self):
@@ -60,9 +61,21 @@ class CollectTest(unittest.TestCase):
         rows = guard.parse_primitives(text)
         reasons = guard.parse_reasons(text)
         for row in rows:
+            if row["name"].strip("`") in guard.UNIVERSAL_PRIMITIVES:
+                continue
             reason = reasons.get(row["name"], "")
             self.assertTrue(reason and reason != guard.EMPTY_CELL,
                             "у {0} нет причины в таблице «## Reasons»".format(row["name"]))
+
+    def test_universal_primitives_of_thin_host_are_declared(self):
+        """Каркас тонкого хозяина (задача 111): универсальные примитивы эпика есть в реестре."""
+        with io.open(REGISTRY, encoding="utf-8") as f:
+            text = f.read()
+        names = set(r["name"] for r in guard.parse_primitives(text))
+        for name in ("read_file", "write_file", "move_file", "delete_file", "file_exists",
+                     "list_dir", "start_process", "stop_process", "process_running",
+                     "run_command", "acquire_lock", "parse_agent", "sha256"):
+            self.assertIn(name, names)
 
     def test_registry_without_primitives_section_is_red(self):
         with self.assertRaises(ValueError):
@@ -168,8 +181,8 @@ class CurrentRegistryTest(unittest.TestCase):
         p = subprocess.run([sys.executable, GUARD, "--registry", REGISTRY],
                            capture_output=True, text=True, encoding="utf-8", cwd=REPO)
         self.assertEqual(0, p.returncode, p.stdout + p.stderr)
-        self.assertIn("внешних функций 71", p.stdout)
-        self.assertIn("предметных с причиной 71", p.stdout)
+        self.assertIn("внешних функций 87", p.stdout)
+        self.assertIn("предметных с причиной 74", p.stdout)
         self.assertIn("предметных без причины 0", p.stdout)
         self.assertIn("ИТОГ: зелёный", p.stdout)
 

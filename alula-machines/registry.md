@@ -1,6 +1,6 @@
 # Реестр методики: примитивы шага агента, совещания, запуска сессии и раннера задачи
 
-Данные методики (71 инструмент и типы их подписей), которые она регистрирует у языка; в языке записи машин инструмент называется «внешняя функция» (раздел 7 спецификации языка). Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера). Наборы `session` и `runner` включают основной набор целиком; в их таблицах записаны только свои типы и типы, заменяющие одноимённые типы основного набора (у `session` — `Finding`, `Severity`, `Summary`), повторы не пишутся. Контракт доверенного ввода и доказательств — [task-runner.md](../task-runner.md), «Смена маршрута»; проверка происхождения не заменяется значениями тестового хозяина.
+Данные методики (87 инструментов и типы их подписей), которые она регистрирует у языка; в языке записи машин инструмент называется «внешняя функция» (раздел 7 спецификации языка). Последние 16 строк таблицы «Primitives» — примитивы каркаса тонкого хозяина (эпик, стадия 1, 2026-11-06): машины пока к ним не обращаются, сценарное использование — стадии 2–6; `release_lock` с токеном вместо действующего без параметров войдёт на стадии 4. Примитивы `time_now` и `new_id` — язык (раздел 7а, AL-113), здесь их нет. Наборы типов: основной (`standard`), `session` (типы запуска сессии: свои `Finding`, `Severity`, `Summary`) и `runner` (типы раннера). Наборы `session` и `runner` включают основной набор целиком; в их таблицах записаны только свои типы и типы, заменяющие одноимённые типы основного набора (у `session` — `Finding`, `Severity`, `Summary`), повторы не пишутся. Контракт доверенного ввода и доказательств — [task-runner.md](../task-runner.md), «Смена маршрута»; проверка происхождения не заменяется значениями тестового хозяина.
 
 Форма — раздел 7 спецификации Алулы: имена — JSON-имена реестра хозяина; типы — как пишет дерево `machine/2` (`int>=0`, `?text`, `[]Finding`, `"a" \| "b"`); `\|` внутри ячейки — знак `|`; списки «читает» и «пишет» разделены `;`; `—` — пусто. Файл читает `parse_registry_table` пакета `alula` (`alula.machine_table`), программа `alula` берёт его рядом с машинами (`registry.md`) или флагом `--registry`: строка примитива — ровно шесть ячеек, седьмой столбец в таблице «Primitives» не бывает. Причина исключения предметного инструмента (правило 14б `state-machines/state-machine-spec.md`: что теряется при разложении на универсальные примитивы) пишется в отдельной таблице раздела «## Reasons» — загрузчик её не читает (первая ячейка заголовка не `name`), страж универсальности (задача 103) сверяет её с таблицей «Primitives».
 
@@ -79,6 +79,22 @@
 | rename_letter | round: int>=0 | — | acting | — | — |
 | release_lock | — | — | acting | — | — |
 | show_human | text: text | — | acting | — | — |
+| read_file | path: text | text | volatile | — | — |
+| write_file | path: text; content: text | — | acting | — | objects: the file |
+| move_file | from: text; to: text | — | acting | — | objects: the moved file |
+| delete_file | path: text | — | acting | — | objects: the deleted file |
+| file_exists | path: text | bool | volatile | objects: the file | — |
+| list_dir | path: text | []text | volatile | objects: the folder | — |
+| start_process | command: text; dir: text; log_path: text | int>=1 | acting | — | objects: the process and its log |
+| stop_process | pid: int>=1 | — | acting | — | objects: the process |
+| process_running | pid: int>=1 | bool | volatile | objects: the process | — |
+| run_command | command: text; dir: text | ExecResult | acting | — | — |
+| acquire_lock | path: text; token: text | bool | acting | — | objects: the lock |
+| parse_agent | instruction: text; input: text | text | volatile | service: the cheap agent | — |
+| sha256 | text: text | text | pure | — | — |
+| issue_token | task_dir: text; area: text; state: text | text | acting | — | objects: trusted token openings |
+| verify_token | task_dir: text; token: text | ?Opening | volatile | objects: trusted token openings | — |
+| journal_write | event: JournalEvent | — | acting | — | objects: the journal |
 
 ## Reasons
 
@@ -157,6 +173,9 @@
 | rename_letter | не убрать безболезненно: письмо раунда не переименуется; даёт: переименование письма по номеру раунда; если убрать: переписка раунда собьётся — письма раундов не опознать |
 | release_lock | не убрать безболезненно: замок раннера не снимется в конце работы; даёт: снятие замка с гарантией исключительности; если убрать: дерево останется занятым — следующая задача встанет; отметка в журнале при этом уже написана |
 | show_human | не убрать безболезненно: человек не увидит тексты ворот и итогов; даёт: показ текста человеку вне каналов машины; если убрать: ворота замолчат — владелец не узнает, что ждёт его решения; при сбое показа отметка в журнале уже сохранена |
+| issue_token | не убрать безболезненно: атомарность и идемпотентность записи открытия по паре «папка, область» должны гарантироваться хранилищем: чтение и запись файла отдельными шагами дали бы гонку и второе открытие на те же ворота после сбоя; даёт: непредсказуемый токен открытия, повтор с теми же аргументами возвращает тот же токен, а не второе открытие; если убрать: разрешение продублируется — сбой между записью и ответом создаст второе открытие, и два решения пройдут на одно ворота |
+| verify_token | не убрать безболезненно: проверка происхождения и неизменности сохранённого открытия по токену — доверенная операция, самозаявленные поля события доказательством не служат; даёт: проверенную запись открытия (автор, дата, источник, содержимое) либо отсутствие, чтение не погашает открытие — погашение идёт записью в журнал в том же шаге, что и переход; если убрать: машина примет токен из текста события без сверки с хранилищем — открытие подделывается содержимым письма |
+| journal_write | не убрать безболезненно: журнал — аудиторский след, писать его может только хозяин, сверка кода и параметров с таблицей шаблонов языка и хоста машине недоступна; даёт: дописанное событие, несоответствие кода или параметров таблице — сбой шага; если убрать: машина запишет событие файлом напрямую — след перестанет быть аудиторским, невалидные коды и лишние параметры пройдут молча, история цикла обесценится |
 
 
 ## Types
@@ -164,6 +183,8 @@
 | type | kind | members |
 |---|---|---|
 | RouteDecision | record | task: text; reference: text; route: "full" \| "fast" \| "small"; basis: text; word: text; date: text; source: text |
+| ExecResult | record | code: int; stdout: text |
+| Opening | record | author: text; date: text; source: text; content: text |
 | GateDecision | record | task: text; reference: text; gate: text; epoch: int>=0; subject: text; word: text; text: text; factory_word: text; factory_word_date: text; date: text; author: text; source: text; actor: "owner" \| "delegate"; viewed_at: ?int>=0 |
 | ReviewHistoryEntry | record | number: int>=1; hash: text; context: text; clean: bool; probes: int>=0; independent: bool; evidence: text |
 | SmallRouteConditions | record | estimate_ms: ?int>=0; total_ms: ?int>=0; work_ms: ?int>=0; overhead_ms: ?int>=0; reversible: bool; external_effects: bool; preview: "test" \| "local" \| "none"; scope_word: text; started: int>=0 |
