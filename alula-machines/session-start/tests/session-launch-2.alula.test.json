@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 2: the volume does not fit: the row 2 of SCOPE does not prepare the launch (B1 is shown, the poisoned answer of prepare_launch is not touched)",
+  "name": "LAUNCH 2: the volume does not fit: the row 2 of SCOPE does not start the process of the agent (B1 is shown, the poisoned answer of start_process is not touched)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -74,7 +74,9 @@
     {
       "do": "feed",
       "host": {
-        "prepare_launch": 5
+        "start_process": "x",
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "signal",

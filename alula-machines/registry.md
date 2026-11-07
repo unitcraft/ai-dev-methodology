@@ -77,7 +77,7 @@
 | write_draft_status | document: TaskDocument | — | acting | — | — |
 | create_approved_copy | word: text; date: text | — | acting | — | — |
 | rename_letter | round: int>=0 | — | acting | — | — |
-| release_lock | — | — | acting | — | — |
+| release_lock | path: text; token: text | — | acting | — | objects: the lock |
 | show_human | text: text | — | acting | — | — |
 | read_file | path: text | text | volatile | — | — |
 | write_file | path: text; content: text | — | acting | — | objects: the file |

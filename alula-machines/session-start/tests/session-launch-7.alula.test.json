@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 7: the process restarts in the middle of the session: the preparation is not written again (the poisoned answers of prepare_launch and finish_launch are not touched), the end of the launch is written once on the answer",
+  "name": "LAUNCH 7: the restart in the middle of the session does not start the process of the agent again and does not stop it (the poisoned answers of start_process and stop_process are not touched)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -132,8 +132,9 @@
         }
       },
       "host": {
-        "prepare_launch": 5,
-        "finish_launch": 5
+        "start_process": "x",
+        "stop_process": 5,
+        "process_running": false
       }
     },
     {
@@ -211,7 +212,9 @@
         }
       },
       "host": {
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       }
     },
     {

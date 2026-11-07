@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 5: the nested step answers: the end of the launch is a writing call on the row 1 of SESSION (the answer of the host of a wrong type stops the step: the machine stays at SESSION)",
+  "name": "LAUNCH 5: the nested step answers: the stop of the agent process is an acting call at the entry of ResultParsing (the answer of the host of a wrong type stops the step: the machine stays at SESSION)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -169,7 +169,7 @@
     {
       "do": "pump",
       "host": {
-        "finish_launch": 5
+        "stop_process": 5
       },
       "expect": {
         "state": "Session",

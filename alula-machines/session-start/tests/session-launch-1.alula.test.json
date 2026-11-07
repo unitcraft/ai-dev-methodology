@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 1: the volume fits: the preparation of the launch is a writing call on the row 1 of SCOPE (the answer of the host of a wrong type stops the step: the machine stays at B2)",
+  "name": "LAUNCH 1: the volume fits: the start of the agent process is an acting call of the operation AgentStart on the way of the row 1 of SCOPE (the answer of the host of a wrong type stops the step: the machine stays at B2)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -74,7 +74,7 @@
     {
       "do": "feed",
       "host": {
-        "prepare_launch": 5
+        "start_process": "x"
       },
       "event": {
         "kind": "signal",

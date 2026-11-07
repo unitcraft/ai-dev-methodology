@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -143,7 +143,10 @@
         "outcome": "refusal:StoppedByHuman",
         "open": [],
         "data": {
-          "reason": {"$variant": "PauseReason", "name": "Halted"}
+          "reason": {
+            "$variant": "PauseReason",
+            "name": "Halted"
+          }
         }
       },
       "also": {

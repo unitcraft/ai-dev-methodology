@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 3: the repeat at B13 stops the group of the processes of the agent (the answer of the host of a wrong type stops the step: the machine stays at B13)",
+  "name": "LAUNCH 3: the repeat at B13 stops the process of the agent (the answer of the host of a wrong type stops the step: the machine stays at B13)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -163,7 +163,7 @@
     {
       "do": "feed",
       "host": {
-        "stop_agent_group": 5
+        "stop_process": 5
       },
       "event": {
         "kind": "signal",

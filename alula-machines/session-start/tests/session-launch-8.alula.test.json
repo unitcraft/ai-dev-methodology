@@ -1,7 +1,7 @@
 {
   "kind": "test",
   "machine": "session_start",
-  "name": "LAUNCH 8: after the repeat at B13 the process restarts: the group is not stopped and the launch is not prepared again (the poisoned answers of stop_agent_group and prepare_launch are not touched)",
+  "name": "LAUNCH 8: the repeat at B13 stops the process of the agent and starts it again on the same step; the restart of the executor does not touch the process (the poisoned answers of start_process and stop_process are not touched)",
   "start_at": 1000,
   "steps": [
     {
@@ -39,9 +39,9 @@
             "findings": null
           }
         },
-        "stop_agent_group": null,
-        "prepare_launch": null,
-        "finish_launch": null
+        "start_process": 7,
+        "stop_process": null,
+        "process_running": false
       },
       "event": {
         "kind": "start",
@@ -198,8 +198,9 @@
     {
       "do": "restart",
       "host": {
-        "stop_agent_group": 5,
-        "prepare_launch": 5
+        "start_process": "x",
+        "stop_process": 5,
+        "process_running": false
       },
       "expect": {
         "state": "Session",
