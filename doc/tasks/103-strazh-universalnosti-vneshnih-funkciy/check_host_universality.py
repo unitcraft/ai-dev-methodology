@@ -38,7 +38,11 @@ AL-113). Расширение 2026-11-06 — слово владельца (пл
 и её продолжение в эпике): прогон по нему зелёный, красный не ожидается.
 
 Запуск: из корня репозитория `python doc/tasks/103-strazh-universalnosti-vneshnih-funkciy/check_host_universality.py`
-(`--registry <путь>` — другой реестр; `--selftest` — самопроверка); код возврата 1 при находках.
+(`--registry <путь>` — другой реестр; `--package-registry <путь>` или переменная среды
+`ALULA_PACKAGE_REGISTRY` — реестр пакета языка для сверки связи (задача 119, М-1 эпика 118:
+канонический источник 13 универсальных строк — реестр пакета; сверка построчная и байт-в-байт,
+утечка ядра-4 в пакет — красный); без пути проверка связи пропускается с явным сообщением —
+методика чужих путей не хранит; `--selftest` — самопроверка); код возврата 1 при находках.
 """
 import argparse
 import io
@@ -75,6 +79,18 @@ REASONS_SECTION = "## Reasons"
 EMPTY_CELL = "—"
 
 REASON_MISSING = "предметная функция без записанной причины нераскладываемости"
+
+# Ядро-4 доверенных решений методики (эпик 118, REQ-2): в реестре пакета их быть не должно —
+# их контракты типизированы объектами методики (Opening с маршрутами, шаблоны журнала).
+TRUSTED_CORE = frozenset({
+    "issue_token",
+    "verify_token",
+    "journal_write",
+    "release_lock",
+})
+
+# Колонки строки примитива для сверки связи (шесть ячеек, раздел 7 спецификации Алулы).
+LINK_COLUMNS = ("name", "parameters", "result", "class", "reads", "writes")
 
 
 class Finding(object):
@@ -196,6 +212,36 @@ def check_registry(text):
     return counts, findings
 
 
+def check_package_link(meth_text, pkg_text):
+    """Сверка связи реестров (задача 119, М-1): 13 универсальных строк методики равны
+    строкам реестра пакета байт-в-байт; ядро-4 в пакете отсутствует.
+
+    Возвращает находки (список Finding); пустой список — зелёный.
+    """
+    meth_rows = {r["name"].strip("`"): r for r in parse_primitives(meth_text)}
+    pkg_rows = {r["name"].strip("`"): r for r in parse_primitives(pkg_text)}
+    findings = []
+    linked = sorted(UNIVERSAL_PRIMITIVES - {"time_now", "new_id"})
+    for name in linked:
+        if name not in meth_rows:
+            findings.append(Finding(name, "универсальная строка отсутствует в реестре методики"))
+            continue
+        if name not in pkg_rows:
+            findings.append(Finding(name, "универсальная строка отсутствует в реестре пакета"))
+            continue
+        for col in LINK_COLUMNS:
+            a = meth_rows[name].get(col, "")
+            b = pkg_rows[name].get(col, "")
+            if a != b:
+                findings.append(Finding(
+                    name,
+                    "строки реестров расходятся в колонке {0}: методика «{1}» против пакета «{2}»"
+                    .format(col, a, b)))
+    for name in sorted(TRUSTED_CORE & set(pkg_rows)):
+        findings.append(Finding(name, "строка доверенного ядра методики утекла в реестр пакета"))
+    return findings
+
+
 def report(path, counts, findings, out):
     for f in findings:
         out.write(str(f) + "\n")
@@ -269,6 +315,47 @@ def selftest(out):
         len(findings) == 1 and findings[0].name == "proposal_with_fingerprint"
         and "read_file" in findings[0].reason)
 
+    link_rows = [
+        "| read_file | path: text | text | volatile | — | — |",
+        "| write_file | path: text; content: text | — | acting | — | objects: the file |",
+        "| move_file | from: text; to: text | — | acting | — | objects: the moved file |",
+        "| delete_file | path: text | — | acting | — | objects: the deleted file |",
+        "| file_exists | path: text | bool | volatile | objects: the file | — |",
+        "| list_dir | path: text | []text | volatile | objects: the folder | — |",
+        "| start_process | command: text; dir: text; log_path: text | int>=1 | acting | — | objects: the process and its log |",
+        "| stop_process | pid: int>=1 | — | acting | — | objects: the process |",
+        "| process_running | pid: int>=1 | bool | volatile | objects: the process | — |",
+        "| run_command | command: text; dir: text | ExecResult | acting | — | — |",
+        "| acquire_lock | path: text; token: text | bool | acting | — | objects: the lock |",
+        "| parse_agent | instruction: text; input: text | text | volatile | service: the cheap agent | — |",
+        "| sha256 | text: text | text | pure | — | — |",
+    ]
+    link_meth = (
+        "## Primitives\n\n| name | parameters | result | class | reads | writes |\n"
+        "|---|---|---|---|---|---|\n" + "\n".join(link_rows) + "\n")
+    findings = check_package_link(link_meth, link_meth)
+    expect("сверка связи: одинаковые 13 строк зелёные", not findings)
+
+    findings = check_package_link(
+        link_meth,
+        link_meth.replace(
+            "| read_file | path: text | text | volatile | — | — |",
+            "| read_file | path: text | text | volatile | objects: the file | — |"))
+    expect(
+        "сверка связи: расхождение ячейки красное с именем и колонкой",
+        len(findings) == 1 and findings[0].name == "read_file"
+        and "reads" in findings[0].reason)
+
+    findings = check_package_link(link_meth, link_meth.replace(
+        "| sha256 | text: text | text | pure | — | — |\n", ""))
+    expect("сверка связи: отсутствие строки в пакете красное",
+           len(findings) == 1 and findings[0].name == "sha256")
+
+    core_leak = link_meth + "| verify_token | task_dir: text; token: text | ?Opening | volatile | objects: trusted token openings | — |\n"
+    findings = check_package_link(link_meth, core_leak)
+    expect("сверка связи: утечка ядра-4 в пакет красная",
+           len(findings) == 1 and findings[0].name == "verify_token")
+
     out.write("самотест: ИТОГ {0}\n".format("зелёный" if ok else "КРАСНЫЙ"))
     return ok
 
@@ -277,6 +364,9 @@ def main(argv):
     ap = argparse.ArgumentParser(description="Страж универсальности внешних функций хозяина (правило 14б).")
     ap.add_argument("--registry", default=DEFAULT_REGISTRY,
                     help="реестр хозяина (по умолчанию %(default)s, запуск из корня репозитория)")
+    ap.add_argument("--package-registry", default=os.environ.get("ALULA_PACKAGE_REGISTRY"),
+                    help="реестр пакета языка для сверки связи (задача 119); иначе переменная "
+                         "ALULA_PACKAGE_REGISTRY; без пути проверка связи пропускается")
     ap.add_argument("--selftest", action="store_true", help="самопроверка без чтения реестра")
     args = ap.parse_args(argv)
 
@@ -291,7 +381,31 @@ def main(argv):
         sys.stdout.write("КРАСНЫЙ: {0}: {1}\n".format(args.registry, e))
         return 1
     report(args.registry, counts, findings, sys.stdout)
-    return 1 if findings else 0
+    red = bool(findings)
+
+    if args.package_registry:
+        with io.open(args.package_registry, encoding="utf-8") as f:
+            pkg_text = f.read()
+        try:
+            link_findings = check_package_link(text, pkg_text)
+        except ValueError as e:
+            sys.stdout.write("КРАСНЫЙ: {0}: {1}\n".format(args.package_registry, e))
+            return 1
+        for f2 in link_findings:
+            sys.stdout.write(str(f2) + "\n")
+        sys.stdout.write(
+            "сверка связи с пакетом {0}: строк {1}; находок {2}; ИТОГ: {3}\n".format(
+                args.package_registry,
+                len(UNIVERSAL_PRIMITIVES) - 2,
+                len(link_findings),
+                "КРАСНЫЙ" if link_findings else "зелёный"))
+        red = red or bool(link_findings)
+    else:
+        sys.stdout.write(
+            "проверка связи с пакетом пропущена: не задан путь (--package-registry <путь> "
+            "или переменная среды ALULA_PACKAGE_REGISTRY)\n")
+
+    return 1 if red else 0
 
 
 if __name__ == "__main__":
