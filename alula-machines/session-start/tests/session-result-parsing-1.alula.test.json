@@ -92,7 +92,9 @@
           "open_requests": [],
           "session": "s2",
           "stop_reason": "",
-          "launch_pass": 3
+          "launch_pass": {
+            "$some": 3
+          }
         }
       }
     },
@@ -144,36 +146,46 @@
         "name": "agent_done",
         "request": "agent-1",
         "input": {
-          "$variant": "TurnResult",
-          "name": "Finished",
+          "case": "Finished",
           "fields": {
-            "text": "Привет, мир",
-            "artifact": null,
+            "text": {
+              "some": "Привет, мир"
+            },
+            "artifact": {
+              "none": true
+            },
             "usage": {
-              "$record": "TransportUsage",
-              "fields": {
-                "model": {
-                  "$record": "AgentModel",
-                  "fields": {
-                    "id": "m1",
-                    "provider": "p",
-                    "variant": null
-                  }
+              "model": {
+                "id": "m1",
+                "provider": "p",
+                "variant": {
+                  "none": true
+                }
+              },
+              "tokens": {
+                "input": {
+                  "some": 10
                 },
-                "tokens": {
-                  "$record": "TokenUsage",
-                  "fields": {
-                    "input": 10,
-                    "output": 5,
-                    "reasoning": null,
-                    "cache_read": null,
-                    "cache_write": null
-                  }
+                "output": {
+                  "some": 5
                 },
-                "cost": null,
-                "context_used": null,
-                "request_started": 5
-              }
+                "reasoning": {
+                  "none": true
+                },
+                "cache_read": {
+                  "none": true
+                },
+                "cache_write": {
+                  "none": true
+                }
+              },
+              "cost": {
+                "none": true
+              },
+              "context_used": {
+                "none": true
+              },
+              "request_started": 5
             }
           }
         }
@@ -206,13 +218,14 @@
         ],
         "open": [],
         "queue": [],
-        "outcome": "answer:{\"$record\":\"SessionLaunchResult\",\"fields\":{\"findings\":[{\"$record\":\"Finding\",\"fields\":{\"evidence\":\"e1\",\"level\":{\"$variant\":\"Level\",\"name\":\"Plan\"},\"severity\":{\"$variant\":\"Severity\",\"name\":\"Essential\"}}}],\"result\":{\"$variant\":\"SessionResult\",\"name\":\"Question\"},\"summary\":{\"$record\":\"Summary\",\"fields\":{\"essential\":1,\"probes\":3}}}}",
+        "outcome": "answer:{\"$record\":\"SessionLaunchResult\",\"fields\":{\"findings\":{\"$some\":[{\"$record\":\"Finding\",\"fields\":{\"evidence\":\"e1\",\"level\":{\"$variant\":\"Level\",\"name\":\"Plan\"},\"severity\":{\"$variant\":\"Severity\",\"name\":\"Essential\"}}}]},\"result\":{\"$variant\":\"SessionResult\",\"name\":\"Question\"},\"summary\":{\"$some\":{\"$record\":\"Summary\",\"fields\":{\"essential\":1,\"probes\":3}}}}}",
         "data": {
           "open_requests": [],
           "result": {
-            "$variant": "SessionResult",
-            "name": "Question",
-            "fields": {}
+            "$some": {
+              "$variant": "SessionResult",
+              "name": "Question"
+            }
           }
         }
       }

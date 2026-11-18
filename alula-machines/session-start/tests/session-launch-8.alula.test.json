@@ -119,8 +119,7 @@
         "name": "agent_done",
         "request": "agent-1",
         "input": {
-          "$variant": "TurnResult",
-          "name": "PermanentError",
+          "case": "PermanentError",
           "fields": {}
         }
       },

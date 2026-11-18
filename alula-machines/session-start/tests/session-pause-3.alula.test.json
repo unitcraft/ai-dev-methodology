@@ -125,7 +125,9 @@
           "agent_step-1"
         ],
         "data": {
-          "previous": "Session"
+          "previous": {
+            "$some": "Session"
+          }
         }
       },
       "also": {

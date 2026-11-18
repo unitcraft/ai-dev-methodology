@@ -147,10 +147,14 @@
         ],
         "data": {
           "reason": {
-            "$variant": "PauseReason",
-            "name": "Halted"
+            "$some": {
+              "$variant": "PauseReason",
+              "name": "Halted"
+            }
           },
-          "previous": "Session"
+          "previous": {
+            "$some": "Session"
+          }
         }
       },
       "also": {

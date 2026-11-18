@@ -85,7 +85,9 @@
       "expect": {
         "state": "Pause",
         "data": {
-          "previous": "Gate2"
+          "previous": {
+            "$some": "Gate2"
+          }
         }
       }
     },

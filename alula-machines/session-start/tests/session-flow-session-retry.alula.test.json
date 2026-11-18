@@ -119,8 +119,7 @@
         "name": "agent_done",
         "request": "agent-1",
         "input": {
-          "$variant": "TurnResult",
-          "name": "PermanentError",
+          "case": "PermanentError",
           "fields": {}
         }
       },
@@ -202,36 +201,46 @@
         "name": "agent_done",
         "request": "agent-1",
         "input": {
-          "$variant": "TurnResult",
-          "name": "Finished",
+          "case": "Finished",
           "fields": {
-            "text": "Привет, мир",
-            "artifact": null,
+            "text": {
+              "some": "Привет, мир"
+            },
+            "artifact": {
+              "none": true
+            },
             "usage": {
-              "$record": "TransportUsage",
-              "fields": {
-                "model": {
-                  "$record": "AgentModel",
-                  "fields": {
-                    "id": "m1",
-                    "provider": "p",
-                    "variant": null
-                  }
+              "model": {
+                "id": "m1",
+                "provider": "p",
+                "variant": {
+                  "none": true
+                }
+              },
+              "tokens": {
+                "input": {
+                  "some": 10
                 },
-                "tokens": {
-                  "$record": "TokenUsage",
-                  "fields": {
-                    "input": 10,
-                    "output": 5,
-                    "reasoning": null,
-                    "cache_read": null,
-                    "cache_write": null
-                  }
+                "output": {
+                  "some": 5
                 },
-                "cost": null,
-                "context_used": null,
-                "request_started": 5
-              }
+                "reasoning": {
+                  "none": true
+                },
+                "cache_read": {
+                  "none": true
+                },
+                "cache_write": {
+                  "none": true
+                }
+              },
+              "cost": {
+                "none": true
+              },
+              "context_used": {
+                "none": true
+              },
+              "request_started": 5
             }
           }
         }

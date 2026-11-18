@@ -96,7 +96,9 @@
           }
         ],
         "data": {
-          "previous": "Gate2"
+          "previous": {
+            "$some": "Gate2"
+          }
         }
       }
     }

@@ -144,8 +144,10 @@
         "open": [],
         "data": {
           "reason": {
-            "$variant": "PauseReason",
-            "name": "Halted"
+            "$some": {
+              "$variant": "PauseReason",
+              "name": "Halted"
+            }
           }
         }
       },

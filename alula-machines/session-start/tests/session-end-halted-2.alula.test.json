@@ -97,8 +97,10 @@
         "outcome": "refusal:StoppedByHuman",
         "data": {
           "reason": {
-            "$variant": "PauseReason",
-            "name": "Halted"
+            "$some": {
+              "$variant": "PauseReason",
+              "name": "Halted"
+            }
           }
         },
         "journal": [

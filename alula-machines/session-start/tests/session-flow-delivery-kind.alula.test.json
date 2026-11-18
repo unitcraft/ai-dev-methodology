@@ -113,8 +113,7 @@
               "fields": {
                 "kind": {
                   "$variant": "CallerKind",
-                  "name": "CycleSession",
-                  "fields": {}
+                  "name": "CycleSession"
                 },
                 "profile": {
                   "$record": "AgentProfile",

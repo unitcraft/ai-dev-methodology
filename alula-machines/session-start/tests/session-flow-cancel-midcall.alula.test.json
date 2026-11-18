@@ -131,8 +131,10 @@
         ],
         "data": {
           "reason": {
-            "$variant": "PauseReason",
-            "name": "Cancelled"
+            "$some": {
+              "$variant": "PauseReason",
+              "name": "Cancelled"
+            }
           },
           "open_requests": []
         }
