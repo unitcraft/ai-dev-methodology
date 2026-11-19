@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Пробы стража универсальности внешних функций (задача 103; причины отдельной
+"""Пробы стража универсальности инструментов (задача 103; причины отдельной
 таблицей «## Reasons» — задача 110).
 
 Позитивные: универсальная функция и предметная с записанной причиной — зелёные
-(причина — столбец `reason` таблицы «Primitives» или таблица «## Reasons»).
+(причина — столбец `reason` таблицы «Tools» или таблица «## Reasons»).
 Негативные: предметная без столбца причины, с пустой причиной и с «—» — красные,
 в находке имя функции и причина. Характеризация: действующий реестр методики
-(`alula-machines/registry.md`) после задачи 110 норме 14б следует: у каждого из 71
+(`alula-machines/registry.md`) после задачи 110 норме 14б следует: у каждого из 59
 предметного инструмента записана причина нераскладываемости, страж на нём зелёный.
 Запуск из папки задачи: `python -m unittest -v test_check_host_universality`.
 """
@@ -33,7 +33,7 @@ def table(rows, reason_column=False, reasons=None):
     if reason_column:
         head += " reason |"
         sep = sep[:-1] + "---|"
-    lines = ["## Primitives", "", head, sep]
+    lines = ["## Tools", "", head, sep]
     for i, row in enumerate(rows):
         if reason_column:
             row = row + " | " + (reasons[i] if reasons else "")
@@ -42,44 +42,44 @@ def table(rows, reason_column=False, reasons=None):
 
 
 class CollectTest(unittest.TestCase):
-    """Шаг 1 критерия: собрать все объявленные внешние функции."""
+    """Шаг 1 критерия: собрать все объявленные инструменты."""
 
     def test_all_declared_functions_collected(self):
         with io.open(REGISTRY, encoding="utf-8") as f:
             text = f.read()
-        rows = guard.parse_primitives(text)
-        self.assertEqual(87, len(rows))
+        rows = guard.parse_tools(text)
+        self.assertEqual(72, len(rows))
         names = [r["name"] for r in rows]
-        self.assertIn("verify_owner_route_decision", names)
-        self.assertIn("show_human", names)
+        self.assertIn("verify_token", names)
+        self.assertIn("task_plan", names)
         self.assertIn("issue_token", names)
         self.assertEqual(len(set(names)), len(names))
 
     def test_reasons_collected_for_every_declared_function(self):
         with io.open(REGISTRY, encoding="utf-8") as f:
             text = f.read()
-        rows = guard.parse_primitives(text)
+        rows = guard.parse_tools(text)
         reasons = guard.parse_reasons(text)
         for row in rows:
-            if row["name"].strip("`") in guard.UNIVERSAL_PRIMITIVES:
+            if row["name"].strip("`") in guard.UNIVERSAL_TOOLS:
                 continue
             reason = reasons.get(row["name"], "")
             self.assertTrue(reason and reason != guard.EMPTY_CELL,
                             "у {0} нет причины в таблице «## Reasons»".format(row["name"]))
 
     def test_universal_primitives_of_thin_host_are_declared(self):
-        """Каркас тонкого хозяина (задача 111): универсальные примитивы эпика есть в реестре."""
+        """Каркас тонкого хозяина (задача 111): универсальные инструменты эпика есть в реестре."""
         with io.open(REGISTRY, encoding="utf-8") as f:
             text = f.read()
-        names = set(r["name"] for r in guard.parse_primitives(text))
+        names = set(r["name"] for r in guard.parse_tools(text))
         for name in ("read_file", "write_file", "move_file", "delete_file", "file_exists",
                      "list_dir", "start_process", "stop_process", "process_running",
                      "run_command", "acquire_lock", "parse_agent", "sha256"):
             self.assertIn(name, names)
 
-    def test_registry_without_primitives_section_is_red(self):
+    def test_registry_without_tools_section_is_red(self):
         with self.assertRaises(ValueError):
-            guard.parse_primitives("# Реестр без раздела\n")
+            guard.parse_tools("# Реестр без раздела\n")
 
 
 class PositiveProbeTest(unittest.TestCase):
@@ -95,7 +95,7 @@ class PositiveProbeTest(unittest.TestCase):
         counts, findings = guard.check_registry(table(
             ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"],
             reason_column=True,
-            reasons=["решение владельца не раскладывается на примитивы без потери доверия"]))
+            reasons=["решение владельца не раскладывается на инструменты без потери доверия"]))
         self.assertEqual(1, counts["justified"])
         self.assertEqual([], findings)
     def test_domain_function_with_reason_in_reasons_section_is_green(self):
@@ -104,7 +104,7 @@ class PositiveProbeTest(unittest.TestCase):
             ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"])
         text += ("## Reasons\n\n| tool | reason |\n|---|---|\n"
                  "| verify_owner_route_decision | решение владельца не раскладывается "
-                 "на примитивы без потери доверия |\n")
+                 "на инструменты без потери доверия |\n")
         counts, findings = guard.check_registry(text)
         self.assertEqual(1, counts["justified"])
         self.assertEqual([], findings)
@@ -135,7 +135,7 @@ class NegativeProbeTest(unittest.TestCase):
 
     def test_reason_naming_other_function_is_red_with_primitives(self):
         """Уточнение критерия: декларация, называющая другие функции реестра, сама
-        признаёт разложение — красный с перечнем этих примитивов."""
+        признаёт разложение — красный с перечнем этих инструментов."""
         _, findings = guard.check_registry(table(
             ["read_file | path: text | text | volatile | — | —",
              "proposal_with_fingerprint | — | text | volatile | — | —"],
@@ -143,10 +143,10 @@ class NegativeProbeTest(unittest.TestCase):
             reasons=["—", "читает файл read_file и считает отпечаток"]))
         self.assertEqual(1, len(findings))
         self.assertEqual("proposal_with_fingerprint", findings[0].name)
-        self.assertIn("раскладывается на примитивы: read_file", findings[0].reason)
+        self.assertIn("раскладывается на инструменты: read_file", findings[0].reason)
 
     def test_reason_mentioning_undeclared_name_is_green(self):
-        """Имя не из реестра — не разложение на существующие примитивы."""
+        """Имя не из реестра — не разложение на существующие инструменты."""
         _, findings = guard.check_registry(table(
             ["verify_owner_route_decision | task_dir: text | text | volatile | — | —"],
             reason_column=True,
@@ -173,7 +173,7 @@ class SelftestTest(unittest.TestCase):
 
 class CurrentRegistryTest(unittest.TestCase):
     """Характеризация после задачи 110: действующий реестр норме 14б следует —
-    у каждого из 71 предметного инструмента записана причина нераскладываемости
+    у каждого из 59 предметного инструмента записана причина нераскладываемости
     в таблице «## Reasons», страж на нём зелёный (бывшая красная проба задачи 103
     перевёрнута этой правкой)."""
 
@@ -181,8 +181,8 @@ class CurrentRegistryTest(unittest.TestCase):
         p = subprocess.run([sys.executable, GUARD, "--registry", REGISTRY],
                            capture_output=True, text=True, encoding="utf-8", cwd=REPO)
         self.assertEqual(0, p.returncode, p.stdout + p.stderr)
-        self.assertIn("внешних функций 87", p.stdout)
-        self.assertIn("предметных с причиной 74", p.stdout)
+        self.assertIn("инструментов 72", p.stdout)
+        self.assertIn("предметных с причиной 59", p.stdout)
         self.assertIn("предметных без причины 0", p.stdout)
         self.assertIn("ИТОГ: зелёный", p.stdout)
 

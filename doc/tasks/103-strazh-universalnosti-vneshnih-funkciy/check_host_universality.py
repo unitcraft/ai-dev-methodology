@@ -1,35 +1,35 @@
 #!/usr/bin/env python3
-"""Страж универсальности внешних функций хозяина (задача 103, правило 14б `state-machine-spec.md`).
+"""Страж универсальности инструментов хозяина (задача 103, правило 14б `state-machine-spec.md`).
 
-Норма (правило 14б): внешняя функция хозяина — универсальный примитив среды исполнения
+Норма (правило 14б): инструмент хозяина универсален, если описывает среду исполнения
 (чтение файла, запись файла, запуск команды и т. п.), а не предметный вызов под конкретный
-документ или действие машины; предметная функция допустима, только если не раскладывается
-на универсальные примитивы без потери смысла; причина — что теряется при разложении —
-называется при её объявлении. Проверка правила: поиском по реестру хозяина у каждой
-предметной функции стоит названная причина исключения. Уточнение критерия (интегратор,
-2026-11-06): каждая внешняя функция — примитив: не раскладывается на другие внешние
-функции без потери смысла; у каждой функции есть записанное доказательство, что она
-не реализуется через существующие примитивы; раскладываемая — красный с указанием,
-на какие примитивы.
+документ или действие машины; предметный инструмент допустим, только если не раскладывается
+на универсальные инструменты без потери смысла; причина — что теряется при разложении —
+называется при её объявлении. Проверка правила: поиском по реестру хозяина у каждого
+предметного инструмента стоит названная причина исключения. Уточнение критерия (интегратор,
+2026-11-06): каждый инструмент — универсальный: не раскладывается на другие инструменты
+без потери смысла; у каждого инструмента есть записанное доказательство, что он
+не реализуется через существующие инструменты; раскладываемый — красный с указанием,
+на какие инструменты.
 
 Что проверяет:
-  1. собирает все объявленные внешние функции — строки таблицы раздела «## Primitives»
+  1. собирает все объявленные инструменты — строки таблицы раздела «## Tools»
      реестра хозяина (`alula-machines/registry.md`; столбцы — раздел 7 спецификации Алулы);
-  2. функция из списка универсальных примитивов (УНИВЕРСАЛЬНЫЕ ниже) — зелёная;
-     иначе она предметная и зелёная только с непустой причиной: из столбца `reason`
-     таблицы «Primitives» или из отдельной таблицы раздела «## Reasons» (заголовок
-     `| tool | reason |`; столбец в таблице «Primitives» не бывает — загрузчик реестра
-     `parse_registry_table` читает строку примитива ровно из шести ячеек, задача 110);
+  2. инструмент из списка универсальных (UNIVERSAL_TOOLS ниже) — зелёный;
+     иначе он предметный и зелёная только с непустой причиной: из столбца `reason`
+     таблицы «Tools» или из отдельной таблицы раздела «## Reasons» (заголовок
+     `| tool | reason |`; столбец в таблице «Tools» не бывает — загрузчик реестра
+     `parse_registry_table` читает строку инструмента ровно из шести ячеек, задача 110);
      пустая ячейка и `—` — причины нет;
-  3. красный на каждую предметную функцию без записанной причины: имя функции и причина
-     находки; красный и тогда, когда записанная причина сама называет другие функции
+  3. красный на каждый предметный инструмент без записанной причины: имя инструмента и причина
+     находки; красный и тогда, когда записанная причина сама называет другие инструменты
      реестра (слово целиком), — декларация признаёт разложение: в находке перечисляются
-     эти примитивы; код возврата 1.
+     эти инструменты; код возврата 1.
 
-Список универсальных примитивов закрытый: примеры правила 14б (чтение файла, запись
-файла, запуск команды) и примитивы языка (`time_now`, `new_id` — шапка реестра, раздел 7а,
+Список универсальных инструментов закрытый: примеры правила 14б (чтение файла, запись
+файла, запуск команды) и инструменты языка (`time_now`, `new_id` — шапка реестра, раздел 7а,
 AL-113). Расширение 2026-11-06 — слово владельца (план тонкого хозяина v3.1, чат; эпик,
-стадия 1, задача 111): универсальные примитивы файловой системы (`move_file`,
+стадия 1, задача 111): универсальные инструменты файловой системы (`move_file`,
 `delete_file`, `file_exists`, `list_dir`), процессов (`start_process`, `stop_process`,
 `process_running`), замков (`acquire_lock`; `release_lock` с токеном войдёт в список
 на стадии 4, когда заменит действующий без параметров), разбор дешёвым агентом
@@ -50,12 +50,12 @@ import os
 import re
 import sys
 
-# Универсальные примитивы среды исполнения (закрытый перечень, см. документацию выше).
-# Первоначальный состав — примеры правила 14б и примитивы языка (задача 103).
+# Универсальные инструменты среды исполнения (закрытый перечень, см. документацию выше).
+# Первоначальный состав — примеры правила 14б и инструменты языка (задача 103).
 # Расширение 2026-11-06 (слово владельца, план тонкого хозяина v3.1, чат): файловая
 # система, процессы, замки, разбор дешёвым агентом и хеш — хозяин приводится к
 # тонкому клиенту (эпик, стадия 1, задача 111). Расширение далее — решение методики.
-UNIVERSAL_PRIMITIVES = frozenset({
+UNIVERSAL_TOOLS = frozenset({
     "read_file",
     "write_file",
     "move_file",
@@ -78,7 +78,7 @@ REASON_COLUMN = "reason"
 REASONS_SECTION = "## Reasons"
 EMPTY_CELL = "—"
 
-REASON_MISSING = "предметная функция без записанной причины нераскладываемости"
+REASON_MISSING = "предметный инструмент без записанной причины нераскладываемости"
 
 # Ядро-4 доверенных решений методики (эпик 118, REQ-2): в реестре пакета их быть не должно —
 # их контракты типизированы объектами методики (Opening с маршрутами, шаблоны журнала).
@@ -89,12 +89,12 @@ TRUSTED_CORE = frozenset({
     "release_lock",
 })
 
-# Колонки строки примитива для сверки связи (шесть ячеек, раздел 7 спецификации Алулы).
+# Колонки строки инструмента для сверки связи (шесть ячеек, раздел 7 спецификации Алулы).
 LINK_COLUMNS = ("name", "parameters", "result", "class", "reads", "writes")
 
 
 class Finding(object):
-    """Одна находка: имя функции и причина."""
+    """Одна находка: имя инструмента и причина."""
 
     def __init__(self, name, reason):
         self.name = name
@@ -114,22 +114,22 @@ def split_row(line):
     return [c.strip().replace("\\|", "|") for c in cells]
 
 
-def parse_primitives(text):
-    """Строки таблицы «## Primitives»: список словарей {имя столбца: ячейка}.
+def parse_tools(text):
+    """Строки таблицы «## Tools»: список словарей {имя столбца: ячейка}.
 
     Без раздела или таблицы — ValueError: страж не работает молча.
     """
-    m = re.search(r"^## Primitives\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    m = re.search(r"^## Tools\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     if not m:
-        raise ValueError("в реестре нет раздела «## Primitives»")
+        raise ValueError("в реестре нет раздела «## Tools»")
     rows = [ln for ln in m.group(1).splitlines() if ln.strip().startswith("|")]
     if len(rows) < 2:
-        raise ValueError("в разделе «## Primitives» нет таблицы")
+        raise ValueError("в разделе «## Tools» нет таблицы")
     header = split_row(rows[0])
     if "name" not in header:
-        raise ValueError("в таблице «Primitives» нет столбца «name»")
+        raise ValueError("в таблице «Tools» нет столбца «name»")
     if not re.match(r"^:?-+:?$", split_row(rows[1])[0].replace(" ", "")):
-        raise ValueError("вторая строка таблицы «Primitives» — не разделитель")
+        raise ValueError("вторая строка таблицы «Tools» — не разделитель")
     out = []
     for ln in rows[2:]:
         cells = split_row(ln)
@@ -142,10 +142,10 @@ def parse_primitives(text):
 def parse_reasons(text):
     """Таблица раздела «## Reasons»: {имя инструмента: причина}.
 
-    Отдельная таблица — потому что строка примитива читается загрузчиком реестра
-    ровно из шести ячеек и седьмого столбца в «Primitives» не бывает (задача 110).
+    Отдельная таблица — потому что строка инструмента читается загрузчиком реестра
+    ровно из шести ячеек и седьмого столбца в «Tools» не бывает (задача 110).
     Заголовок таблицы — с первой ячейкой «tool» (не «name»: иначе это таблица
-    примитивов). Раздела или таблицы нет — пустой словарь: причины необязательны.
+    инструментов). Раздела или таблицы нет — пустой словарь: причины необязательны.
     """
     m = re.search(r"^## Reasons\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     if not m:
@@ -166,9 +166,9 @@ def parse_reasons(text):
 
 
 def referenced_functions(reason, names, own):
-    """Имена других функций реестра, названные в записанной причине (слово целиком).
+    """Имена других инструментов реестра, названные в записанной причине (слово целиком).
 
-    Декларация, называющая другие функции, сама признаёт разложение на них.
+    Декларация, называющая другие инструменты, сама признаёт разложение на них.
     """
     found = []
     for n in sorted(names):
@@ -179,14 +179,14 @@ def referenced_functions(reason, names, own):
 
 def check_registry(text):
     """Сверка реестра с правилом 14б. Возвращает (числа, находки)."""
-    rows = parse_primitives(text)
+    rows = parse_tools(text)
     reasons = parse_reasons(text)
     names = set(row.get("name", "").strip("`") for row in rows)
     universal, justified = 0, 0
     findings = []
     for row in rows:
         name = row.get("name", "").strip("`")
-        if name in UNIVERSAL_PRIMITIVES:
+        if name in UNIVERSAL_TOOLS:
             universal += 1
             continue
         reason = row.get(REASON_COLUMN, "").strip()
@@ -199,7 +199,7 @@ def check_registry(text):
         if decomposed:
             findings.append(Finding(
                 name,
-                "раскладывается на примитивы: {0}: записанная причина сама называет "
+                "раскладывается на инструменты: {0}: записанная причина сама называет "
                 "реализацию через них".format(", ".join(decomposed))))
         else:
             justified += 1
@@ -218,10 +218,10 @@ def check_package_link(meth_text, pkg_text):
 
     Возвращает находки (список Finding); пустой список — зелёный.
     """
-    meth_rows = {r["name"].strip("`"): r for r in parse_primitives(meth_text)}
-    pkg_rows = {r["name"].strip("`"): r for r in parse_primitives(pkg_text)}
+    meth_rows = {r["name"].strip("`"): r for r in parse_tools(meth_text)}
+    pkg_rows = {r["name"].strip("`"): r for r in parse_tools(pkg_text)}
     findings = []
-    linked = sorted(UNIVERSAL_PRIMITIVES - {"time_now", "new_id"})
+    linked = sorted(UNIVERSAL_TOOLS - {"time_now", "new_id"})
     for name in linked:
         if name not in meth_rows:
             findings.append(Finding(name, "универсальная строка отсутствует в реестре методики"))
@@ -246,7 +246,7 @@ def report(path, counts, findings, out):
     for f in findings:
         out.write(str(f) + "\n")
     out.write(
-        "реестр {0}: внешних функций {1}; универсальных {2}; предметных с причиной {3}; "
+        "реестр {0}: инструментов {1}; универсальных {2}; предметных с причиной {3}; "
         "предметных без причины {4}\n".format(
             path, counts["total"], counts["universal"], counts["justified"], counts["unjustified"]))
     out.write("ИТОГ: {0}\n".format("КРАСНЫЙ" if findings else "зелёный"))
@@ -261,25 +261,25 @@ def selftest(out):
         out.write("самотест: {0} — {1}\n".format(label, "ок" if cond else "ПРОВАЛ"))
         ok = ok and cond
 
-    expect("список универсальных примитивов не пуст", len(UNIVERSAL_PRIMITIVES) > 0)
+    expect("список универсальных инструментов не пуст", len(UNIVERSAL_TOOLS) > 0)
 
     table_universal = (
-        "## Primitives\n\n| name | parameters | result | class | reads | writes |\n"
+        "## Tools\n\n| name | parameters | result | class | reads | writes |\n"
         "|---|---|---|---|---|---|\n| read_file | path: text | text | volatile | — | — |\n")
     counts, findings = check_registry(table_universal)
-    expect("универсальная функция зелёная", counts["total"] == 1 and not findings)
+    expect("универсальный инструмент зелёный", counts["total"] == 1 and not findings)
 
     table_reason = (
-        "## Primitives\n\n| name | parameters | result | class | reads | writes | reason |\n"
+        "## Tools\n\n| name | parameters | result | class | reads | writes | reason |\n"
         "|---|---|---|---|---|---|---|\n"
-        "| verify_owner_route_decision | task_dir: text | text | volatile | — | — | решение владельца не раскладывается на примитивы без потери доверия |\n")
+        "| verify_owner_route_decision | task_dir: text | text | volatile | — | — | решение владельца не раскладывается на инструменты без потери доверия |\n")
     counts, findings = check_registry(table_reason)
     expect("предметная с записанной причиной зелёная", counts["justified"] == 1 and not findings)
 
     table_reasons_section = (
         table_reason +
         "## Reasons\n\n| tool | reason |\n|---|---|\n"
-        "| verify_owner_route_decision | решение владельца не раскладывается на примитивы без потери доверия |\n")
+        "| verify_owner_route_decision | решение владельца не раскладывается на инструменты без потери доверия |\n")
     counts, findings = check_registry(table_reasons_section)
     expect("причина из отдельной таблицы «## Reasons» зелёная",
            counts["justified"] == 1 and not findings)
@@ -294,7 +294,7 @@ def selftest(out):
         and findings[0].reason == REASON_MISSING)
 
     table_dash = table_reason.replace(
-        "решение владельца не раскладывается на примитивы без потери доверия", EMPTY_CELL)
+        "решение владельца не раскладывается на инструменты без потери доверия", EMPTY_CELL)
     counts, findings = check_registry(table_dash)
     expect("причина «—» — причины нет", len(findings) == 1)
 
@@ -305,13 +305,13 @@ def selftest(out):
     expect("причина «—» в таблице «## Reasons» — причины нет", len(findings) == 1)
 
     table_decomposed = (
-        "## Primitives\n\n| name | parameters | result | class | reads | writes | reason |\n"
+        "## Tools\n\n| name | parameters | result | class | reads | writes | reason |\n"
         "|---|---|---|---|---|---|---|\n"
         "| read_file | path: text | text | volatile | — | — | — |\n"
         "| proposal_with_fingerprint | — | text | volatile | — | — | читает файл read_file и считает отпечаток |\n")
     counts, findings = check_registry(table_decomposed)
     expect(
-        "причина, называющая другую функцию, — красный с перечнем примитивов",
+        "причина, называющая другой инструмент, — красный с перечнем инструментов",
         len(findings) == 1 and findings[0].name == "proposal_with_fingerprint"
         and "read_file" in findings[0].reason)
 
@@ -331,7 +331,7 @@ def selftest(out):
         "| sha256 | text: text | text | pure | — | — |",
     ]
     link_meth = (
-        "## Primitives\n\n| name | parameters | result | class | reads | writes |\n"
+        "## Tools\n\n| name | parameters | result | class | reads | writes |\n"
         "|---|---|---|---|---|---|\n" + "\n".join(link_rows) + "\n")
     findings = check_package_link(link_meth, link_meth)
     expect("сверка связи: одинаковые 13 строк зелёные", not findings)
@@ -361,7 +361,7 @@ def selftest(out):
 
 
 def main(argv):
-    ap = argparse.ArgumentParser(description="Страж универсальности внешних функций хозяина (правило 14б).")
+    ap = argparse.ArgumentParser(description="Страж универсальности инструментов хозяина (правило 14б).")
     ap.add_argument("--registry", default=DEFAULT_REGISTRY,
                     help="реестр хозяина (по умолчанию %(default)s, запуск из корня репозитория)")
     ap.add_argument("--package-registry", default=os.environ.get("ALULA_PACKAGE_REGISTRY"),
@@ -396,7 +396,7 @@ def main(argv):
         sys.stdout.write(
             "сверка связи с пакетом {0}: строк {1}; находок {2}; ИТОГ: {3}\n".format(
                 args.package_registry,
-                len(UNIVERSAL_PRIMITIVES) - 2,
+                len(UNIVERSAL_TOOLS) - 2,
                 len(link_findings),
                 "КРАСНЫЙ" if link_findings else "зелёный"))
         red = red or bool(link_findings)
