@@ -2,7 +2,7 @@
 
 - machine: meeting
 - revision: 1
-- alula_version: 0.29
+- alula_version: 0.30
 
 Это **запись машины «Совещание агентов» целиком на Алуле**, версия формата 0.28 ([spec/alula-spec.md](https://github.com/nv-lang/nova-alula/blob/main/spec/alula-spec.md); он единственное определение языка записи). Первоисточник — эта запись на Алуле; прежние таблицы лежат в архиве и не обновляются. Прежняя запись — таблицы состояний [archive/task-runner-meeting-states.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/archive/task-runner-meeting-states.md), код автомата [archive/task-runner-meeting-automaton.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/archive/task-runner-meeting-automaton.md) и псевдокод [archive/task-runner-meeting-pseudocode.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/archive/task-runner-meeting-pseudocode.md). Библиотека «Пауза» ([libs/pause.alula.md](libs/pause.alula.md)); прежняя запись — [archive/state-machine-pause-states.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/archive/state-machine-pause-states.md), коды журнала — [state-machine-journal.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/state-machine-journal.md), имена — [state-machine-glossary.md](https://github.com/unitcraft/ai-dev-methodology/blob/main/state-machines/state-machine-glossary.md). Вложенная машина «Шаг агента» — [agent_step.alula.md](agent_step.alula.md). Справка к записи — что не уложилось в формат, неоднозначности спецификации, соответствие источнику — [spec/samples/meeting-notes.md](https://github.com/nv-lang/nova-alula/blob/main/spec/samples/meeting-notes.md).
 
@@ -168,11 +168,11 @@
 
 ### арифметика_цикла
 - Файл: libs/cycle_arithmetic.alula.md
-- Хеш: 8dd3bc954085
+- Хеш: 0f945c058f51
 
 ### Пауза
 - Файл: libs/pause.alula.md
-- Хеш: 7d497a4b0a12
+- Хеш: 279ac2e4b4b8
 
 | параметр | значение |
 |---|---|
@@ -576,7 +576,7 @@
 
 Набор `остановка` — 11 значений; ОСТАНОВЛЕНО покрывает 10, одиннадцатое (`""`) снято строкой `Кроме`. Значения `pause_halt_meeting` и `cancel_request` обязывает фрагмент «Пауза» (строки № 3 и № 10); четыре значения `<сбойное_обращение>_halt_meeting` вычисляет СБОЙ № 2.
 
-## Внешние функции
+## Инструменты
 
 ```
 профиль_стороны(сторона строка) изменчивая -> ПрофильАгента
